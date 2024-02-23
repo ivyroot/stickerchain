@@ -15,6 +15,7 @@ struct StickerDesign {
 contract StickerDesigns is ERC721A, Ownable {
     event StickerDesignCreated(uint256 indexed id, uint256 imageCID, uint256 metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
+    event StickerPriceSet(uint256 indexed stickerId, uint256 price);
 
     error InvalidPublishingFee(uint256 requiredFee);
 
@@ -34,6 +35,14 @@ contract StickerDesigns is ERC721A, Ownable {
 
     function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {
         return stickerDesigns[_stickerId];
+    }
+
+    function getStickerDesigns(uint256[] calldata _stickerIds) external view returns (StickerDesign[] memory) {
+        StickerDesign[] memory designs = new StickerDesign[](_stickerIds.length);
+        for (uint256 i = 0; i < _stickerIds.length; i++) {
+            designs[i] = stickerDesigns[_stickerIds[i]];
+        }
+        return designs;
     }
 
     // on first sticker creation new addresses pay the publisher fee and have their address added to the goodStandingPublishers mapping
@@ -86,6 +95,7 @@ contract StickerDesigns is ERC721A, Ownable {
     function setStickerPrice(uint256 _stickerId, uint256 _price) public {
         require(canModifyStickerDesign(msg.sender, _stickerId), "You are not allowed to modify sticker");
         stickerDesigns[_stickerId].price = _price;
+        emit StickerPriceSet(_stickerId, _price);
     }
 
 

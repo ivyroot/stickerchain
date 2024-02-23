@@ -53,4 +53,35 @@ contract StickerDesignsTest is Test {
         stickerDesigns.createStickerDesign{value: incorrectFeeAmount}(imageCID, metadataCID, price, payoutAddress);
     }
 
+    // Test second sticker creation with the fee for a returning publisher
+    function testReturningPublisherFee() public {
+        uint256 image1CID = 123456;
+        uint256 metadata1CID = 654321;
+        uint256 image2CID = 383745;
+        uint256 metadata2CID = 462832;
+        uint256 price = 0.0 ether;
+        address publisher = address(this);
+        address payoutAddress = publisher;
+        vm.deal(publisher, 20 ether);
+        vm.prank(publisher);
+
+        uint256 newStickerId1 =  stickerDesigns.createStickerDesign{value: publisherFee + newStickerFee}(image1CID, metadata1CID, price, payoutAddress);
+        uint256 newStickerId2 = stickerDesigns.createStickerDesign{value: newStickerFee}(image2CID, metadata2CID, price, payoutAddress);
+        uint256[] memory stickerIds = new uint256[](2);
+        stickerIds[0] = newStickerId1;
+        stickerIds[1] = newStickerId2;
+        StickerDesign[] memory stickers = stickerDesigns.getStickerDesigns(stickerIds);
+        assertEq(stickers.length, 2);
+        assertEq(stickers[0].imageCID, image1CID);
+        assertEq(stickers[0].metadataCID, metadata1CID);
+        assertEq(stickers[0].price, price);
+        assertEq(stickers[0].publisher, publisher);
+        assertEq(stickers[0].payoutAddress, payoutAddress);
+        assertEq(stickers[1].imageCID, image2CID);
+        assertEq(stickers[1].metadataCID, metadata2CID);
+        assertEq(stickers[1].price, price);
+        assertEq(stickers[1].publisher, publisher);
+        assertEq(stickers[1].payoutAddress, payoutAddress);
+    }
+
 }
