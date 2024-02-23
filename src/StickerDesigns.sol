@@ -4,16 +4,14 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "erc721a/contracts/ERC721A.sol";
 
 struct StickerDesign {
-    uint256 imageCID;
-    uint256 metadataCID;
-    uint256 price;
     address publisher;
     address payoutAddress;
+    uint256 price;
+    bytes metadataCID;
 }
 
-
 contract StickerDesigns is ERC721A, Ownable {
-    event StickerDesignCreated(uint256 indexed id, uint256 imageCID, uint256 metadataCID, uint256 price, address publisher, address payoutAddress);
+    event StickerDesignCreated(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
 
@@ -48,7 +46,7 @@ contract StickerDesigns is ERC721A, Ownable {
 
     // on first sticker creation new addresses pay the publisher fee and have their address added to the goodStandingPublishers mapping
     // if a publisher is banned they can no longer create new stickers
-    function createStickerDesign(uint256 _imageCID, uint256 _metadataCID, uint256 _price, address _payoutAddress) external payable returns(uint256) {
+    function createStickerDesign(uint256 _price, address _payoutAddress, bytes calldata _metadataCID) external payable returns(uint256) {
         if (bannedPublishers[msg.sender]) {
             revert InsufficientPublisherPermissions();
         }
@@ -59,7 +57,6 @@ contract StickerDesigns is ERC721A, Ownable {
         }
 
         stickerDesigns[nextStickerDesignId] = StickerDesign({
-            imageCID: _imageCID,
             metadataCID: _metadataCID,
             price: _price,
             publisher: msg.sender,
@@ -72,7 +69,7 @@ contract StickerDesigns is ERC721A, Ownable {
 
         nextStickerDesignId++;
 
-        emit StickerDesignCreated(nextStickerDesignId, _imageCID, _metadataCID, _price, msg.sender, _payoutAddress);
+        emit StickerDesignCreated(nextStickerDesignId, _metadataCID, _price, msg.sender, _payoutAddress);
 
         return nextStickerDesignId - 1;
     }
