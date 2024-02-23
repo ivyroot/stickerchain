@@ -77,14 +77,12 @@ contract StickerDesigns is ERC721A, Ownable {
         return isPublisherInGoodStanding(_publisher) && stickerDesigns[_stickerId].publisher == _publisher;
     }
 
-    // transfer sticker ownership
     function transferStickerOwnership(uint256 _stickerId, address _recipient) public {
         require(canModifyStickerDesign(msg.sender, _stickerId), "You are not allowed to modify sticker");
         stickerDesigns[_stickerId].publisher = _recipient;
         emit StickerOwnershipTransferred(msg.sender, _recipient, _stickerId);
     }
 
-    // set sticker price
     function setStickerPrice(uint256 _stickerId, uint256 _price) public {
         require(canModifyStickerDesign(msg.sender, _stickerId), "You are not allowed to modify sticker");
         stickerDesigns[_stickerId].price = _price;
