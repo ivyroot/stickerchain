@@ -17,6 +17,7 @@ contract StickerDesigns is ERC721A, Ownable {
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
 
+    error InsufficientPublisherPermissions();
     error InvalidPublishingFee(uint256 requiredFee);
 
     constructor() ERC721A("StickerDesignz", "STKRS-TEST-DEV") Ownable(msg.sender) {}
@@ -48,7 +49,9 @@ contract StickerDesigns is ERC721A, Ownable {
     // on first sticker creation new addresses pay the publisher fee and have their address added to the goodStandingPublishers mapping
     // if a publisher is banned they can no longer create new stickers
     function createStickerDesign(uint256 _imageCID, uint256 _metadataCID, uint256 _price, address _payoutAddress) external payable returns(uint256) {
-        require(!bannedPublishers[msg.sender], "You are banned from creating new stickers");
+        if (bannedPublishers[msg.sender]) {
+            revert InsufficientPublisherPermissions();
+        }
         bool firstSticker = !goodStandingPublishers[msg.sender];
         uint256 requiredFee = firstSticker ? publisherFee + newStickerFee : newStickerFee;
         if (msg.value != requiredFee) {
@@ -87,13 +90,17 @@ contract StickerDesigns is ERC721A, Ownable {
     }
 
     function transferStickerOwnership(uint256 _stickerId, address _recipient) public {
-        require(canModifyStickerDesign(msg.sender, _stickerId), "You are not allowed to modify sticker");
+        if (!canModifyStickerDesign(msg.sender, _stickerId)) {
+            revert InsufficientPublisherPermissions();
+        }
         stickerDesigns[_stickerId].publisher = _recipient;
         emit StickerOwnershipTransferred(msg.sender, _recipient, _stickerId);
     }
 
     function setStickerPrice(uint256 _stickerId, uint256 _price) public {
-        require(canModifyStickerDesign(msg.sender, _stickerId), "You are not allowed to modify sticker");
+        if (!canModifyStickerDesign(msg.sender, _stickerId)) {
+            revert InsufficientPublisherPermissions();
+        }
         stickerDesigns[_stickerId].price = _price;
         emit StickerPriceSet(_stickerId, _price);
     }
