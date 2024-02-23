@@ -16,10 +16,12 @@ contract StickerDesigns is ERC721A, Ownable {
     event StickerDesignCreated(uint256 indexed id, uint256 imageCID, uint256 metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
 
+    error InvalidPublishingFee(uint256 requiredFee);
+
     constructor() ERC721A("StickerDesignz", "STKRS-TEST-DEV") Ownable(msg.sender) {}
 
-    mapping(uint256 => StickerDesign) public stickerDesigns;
-    uint256 public nextStickerDesignId = 0;
+    mapping(uint256 => StickerDesign) stickerDesigns;
+    uint256 public nextStickerDesignId = 1;
 
     // all publishers must pay a onetime fee to establish reputation the admin can set this
     // using the setPublisherFee function
@@ -29,21 +31,19 @@ contract StickerDesigns is ERC721A, Ownable {
     mapping (address => bool) public goodStandingPublishers;
     mapping (address => bool) public bannedPublishers;
 
-    function mint(uint256 quantity) external payable {
-        // `_mint`'s second argument now takes in a `quantity`, not a `tokenId`.
-        _mint(msg.sender, quantity);
+
+    function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {
+        return stickerDesigns[_stickerId];
     }
 
     // on first sticker creation new addresses pay the publisher fee and have their address added to the goodStandingPublishers mapping
     // if a publisher is banned they can no longer create new stickers
-    function createStickerDesign(uint256 _imageCID, uint256 _metadataCID, uint256 _price, address _payoutAddress) external payable {
+    function createStickerDesign(uint256 _imageCID, uint256 _metadataCID, uint256 _price, address _payoutAddress) external payable returns(uint256) {
         require(!bannedPublishers[msg.sender], "You are banned from creating new stickers");
         bool firstSticker = !goodStandingPublishers[msg.sender];
-
-        if (firstSticker) {
-            require(msg.value == publisherFee + newStickerFee, "Incorrect fee for first sticker");
-        }else{
-            require(msg.value == newStickerFee, "Incorrect fee for new sticker");
+        uint256 requiredFee = firstSticker ? publisherFee + newStickerFee : newStickerFee;
+        if (msg.value != requiredFee) {
+            revert InvalidPublishingFee(requiredFee);
         }
 
         stickerDesigns[nextStickerDesignId] = StickerDesign({
@@ -61,6 +61,8 @@ contract StickerDesigns is ERC721A, Ownable {
         nextStickerDesignId++;
 
         emit StickerDesignCreated(nextStickerDesignId, _imageCID, _metadataCID, _price, msg.sender, _payoutAddress);
+
+        return nextStickerDesignId - 1;
     }
 
     // Publisher methods
