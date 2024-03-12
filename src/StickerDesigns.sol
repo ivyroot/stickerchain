@@ -6,12 +6,15 @@ import "erc721a/contracts/ERC721A.sol";
 struct StickerDesign {
     address publisher;
     address payoutAddress;
-    uint256 price;
+    uint256 publishTimestamp;
+    uint64 price;
+    uint64 limitCount;
+    uint64 limitTime;
     bytes metadataCID;
 }
 
 contract StickerDesigns is ERC721A, Ownable {
-    event StickerDesignCreated(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
+    event StickerDesignPublished(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
 
@@ -46,7 +49,7 @@ contract StickerDesigns is ERC721A, Ownable {
 
     // on first sticker creation new addresses pay the publisher fee and have their address added to the goodStandingPublishers mapping
     // if a publisher is banned they can no longer create new stickers
-    function createStickerDesign(uint256 _price, address _payoutAddress, bytes calldata _metadataCID) external payable returns(uint256) {
+    function publishStickerDesign(StickerDesign calldata newSticker) external payable returns(uint256) {
         if (bannedPublishers[msg.sender]) {
             revert InsufficientPublisherPermissions();
         }
@@ -56,11 +59,16 @@ contract StickerDesigns is ERC721A, Ownable {
             revert InvalidPublishingFee(requiredFee);
         }
 
-        stickerDesigns[nextStickerDesignId] = StickerDesign({
-            metadataCID: _metadataCID,
-            price: _price,
+        bytes memory _metadataCID = newSticker.metadataCID;
+        uint256 newStickerId = nextStickerDesignId;
+        stickerDesigns[newStickerId] = StickerDesign({
             publisher: msg.sender,
-            payoutAddress: _payoutAddress
+            publishTimestamp: block.timestamp,
+            metadataCID: newSticker.metadataCID,
+            price: newSticker.price,
+            payoutAddress: newSticker.payoutAddress,
+            limitCount: newSticker.limitCount,
+            limitTime: newSticker.limitTime
         });
 
         if (firstSticker) {
@@ -69,9 +77,9 @@ contract StickerDesigns is ERC721A, Ownable {
 
         nextStickerDesignId++;
 
-        emit StickerDesignCreated(nextStickerDesignId, _metadataCID, _price, msg.sender, _payoutAddress);
+        emit StickerDesignPublished(newStickerId, _metadataCID, _price, msg.sender, _payoutAddress);
 
-        return nextStickerDesignId - 1;
+        return newStickerId;
     }
 
     // Publisher methods
