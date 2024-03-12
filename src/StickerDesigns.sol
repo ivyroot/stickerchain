@@ -17,6 +17,7 @@ contract StickerDesigns is ERC721A, Ownable {
     event StickerDesignPublished(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
+    event StickerCapped(uint256 indexed stickerId);
 
     error InsufficientPublisherPermissions();
     error InvalidPublishingFee(uint256 requiredFee);
@@ -110,6 +111,13 @@ contract StickerDesigns is ERC721A, Ownable {
         emit StickerPriceSet(_stickerId, _price);
     }
 
+    function capSticker(uint256 _stickerId) public {
+        if (!canModifyStickerDesign(msg.sender, _stickerId)) {
+            revert InsufficientPublisherPermissions();
+        }
+        stickerDesigns[_stickerId].limitTime = block.timestamp;
+        emit StickerCapped(_stickerId, _price);
+    }
 
     // Admin methods
 
