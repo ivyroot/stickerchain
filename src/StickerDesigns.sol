@@ -43,7 +43,7 @@ contract StickerDesigns is Ownable {
     // If a Publisher is banned they can no longer create new stickers.
     mapping (address => bool) public bannedPublishers;
 
-    // There is a fee per sticker design registered.
+    // Fee for registering a new sticker design.
     uint256 public stickerRegistrationFee = 0.0005 ether;
 
     // If an individual sticker design is banned, it will not be returned by the contract.
