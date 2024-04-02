@@ -24,10 +24,12 @@ contract StickerDesigns is Ownable {
     event StickerDesignPublished(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
+    event StickerEndTimeChanged(uint256 indexed stickerId, uint256 endTime);
     event StickerCapped(uint256 indexed stickerId);
 
-    error PublisherIsBanned();
+    error PublisherPermissionsIssue();
     error InvalidPublishingFee(uint256 requiredFee);
+    error InvalidEndTime();
 
     constructor() Ownable(msg.sender) {}
 
@@ -37,24 +39,18 @@ contract StickerDesigns is Ownable {
     // New Publishers pay the publisher reputation fee on first publish.
     uint256 public publisherReputationFee = 0.002 ether;
     mapping (address => bool) public goodStandingPublishers;
+
     // If a Publisher is banned they can no longer create new stickers.
     mapping (address => bool) public bannedPublishers;
 
-    // If an individual sticker design is banned, it will not be returned by the contract.
+    // There is a fee per sticker design registered.
     uint256 public stickerRegistrationFee = 0.0005 ether;
+
+    // If an individual sticker design is banned, it will not be returned by the contract.
     mapping (uint256 => bool) public bannedStickerDesigns;
 
-    function isGoodStandingPublisher(address _publisher) external view returns (bool) {
-        return isPublisherInGoodStanding(_publisher);
-    }
 
-    function readStickerDesign(uint256 _stickerId) internal view returns (StickerDesign memory) {
-        if (bannedStickerDesigns[_stickerId] == true) {
-            return StickerDesign(address(0), address(0), 0, 0, 0, 0, "");
-        } else {
-            return stickerDesigns[_stickerId];
-        }
-    }
+    // View methods
 
     function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {
         return readStickerDesign(_stickerId);
@@ -68,9 +64,24 @@ contract StickerDesigns is Ownable {
         return designs;
     }
 
+    function readStickerDesign(uint256 _stickerId) internal view returns (StickerDesign memory) {
+        if (bannedStickerDesigns[_stickerId] == true) {
+            return StickerDesign(address(0), address(0), 0, 0, 0, 0, "");
+        } else {
+            return stickerDesigns[_stickerId];
+        }
+    }
+
+    function isPublisherInGoodStanding(address _publisher) external view returns (bool) {
+        return checkGoodStandingPublisher(_publisher);
+    }
+
+
+    // Publisher methods
+
     function publishStickerDesign(NewStickerDesign calldata newDesign) external payable returns(uint256) {
         if (bannedPublishers[msg.sender]) {
-            revert PublisherIsBanned();
+            revert PublisherPermissionsIssue();
         }
         bool firstSticker = !goodStandingPublishers[msg.sender];
         uint256 requiredFee = firstSticker ? publisherReputationFee + stickerRegistrationFee : stickerRegistrationFee;
@@ -78,7 +89,10 @@ contract StickerDesigns is Ownable {
             revert InvalidPublishingFee(requiredFee);
         }
         uint256 newStickerId = nextStickerDesignId;
-        uint64 endTime = uint64(newDesign.limitTime == 0 ? 0 : block.timestamp + newDesign.limitTime);
+        uint64 endTime;
+        if (newDesign.limitTime > 0) {
+            endTime = uint64(block.timestamp > newDesign.limitTime ? block.timestamp : newDesign.limitTime);
+        }
         stickerDesigns[newStickerId] = StickerDesign({
             publisher: msg.sender,
             payoutAddress: newDesign.payoutAddress,
@@ -96,8 +110,7 @@ contract StickerDesigns is Ownable {
         return newStickerId;
     }
 
-    // Publisher methods
-    function isPublisherInGoodStanding(address _publisher) internal view returns (bool) {
+    function checkGoodStandingPublisher(address _publisher) internal view returns (bool) {
         if (bannedPublishers[_publisher]) {
             return false;
         }
@@ -105,12 +118,12 @@ contract StickerDesigns is Ownable {
     }
 
     function canModifyStickerDesign(address _publisher, uint256 _stickerId) internal view returns (bool) {
-        return isPublisherInGoodStanding(_publisher) && stickerDesigns[_stickerId].publisher == _publisher;
+        return checkGoodStandingPublisher(_publisher) && stickerDesigns[_stickerId].publisher == _publisher;
     }
 
     function transferStickerOwnership(uint256 _stickerId, address _recipient) public {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
-            revert PublisherIsBanned();
+            revert PublisherPermissionsIssue();
         }
         stickerDesigns[_stickerId].publisher = _recipient;
         emit StickerOwnershipTransferred(msg.sender, _recipient, _stickerId);
@@ -118,19 +131,31 @@ contract StickerDesigns is Ownable {
 
     function setStickerPrice(uint256 _stickerId, uint64 _price) public {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
-            revert PublisherIsBanned();
+            revert PublisherPermissionsIssue();
         }
         stickerDesigns[_stickerId].price = _price;
         emit StickerPriceSet(_stickerId, _price);
     }
 
+    function setStickerEndTime(uint256 _stickerId, uint64 _endTime) public {
+        if (!canModifyStickerDesign(msg.sender, _stickerId)) {
+            revert PublisherPermissionsIssue();
+        }
+        if (_endTime < block.timestamp) {
+            revert InvalidEndTime();
+        }
+        stickerDesigns[_stickerId].endTime = _endTime;
+        emit StickerEndTimeChanged(_stickerId, _endTime);
+    }
+
     function capSticker(uint256 _stickerId) public {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
-            revert PublisherIsBanned();
+            revert PublisherPermissionsIssue();
         }
         stickerDesigns[_stickerId].endTime = uint64(block.timestamp);
         emit StickerCapped(_stickerId);
     }
+
 
     // Admin methods
 
@@ -142,17 +167,20 @@ contract StickerDesigns is Ownable {
         stickerRegistrationFee = _fee;
     }
 
+    function banPublishers(address[] calldata _publishers, bool undoBan) external onlyOwner {
+        for (uint256 i = 0; i < _publishers.length; i++) {
+            bannedPublishers[_publishers[i]] = !undoBan;
+        }
+    }
+
     function banStickerDesigns(uint256[] calldata _stickerIds, bool undoBan) external onlyOwner {
         for (uint256 i = 0; i < _stickerIds.length; i++) {
             bannedStickerDesigns[_stickerIds[i]] = !undoBan;
         }
     }
 
-    function banPublishers(address[] calldata _publishers, bool undoBan) external onlyOwner {
-        for (uint256 i = 0; i < _publishers.length; i++) {
-            bannedPublishers[_publishers[i]] = !undoBan;
-        }
-    }
+
+    // Payout methods
 
     function withdraw() external onlyOwner {
         payable(owner()).transfer(address(this).balance);

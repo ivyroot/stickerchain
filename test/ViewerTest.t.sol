@@ -35,7 +35,7 @@ contract ViewerTest is Test {
             limitTime: 0,
             metadataCID: metadataCID2
         });
-        bool inGoodStanding = stickerDesigns.isGoodStandingPublisher(publisher);
+        bool inGoodStanding = stickerDesigns.isPublisherInGoodStanding(publisher);
         uint256 feeAmount = inGoodStanding ? newStickerFee : publisherFee + newStickerFee;
         newStickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
         newStickerId2 = stickerDesigns.publishStickerDesign{value: newStickerFee}(newStickerDesign2);
