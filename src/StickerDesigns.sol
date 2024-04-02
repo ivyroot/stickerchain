@@ -3,13 +3,21 @@ pragma solidity ^0.8.13;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "erc721a/contracts/ERC721A.sol";
 
-struct StickerDesign {
-    address publisher;
+struct NewStickerDesign {
     address payoutAddress;
-    uint256 publishTimestamp;
     uint64 price;
     uint64 limitCount;
     uint64 limitTime;
+    bytes metadataCID;
+}
+
+struct StickerDesign {
+    address publisher;
+    address payoutAddress;
+    uint64 publishedAt;
+    uint64 price;
+    uint64 limit;
+    uint64 endTime;
     bytes metadataCID;
 }
 
@@ -50,7 +58,7 @@ contract StickerDesigns is ERC721A, Ownable {
 
     // on first sticker creation new addresses pay the publisher fee and have their address added to the goodStandingPublishers mapping
     // if a publisher is banned they can no longer create new stickers
-    function publishStickerDesign(StickerDesign calldata newSticker) external payable returns(uint256) {
+    function publishStickerDesign(NewStickerDesign calldata newDesign) external payable returns(uint256) {
         if (bannedPublishers[msg.sender]) {
             revert InsufficientPublisherPermissions();
         }
@@ -60,16 +68,16 @@ contract StickerDesigns is ERC721A, Ownable {
             revert InvalidPublishingFee(requiredFee);
         }
 
-        bytes memory _metadataCID = newSticker.metadataCID;
         uint256 newStickerId = nextStickerDesignId;
+        uint64 endTime = uint64(newDesign.limitTime == 0 ? 0 : block.timestamp + newDesign.limitTime);
         stickerDesigns[newStickerId] = StickerDesign({
             publisher: msg.sender,
-            publishTimestamp: block.timestamp,
-            metadataCID: newSticker.metadataCID,
-            price: newSticker.price,
-            payoutAddress: newSticker.payoutAddress,
-            limitCount: newSticker.limitCount,
-            limitTime: newSticker.limitTime
+            payoutAddress: newDesign.payoutAddress,
+            publishedAt: uint64(block.timestamp),
+            price: newDesign.price,
+            limit: newDesign.limitCount,
+            endTime: endTime,
+            metadataCID: newDesign.metadataCID
         });
 
         if (firstSticker) {
@@ -78,7 +86,7 @@ contract StickerDesigns is ERC721A, Ownable {
 
         nextStickerDesignId++;
 
-        emit StickerDesignPublished(newStickerId, _metadataCID, _price, msg.sender, _payoutAddress);
+        emit StickerDesignPublished(newStickerId, newDesign.metadataCID, newDesign.price, msg.sender, newDesign.payoutAddress);
 
         return newStickerId;
     }
@@ -103,7 +111,7 @@ contract StickerDesigns is ERC721A, Ownable {
         emit StickerOwnershipTransferred(msg.sender, _recipient, _stickerId);
     }
 
-    function setStickerPrice(uint256 _stickerId, uint256 _price) public {
+    function setStickerPrice(uint256 _stickerId, uint64 _price) public {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
             revert InsufficientPublisherPermissions();
         }
@@ -115,8 +123,8 @@ contract StickerDesigns is ERC721A, Ownable {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
             revert InsufficientPublisherPermissions();
         }
-        stickerDesigns[_stickerId].limitTime = block.timestamp;
-        emit StickerCapped(_stickerId, _price);
+        stickerDesigns[_stickerId].endTime = uint64(block.timestamp);
+        emit StickerCapped(_stickerId);
     }
 
     // Admin methods
