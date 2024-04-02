@@ -26,7 +26,7 @@ contract StickerDesigns is Ownable {
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
     event StickerCapped(uint256 indexed stickerId);
 
-    error InsufficientPublisherPermissions();
+    error PublisherIsBanned();
     error InvalidPublishingFee(uint256 requiredFee);
 
     constructor() Ownable(msg.sender) {}
@@ -34,39 +34,49 @@ contract StickerDesigns is Ownable {
     mapping(uint256 => StickerDesign) stickerDesigns;
     uint256 public nextStickerDesignId = 1;
 
-    // all publishers must pay a onetime fee to establish reputation the admin can set this
-    // using the setPublisherFee function
-    uint256 public publisherFee = 0.002 ether;
-    uint256 public newStickerFee = 0.0005 ether;
-
+    // New Publishers pay the publisher reputation fee on first publish.
+    uint256 public publisherReputationFee = 0.002 ether;
     mapping (address => bool) public goodStandingPublishers;
+    // If a Publisher is banned they can no longer create new stickers.
     mapping (address => bool) public bannedPublishers;
 
+    // If an individual sticker design is banned, it will not be returned by the contract.
+    uint256 public stickerRegistrationFee = 0.0005 ether;
+    mapping (uint256 => bool) public bannedStickerDesigns;
+
+    function isGoodStandingPublisher(address _publisher) external view returns (bool) {
+        return isPublisherInGoodStanding(_publisher);
+    }
+
+    function readStickerDesign(uint256 _stickerId) internal view returns (StickerDesign memory) {
+        if (bannedStickerDesigns[_stickerId] == true) {
+            return StickerDesign(address(0), address(0), 0, 0, 0, 0, "");
+        } else {
+            return stickerDesigns[_stickerId];
+        }
+    }
 
     function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {
-        return stickerDesigns[_stickerId];
+        return readStickerDesign(_stickerId);
     }
 
     function getStickerDesigns(uint256[] calldata _stickerIds) external view returns (StickerDesign[] memory) {
         StickerDesign[] memory designs = new StickerDesign[](_stickerIds.length);
         for (uint256 i = 0; i < _stickerIds.length; i++) {
-            designs[i] = stickerDesigns[_stickerIds[i]];
+            designs[i] = readStickerDesign(_stickerIds[i]);
         }
         return designs;
     }
 
-    // on first sticker creation new addresses pay the publisher fee and have their address added to the goodStandingPublishers mapping
-    // if a publisher is banned they can no longer create new stickers
     function publishStickerDesign(NewStickerDesign calldata newDesign) external payable returns(uint256) {
         if (bannedPublishers[msg.sender]) {
-            revert InsufficientPublisherPermissions();
+            revert PublisherIsBanned();
         }
         bool firstSticker = !goodStandingPublishers[msg.sender];
-        uint256 requiredFee = firstSticker ? publisherFee + newStickerFee : newStickerFee;
+        uint256 requiredFee = firstSticker ? publisherReputationFee + stickerRegistrationFee : stickerRegistrationFee;
         if (msg.value != requiredFee) {
             revert InvalidPublishingFee(requiredFee);
         }
-
         uint256 newStickerId = nextStickerDesignId;
         uint64 endTime = uint64(newDesign.limitTime == 0 ? 0 : block.timestamp + newDesign.limitTime);
         stickerDesigns[newStickerId] = StickerDesign({
@@ -78,15 +88,11 @@ contract StickerDesigns is Ownable {
             endTime: endTime,
             metadataCID: newDesign.metadataCID
         });
-
         if (firstSticker) {
             goodStandingPublishers[msg.sender] = true;
         }
-
         nextStickerDesignId++;
-
         emit StickerDesignPublished(newStickerId, newDesign.metadataCID, newDesign.price, msg.sender, newDesign.payoutAddress);
-
         return newStickerId;
     }
 
@@ -104,7 +110,7 @@ contract StickerDesigns is Ownable {
 
     function transferStickerOwnership(uint256 _stickerId, address _recipient) public {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
-            revert InsufficientPublisherPermissions();
+            revert PublisherIsBanned();
         }
         stickerDesigns[_stickerId].publisher = _recipient;
         emit StickerOwnershipTransferred(msg.sender, _recipient, _stickerId);
@@ -112,7 +118,7 @@ contract StickerDesigns is Ownable {
 
     function setStickerPrice(uint256 _stickerId, uint64 _price) public {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
-            revert InsufficientPublisherPermissions();
+            revert PublisherIsBanned();
         }
         stickerDesigns[_stickerId].price = _price;
         emit StickerPriceSet(_stickerId, _price);
@@ -120,7 +126,7 @@ contract StickerDesigns is Ownable {
 
     function capSticker(uint256 _stickerId) public {
         if (!canModifyStickerDesign(msg.sender, _stickerId)) {
-            revert InsufficientPublisherPermissions();
+            revert PublisherIsBanned();
         }
         stickerDesigns[_stickerId].endTime = uint64(block.timestamp);
         emit StickerCapped(_stickerId);
@@ -128,20 +134,24 @@ contract StickerDesigns is Ownable {
 
     // Admin methods
 
-    function setPublisherFee(uint256 _fee) external onlyOwner {
-        publisherFee = _fee;
+    function setpublisherReputationFee(uint256 _fee) external onlyOwner {
+        publisherReputationFee = _fee;
     }
 
-    function setNewStickerFee(uint256 _fee) external onlyOwner {
-        newStickerFee = _fee;
+    function setstickerRegistrationFee(uint256 _fee) external onlyOwner {
+        stickerRegistrationFee = _fee;
     }
 
-    function banPublisher(address _publisher) external onlyOwner {
-        bannedPublishers[_publisher] = true;
+    function banStickerDesigns(uint256[] calldata _stickerIds, bool undoBan) external onlyOwner {
+        for (uint256 i = 0; i < _stickerIds.length; i++) {
+            bannedStickerDesigns[_stickerIds[i]] = !undoBan;
+        }
     }
 
-    function unbanPublisher(address _publisher) external onlyOwner {
-        bannedPublishers[_publisher] = false;
+    function banPublishers(address[] calldata _publishers, bool undoBan) external onlyOwner {
+        for (uint256 i = 0; i < _publishers.length; i++) {
+            bannedPublishers[_publishers[i]] = !undoBan;
+        }
     }
 
     function withdraw() external onlyOwner {
