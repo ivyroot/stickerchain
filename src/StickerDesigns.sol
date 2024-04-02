@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "erc721a/contracts/ERC721A.sol";
 
 struct NewStickerDesign {
     address payoutAddress;
@@ -21,7 +20,7 @@ struct StickerDesign {
     bytes metadataCID;
 }
 
-contract StickerDesigns is ERC721A, Ownable {
+contract StickerDesigns is Ownable {
     event StickerDesignPublished(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerOwnershipTransferred(address indexed from, address indexed to, uint256 indexed stickerId);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
@@ -30,7 +29,7 @@ contract StickerDesigns is ERC721A, Ownable {
     error InsufficientPublisherPermissions();
     error InvalidPublishingFee(uint256 requiredFee);
 
-    constructor() ERC721A("StickerDesignz", "STKRS-TEST-DEV") Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) {}
 
     mapping(uint256 => StickerDesign) stickerDesigns;
     uint256 public nextStickerDesignId = 1;
