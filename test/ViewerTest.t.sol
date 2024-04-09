@@ -46,7 +46,8 @@ contract ViewerTest is Test {
         StickerDesign memory sticker = stickerDesigns.getStickerDesign(newStickerId1);
         assertEq(sticker.metadataCID, metadataCID1);
         assertEq(sticker.price, uint64(0.1 ether));
-        assertEq(sticker.publisher, publisher);
+        assertEq(sticker.currentPublisher, publisher);
+        assertEq(sticker.originalPublisher, publisher);
         assertEq(sticker.payoutAddress, address(0));
     }
 
@@ -58,10 +59,12 @@ contract ViewerTest is Test {
         StickerDesign[] memory stickers = stickerDesigns.getStickerDesigns(stickerIds);
         assertEq(stickers.length, 2);
         assertEq(stickers[0].price, uint64(0.1 ether));
-        assertEq(stickers[0].publisher, publisher);
+        assertEq(stickers[0].currentPublisher, publisher);
+        assertEq(stickers[0].originalPublisher, publisher);
         assertEq(stickers[0].payoutAddress, address(0));
         assertEq(stickers[1].price, uint64(0.0 ether));
-        assertEq(stickers[1].publisher, publisher);
+        assertEq(stickers[1].currentPublisher, publisher);
+        assertEq(stickers[1].originalPublisher, publisher);
         assertEq(stickers[1].payoutAddress, address(0));
         assertEq(stickers[0].metadataCID, metadataCID1);
         assertEq(stickers[1].metadataCID, metadataCID2);
