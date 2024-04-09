@@ -68,7 +68,7 @@ contract StickerDesigns is Ownable {
     }
 
     function isPublisherInGoodStanding(address _publisher) external view returns (bool) {
-        return checkGoodStandingPublisher(_publisher);
+        return _checkGoodStandingPublisher(_publisher);
     }
 
     function isBannedPublisher(address _publisher) external view returns (bool) {
@@ -118,7 +118,7 @@ contract StickerDesigns is Ownable {
         return newStickerId;
     }
 
-    function checkGoodStandingPublisher(address _publisher) internal view returns (bool) {
+    function _checkGoodStandingPublisher(address _publisher) internal view returns (bool) {
         if (bannedPublishers[_publisher]) {
             return false;
         }
@@ -126,7 +126,7 @@ contract StickerDesigns is Ownable {
     }
 
     function _canModifyStickerDesign(address _publisher, uint256 _stickerId) internal view returns (bool) {
-        return checkGoodStandingPublisher(_publisher) && _stickerDesigns[_stickerId].currentPublisher == _publisher;
+        return _checkGoodStandingPublisher(_publisher) && _stickerDesigns[_stickerId].currentPublisher == _publisher;
     }
 
     function setStickerPublisher(uint256 _stickerId, address _recipient) public {
