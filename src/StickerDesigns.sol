@@ -23,8 +23,8 @@ struct StickerDesign {
 
 contract StickerDesigns is Ownable {
     // sticker events
-    event StickerDesignPublished(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
-    event StickerPublisherChanged(address indexed from, address indexed to, uint256 indexed stickerId);
+    event StickerDesignPublished(uint256 indexed stickerId, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
+    event StickerPublisherChanged(uint256 indexed stickerId, address indexed from, address indexed to);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
     event StickerEndTimeChanged(uint256 indexed stickerId, uint256 endTime);
     event StickerCapped(uint256 indexed stickerId);
@@ -40,7 +40,7 @@ contract StickerDesigns is Ownable {
     error InvalidAccount();
     error InvalidRecipient();
 
-    address public adminFeeRecipient;
+    address payable public adminFeeRecipient;
     uint256 public publisherReputationFee;
     uint256 public stickerRegistrationFee;
     uint256 private nextStickerDesignId = 1;
@@ -142,8 +142,9 @@ contract StickerDesigns is Ownable {
         if (!_canModifyStickerDesign(msg.sender, _stickerId)) {
             revert PublisherPermissionsIssue();
         }
+        address originalPublisher = _stickerDesigns[_stickerId].originalPublisher;
         _stickerDesigns[_stickerId].currentPublisher = _recipient;
-        emit StickerPublisherChanged(msg.sender, _recipient, _stickerId);
+        emit StickerPublisherChanged(_stickerId, originalPublisher, _recipient);
     }
 
     function setStickerPayoutAddress(uint256 _stickerId, address _recipient) public {
@@ -197,7 +198,7 @@ contract StickerDesigns is Ownable {
         if (newRecipient == address(0)) {
             revert InvalidAccount();
         }
-        adminFeeRecipient = newRecipient;
+        adminFeeRecipient = payable(newRecipient);
         emit AdminFeeRecipientChanged(newRecipient);
     }
 
@@ -233,6 +234,8 @@ contract StickerDesigns is Ownable {
     function forwardFunds() external {
         adminFeeRecipient.transfer(address(this).balance);
     }
+
+    receive() external payable {}
 
     fallback() external payable {}
 

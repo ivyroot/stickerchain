@@ -9,7 +9,7 @@ import "../src/StickerDesigns.sol";
 contract DeployStickers is Script {
     function run() external {
         vm.startBroadcast();
-        new StickerDesigns(2000000000000000, 50000000000000);
+        new StickerDesigns(msg.sender, 2000000000000000, 50000000000000);
         vm.stopBroadcast();
     }
 }

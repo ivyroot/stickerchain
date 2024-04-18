@@ -18,7 +18,7 @@ contract ViewerTest is Test {
 
     // Setup function to deploy the StickerDesigns contract before each test
     function setUp() public {
-        stickerDesigns = new StickerDesigns(0.002 ether, 0.0005 ether);
+        stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
         vm.deal(publisher, 20 ether);
         vm.startPrank(publisher);
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
