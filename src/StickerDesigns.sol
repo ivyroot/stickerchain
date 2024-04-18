@@ -23,7 +23,7 @@ struct StickerDesign {
 
 contract StickerDesigns is Ownable {
     // sticker events
-    event StickerDesignPublished(uint256 indexed stickerId, bytes metadataCID, address publisher, address payoutAddress);
+    event StickerDesignPublished(uint256 indexed stickerId, address publisher, address payoutAddress, bytes metadataCID);
     event StickerPublisherChanged(uint256 indexed stickerId, address indexed from, address indexed to);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
     event StickerEndTimeChanged(uint256 indexed stickerId, uint256 endTime);
@@ -122,7 +122,7 @@ contract StickerDesigns is Ownable {
             goodStandingPublishers[msg.sender] = true;
         }
         nextStickerDesignId++;
-        emit StickerDesignPublished(newStickerId, newDesign.metadataCID, msg.sender, newDesign.payoutAddress);
+        emit StickerDesignPublished(newStickerId, msg.sender, newDesign.payoutAddress, newDesign.metadataCID);
         adminFeeRecipient.transfer(msg.value);
         return newStickerId;
     }
