@@ -22,18 +22,25 @@ struct StickerDesign {
 }
 
 contract StickerDesigns is Ownable {
+    // sticker events
     event StickerDesignPublished(uint256 indexed id, bytes metadataCID, uint256 price, address publisher, address payoutAddress);
     event StickerPublisherChanged(address indexed from, address indexed to, uint256 indexed stickerId);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
     event StickerEndTimeChanged(uint256 indexed stickerId, uint256 endTime);
     event StickerCapped(uint256 indexed stickerId);
+    // admin events
+    event AdminFeeRecipientChanged(address indexed newRecipient);
+    event PublisherReputationFeeChanged(uint256 indexed newFee);
+    event StickerRegistrationFeeChanged(uint256 indexed newFee);
 
     error PublisherPermissionsIssue();
     error InvalidPublishingFee(uint256 requiredFee);
     error InvalidEndTime();
     error CannotModifyEndTime();
+    error InvalidAccount();
     error InvalidRecipient();
 
+    address public adminFeeRecipient;
     uint256 public publisherReputationFee;
     uint256 public stickerRegistrationFee;
     uint256 private nextStickerDesignId = 1;
@@ -43,7 +50,8 @@ contract StickerDesigns is Ownable {
     mapping (uint256 => bool) private bannedStickerDesigns;
     mapping (uint256 => StickerDesign) private _stickerDesigns;
 
-    constructor(uint _reputationFee, uint _registrationFee) Ownable(msg.sender) {
+    constructor(address _adminFeeRecipient, uint _reputationFee, uint _registrationFee) Ownable(msg.sender) {
+        _persistAdminFeeRecipient(_adminFeeRecipient);
         publisherReputationFee = _reputationFee;
         stickerRegistrationFee = _registrationFee;
     }
@@ -115,6 +123,7 @@ contract StickerDesigns is Ownable {
         }
         nextStickerDesignId++;
         emit StickerDesignPublished(newStickerId, newDesign.metadataCID, newDesign.price, msg.sender, newDesign.payoutAddress);
+        adminFeeRecipient.transfer(msg.value);
         return newStickerId;
     }
 
@@ -184,12 +193,26 @@ contract StickerDesigns is Ownable {
 
     // Admin methods
 
+    function _persistAdminFeeRecipient(address newRecipient) internal {
+        if (newRecipient == address(0)) {
+            revert InvalidAccount();
+        }
+        adminFeeRecipient = newRecipient;
+        emit AdminFeeRecipientChanged(newRecipient);
+    }
+
+    function setAdminFeeRecipient(address _recipient) external onlyOwner {
+        _persistAdminFeeRecipient(_recipient);
+    }
+
     function setpublisherReputationFee(uint256 _fee) external onlyOwner {
         publisherReputationFee = _fee;
+        emit PublisherReputationFeeChanged(_fee);
     }
 
     function setstickerRegistrationFee(uint256 _fee) external onlyOwner {
         stickerRegistrationFee = _fee;
+        emit StickerRegistrationFeeChanged(_fee);
     }
 
     function banPublishers(address[] calldata _publishers, bool undoBan) external onlyOwner {
@@ -207,14 +230,10 @@ contract StickerDesigns is Ownable {
         }
     }
 
-
-    // Payout methods
-
-    // TK
-
-    function withdraw() external onlyOwner {
-        payable(owner()).transfer(address(this).balance);
+    function forwardFunds() external {
+        adminFeeRecipient.transfer(address(this).balance);
     }
 
+    fallback() external payable {}
 
 }
