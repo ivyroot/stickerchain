@@ -23,15 +23,15 @@ struct StickerDesign {
 
 contract StickerDesigns is Ownable {
     // sticker events
-    event StickerDesignPublished(uint256 indexed stickerId, address publisher, address payoutAddress, bytes metadataCID);
+    event StickerDesignPublished(uint256 indexed stickerId, address indexed publisher, address indexed payoutAddress, bytes metadataCID);
     event StickerPublisherChanged(uint256 indexed stickerId, address indexed from, address indexed to);
     event StickerPriceSet(uint256 indexed stickerId, uint256 price);
     event StickerEndTimeChanged(uint256 indexed stickerId, uint256 endTime);
     event StickerCapped(uint256 indexed stickerId);
     // admin events
-    event AdminFeeRecipientChanged(address indexed newRecipient);
-    event PublisherReputationFeeChanged(uint256 indexed newFee);
-    event StickerRegistrationFeeChanged(uint256 indexed newFee);
+    event AdminFeeRecipientChanged(address newRecipient);
+    event PublisherReputationFeeChanged(uint256 newFee);
+    event StickerRegistrationFeeChanged(uint256 newFee);
 
     error PublisherPermissionsIssue();
     error InvalidPublishingFee(uint256 requiredFee);
