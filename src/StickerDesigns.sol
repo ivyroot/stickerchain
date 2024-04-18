@@ -195,6 +195,9 @@ contract StickerDesigns is Ownable {
     function banPublishers(address[] calldata _publishers, bool undoBan) external onlyOwner {
         for (uint256 i = 0; i < _publishers.length; i++) {
             bannedPublishers[_publishers[i]] = !undoBan;
+            if (!undoBan) {
+                goodStandingPublishers[_publishers[i]] = false;
+            }
         }
     }
 
