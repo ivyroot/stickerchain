@@ -1,3 +1,4 @@
 forge-std/=lib/forge-std/src/
 erc721a/=lib/ERC721A
 openzeppelin-contracts/=lib/openzeppelin-contracts
+block-places/=lib/block-places/src/
