@@ -65,6 +65,15 @@ contract StickerChain is Ownable {
         return slaps;
     }
 
+    // returns Slaps at Place starting from most recent and going back in time
+    function getPlaceSlaps(uint _placeId, uint _offset, uint _limit) external view returns (uint total, Slap[] memory) {
+        uint256[] memory slapEpochs = _boardSlapEpochs[_placeId];
+        Slap[] memory slaps = new Slap[](slapEpochs.length);
+        for (uint i = 0; i < slapEpochs.length; i++) {
+            slaps[i] = this.getSlap(slapEpochs[i]);
+        }
+        return slaps;
+    }
 
 
 
