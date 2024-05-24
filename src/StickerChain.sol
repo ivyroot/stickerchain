@@ -79,7 +79,7 @@ contract StickerChain is Ownable, ERC721A {
 
     function getSlap(uint _slapId) external view returns (Slap memory) {
         StoredSlap memory storedSlap = _slaps[_slapId];
-        Slap memory slap = Slap({
+        Slap memory loadedSlap  = Slap({
             slapId: _slapId,
             stickerId: storedSlap.stickerId,
             placeId: storedSlap.placeId,
@@ -87,7 +87,7 @@ contract StickerChain is Ownable, ERC721A {
             slappedAt: storedSlap.slappedAt,
             player: storedSlap.player
         });
-        return slap;
+        return loadedSlap;
     }
     function getSlaps(uint[] calldata _slapIds) external view returns (Slap[] memory) {
         Slap[] memory slaps = new Slap[](_slapIds.length);
@@ -135,6 +135,29 @@ contract StickerChain is Ownable, ERC721A {
         return (length, slaps);
     }
 
+    function slap(uint _placeId, uint _stickerId) external payable {
+        require(msg.value >= slapFee, "StickerChain: insufficient funds");
+        (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
+        if (!isValid) {
+            revert InvalidPlaceId(_placeId);
+        }
+
+        uint _slappedTokenId = _nextTokenId();
+        uint _slappedLayer = _board[_placeId].slapCount + 1;
+        _mint(msg.sender, 1);
+
+        _slaps[_slappedTokenId] = StoredSlap({
+            placeId: _placeId,
+            layer: _slappedLayer,
+            stickerId: _stickerId,
+            slappedAt: block.timestamp,
+            player: msg.sender
+        });
+        _board[_placeId].slaps[_board[_placeId].slapCount] = _slappedTokenId;
+        _board[_placeId].slapCount++;
+
+        emit Transfer(msg.sender, address(this), _slappedTokenId);
+    }
 
 
 }
