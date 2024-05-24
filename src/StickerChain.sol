@@ -40,7 +40,7 @@ contract StickerChain is Ownable {
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
-    mapping (uint256 => uint256[]) private _boardSlapEpochs;
+    mapping (uint256 => mapping (uint256 => StoredSlap)) private _boardSlapEpochs;
 
     constructor(uint _reputationFee) Ownable(msg.sender) {
         slapFee = _reputationFee;
