@@ -8,6 +8,7 @@ struct Slap {
     uint256 slapId;
     uint256 stickerId;
     uint256 placeId;
+    uint256 layer;
     uint256 slappedAt;
     address player;
 }
@@ -16,6 +17,7 @@ struct StoredSlap {
     uint256 prevSlapId;
     uint256 nextSlapId;
     uint256 placeId;
+    uint256 layer;
     uint256 stickerId;
     uint256 slappedAt;
     address player;
@@ -32,9 +34,8 @@ struct Place {
 }
 
 struct StoredPlace {
-    uint256 slap;
     uint256 slapCount;
-    uint256 firstSlap;
+    mapping (uint256 => uint256) slaps;
 }
 
 contract StickerChain is Ownable {
@@ -46,14 +47,13 @@ contract StickerChain is Ownable {
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
-    mapping (uint256 => mapping (uint256 => StoredSlap)) private _boardSlapEpochs;
 
     constructor(uint _reputationFee) Ownable(msg.sender) {
         slapFee = _reputationFee;
     }
 
     function getPlace(uint _placeId) external view returns (Place memory) {
-        (bool isValid, uint lng, uint lngDecimal, uint lat, uint latDecimal) = BlockPlaces.blockPlaceFromPlaceId;
+        (bool isValid, uint lng, uint lngDecimal, uint lat, uint latDecimal) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
         }
@@ -63,7 +63,7 @@ contract StickerChain is Ownable {
             lngDecimal: lngDecimal,
             lat: lat,
             latDecimal: latDecimal,
-            slap: _board[_placeId].slap,
+            slap: _board[_placeId].slaps[1],
             slapCount: _board[_placeId].slapCount
         });
         return place;
@@ -75,6 +75,7 @@ contract StickerChain is Ownable {
             places[i] = this.getPlace(_placeIds[i]);
         }
         return places;
+
     }
 
     function getSlap(uint _slapId) external view returns (Slap memory) {
@@ -83,6 +84,7 @@ contract StickerChain is Ownable {
             slapId: _slapId,
             stickerId: storedSlap.stickerId,
             placeId: storedSlap.placeId,
+            layer: storedSlap.layer,
             slappedAt: storedSlap.slappedAt,
             player: storedSlap.player
         });
@@ -98,12 +100,30 @@ contract StickerChain is Ownable {
 
     // returns Slaps at Place starting from most recent and going back in time
     function getPlaceSlaps(uint _placeId, uint _offset, uint _limit) external view returns (uint total, Slap[] memory) {
-        uint256[] memory slapEpochs = _boardSlapEpochs[_placeId];
-        Slap[] memory slaps = new Slap[](slapEpochs.length);
-        for (uint i = 0; i < slapEpochs.length; i++) {
-            slaps[i] = this.getSlap(slapEpochs[i]);
+        (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
+        if (!isValid) {
+            revert InvalidPlaceId(_placeId);
         }
-        return slaps;
+        uint256 slapCount = _board[_placeId].slapCount;
+        if (_offset >= slapCount) {
+            return (0, new Slap[](0));
+        }
+        int256 start = slapCount - _offset;
+        int256 min = slapCount - _offset - _limit < 0 ? 0 : slapCount - _offset - _limit;
+        Slap[] memory slaps = new Slap[](start - min);
+        for (uint i = start; i >= min; i--) {
+            StoredSlap memory storedSlap = _slaps[_board[_placeId].slaps[i]];
+            Slap memory slap = Slap({
+                slapId: _board[_placeId].slaps[i], /// suss AI code starts here
+                stickerId: storedSlap.stickerId,
+                placeId: storedSlap.placeId,
+                layer: storedSlap.layer,
+                slappedAt: storedSlap.slappedAt,
+                player: storedSlap.player
+            });
+            slaps[start - i] = slap;
+        }
+        return (start - min, slaps);
     }
 
 
