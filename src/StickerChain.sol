@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "erc721a/contracts/ERC721A.sol";
 import {StickerDesign} from "./StickerDesigns.sol";
 import "block-places/BlockPlaces.sol";
 
@@ -14,8 +15,6 @@ struct Slap {
 }
 
 struct StoredSlap {
-    uint256 prevSlapId;
-    uint256 nextSlapId;
     uint256 placeId;
     uint256 layer;
     uint256 stickerId;
@@ -38,18 +37,17 @@ struct StoredPlace {
     mapping (uint256 => uint256) slaps;
 }
 
-contract StickerChain is Ownable {
+contract StickerChain is Ownable, ERC721A {
 
     error InvalidPlaceId(uint256 placeId);
-
 
     uint256 public slapFee;
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
 
-    constructor(uint _reputationFee) Ownable(msg.sender) {
-        slapFee = _reputationFee;
+    constructor(uint _initialSlapFee) Ownable(msg.sender) ERC721A("StickerChain", "SLAP")  {
+        slapFee = _initialSlapFee;
     }
 
     function getPlace(uint _placeId) external view returns (Place memory) {
@@ -108,13 +106,21 @@ contract StickerChain is Ownable {
         if (_offset >= slapCount) {
             return (0, new Slap[](0));
         }
-        int256 start = slapCount - _offset;
-        int256 min = slapCount - _offset - _limit < 0 ? 0 : slapCount - _offset - _limit;
-        Slap[] memory slaps = new Slap[](start - min);
+        int256 start = int(slapCount) - int(_offset);
+        int256 min = int(slapCount) - int(_offset) - int(_limit);
+        if (min < 0) {
+            min = 0;
+        }
+        int256 length = start - min;
+        if (length <= 0) {
+            return (0, new Slap[](0));
+        }
+        Slap[] memory slaps = new Slap[](length);
         for (uint i = start; i >= min; i--) {
-            StoredSlap memory storedSlap = _slaps[_board[_placeId].slaps[i]];
+            uint256 slapId = _board[_placeId].slaps[i];
+            StoredSlap memory storedSlap = _slaps[slapId];
             Slap memory slap = Slap({
-                slapId: _board[_placeId].slaps[i], /// suss AI code starts here
+                slapId: slapId,
                 stickerId: storedSlap.stickerId,
                 placeId: storedSlap.placeId,
                 layer: storedSlap.layer,
@@ -123,7 +129,7 @@ contract StickerChain is Ownable {
             });
             slaps[start - i] = slap;
         }
-        return (start - min, slaps);
+        return (length, slaps);
     }
 
 
