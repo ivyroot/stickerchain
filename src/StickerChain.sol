@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.24;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "erc721a/contracts/ERC721A.sol";
 import {StickerDesign} from "./StickerDesigns.sol";
@@ -40,6 +40,7 @@ struct StoredPlace {
 contract StickerChain is Ownable, ERC721A {
 
     error InvalidPlaceId(uint256 placeId);
+    error InvalidStart();
 
     uint256 public slapFee;
 
@@ -107,19 +108,22 @@ contract StickerChain is Ownable, ERC721A {
             return (0, new Slap[](0));
         }
         int256 start = int(slapCount) - int(_offset);
-        int256 min = int(slapCount) - int(_offset) - int(_limit);
-        if (min < 0) {
-            min = 0;
+
+        if (start <= 0) {
+            revert InvalidStart();
         }
-        int256 length = start - min;
-        if (length <= 0) {
+        uint256 startUint = uint(start);
+        int256 min = int(slapCount) - int(_offset) - int(_limit);
+        uint256 minUint = min < 0 ? 0 : uint(min);
+        uint256 length = startUint >= minUint ? startUint - minUint : 0;
+        if (length == 0) {
             return (0, new Slap[](0));
         }
-        Slap[] memory slaps = new Slap[](length);
-        for (uint i = start; i >= min; i--) {
+        Slap[] memory slaps = new Slap[](uint(length));
+        for (uint i = uint(startUint); i >= minUint; i--) {
             uint256 slapId = _board[_placeId].slaps[i];
             StoredSlap memory storedSlap = _slaps[slapId];
-            Slap memory slap = Slap({
+            slaps[i] = Slap({
                 slapId: slapId,
                 stickerId: storedSlap.stickerId,
                 placeId: storedSlap.placeId,
@@ -127,7 +131,6 @@ contract StickerChain is Ownable, ERC721A {
                 slappedAt: storedSlap.slappedAt,
                 player: storedSlap.player
             });
-            slaps[start - i] = slap;
         }
         return (length, slaps);
     }
