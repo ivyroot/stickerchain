@@ -7,3 +7,6 @@
 [submodule "lib/block-places"]
 	path = lib/block-places
 	url = https://github.com/ivyroot/block-places
+[submodule "lib/ERC721A"]
+	path = lib/ERC721A
+	url = https://github.com/chiru-labs/ERC721A
