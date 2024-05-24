@@ -13,8 +13,10 @@ struct Slap {
 }
 
 struct StoredSlap {
-    uint256 stickerId;
+    uint256 prevSlapId;
+    uint256 nextSlapId;
     uint256 placeId;
+    uint256 stickerId;
     uint256 slappedAt;
     address player;
 }
@@ -36,6 +38,10 @@ struct StoredPlace {
 }
 
 contract StickerChain is Ownable {
+
+    error InvalidPlaceId(uint256 placeId);
+
+
     uint256 public slapFee;
 
     mapping (uint256 => StoredSlap) private _slaps;
@@ -44,6 +50,31 @@ contract StickerChain is Ownable {
 
     constructor(uint _reputationFee) Ownable(msg.sender) {
         slapFee = _reputationFee;
+    }
+
+    function getPlace(uint _placeId) external view returns (Place memory) {
+        (bool isValid, uint lng, uint lngDecimal, uint lat, uint latDecimal) = BlockPlaces.blockPlaceFromPlaceId;
+        if (!isValid) {
+            revert InvalidPlaceId(_placeId);
+        }
+        Place memory place = Place({
+            placeId: _placeId,
+            lng: lng,
+            lngDecimal: lngDecimal,
+            lat: lat,
+            latDecimal: latDecimal,
+            slap: _board[_placeId].slap,
+            slapCount: _board[_placeId].slapCount
+        });
+        return place;
+    }
+
+    function getPlaces(uint[] calldata _placeIds) external view returns (Place[] memory) {
+        Place[] memory places = new Place[](_placeIds.length);
+        for (uint i = 0; i < _placeIds.length; i++) {
+            places[i] = this.getPlace(_placeIds[i]);
+        }
+        return places;
     }
 
     function getSlap(uint _slapId) external view returns (Slap memory) {
