@@ -135,6 +135,10 @@ contract StickerChain is Ownable, ERC721A {
         return (length, slaps);
     }
 
+    function _startTokenId() internal view virtual override returns (uint256) {
+        return 1;
+    }
+
     function slap(uint _placeId, uint _stickerId) external payable {
         require(msg.value >= slapFee, "StickerChain: insufficient funds");
         (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
@@ -158,6 +162,5 @@ contract StickerChain is Ownable, ERC721A {
 
         emit Transfer(msg.sender, address(this), _slappedTokenId);
     }
-
 
 }
