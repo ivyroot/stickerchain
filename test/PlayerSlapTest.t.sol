@@ -42,7 +42,7 @@ contract PlayerSlapTest is Test {
         address player = address(0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97);
         vm.deal(player, 20 ether);
         vm.startPrank(player);
-        stickerChain.slap{value: slapFee}(7147618599, exampleStickerId1);
+        stickerChain.slap{value: slapFee}(7147618599, exampleStickerId1, 1);
         Slap memory slap = stickerChain.getSlap(1);
         assertEq(slap.stickerId, exampleStickerId1);
         assertEq(slap.placeId, 7147618599);

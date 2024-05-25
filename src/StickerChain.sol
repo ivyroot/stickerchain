@@ -9,16 +9,18 @@ struct Slap {
     uint256 slapId;
     uint256 stickerId;
     uint256 placeId;
-    uint256 layer;
+    uint256 height;
     uint256 slappedAt;
+    uint8 size;
     address player;
 }
 
 struct StoredSlap {
     uint256 placeId;
-    uint256 layer;
+    uint256 height;
     uint256 stickerId;
     uint256 slappedAt;
+    uint8 size;
     address player;
 }
 
@@ -38,6 +40,7 @@ struct StoredPlace {
 }
 
 contract StickerChain is Ownable, ERC721A {
+    event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint8 size);
 
     error InvalidPlaceId(uint256 placeId);
     error InvalidStart();
@@ -83,8 +86,9 @@ contract StickerChain is Ownable, ERC721A {
             slapId: _slapId,
             stickerId: storedSlap.stickerId,
             placeId: storedSlap.placeId,
-            layer: storedSlap.layer,
+            height: storedSlap.height,
             slappedAt: storedSlap.slappedAt,
+            size: storedSlap.size,
             player: storedSlap.player
         });
         return loadedSlap;
@@ -127,8 +131,9 @@ contract StickerChain is Ownable, ERC721A {
                 slapId: slapId,
                 stickerId: storedSlap.stickerId,
                 placeId: storedSlap.placeId,
-                layer: storedSlap.layer,
+                height: storedSlap.height,
                 slappedAt: storedSlap.slappedAt,
+                size: storedSlap.size,
                 player: storedSlap.player
             });
         }
@@ -139,7 +144,7 @@ contract StickerChain is Ownable, ERC721A {
         return 1;
     }
 
-    function slap(uint _placeId, uint _stickerId) external payable {
+    function slap(uint _placeId, uint _stickerId, uint8 size) external payable {
         require(msg.value >= slapFee, "StickerChain: insufficient funds");
         (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
         if (!isValid) {
@@ -147,17 +152,23 @@ contract StickerChain is Ownable, ERC721A {
         }
 
         uint _slappedTokenId = _nextTokenId();
-        uint _slappedLayer = _board[_placeId].slapCount + 1;
+        uint _slapHeight = _board[_placeId].slapCount + 1;
         _mint(msg.sender, 1);
 
         _slaps[_slappedTokenId] = StoredSlap({
             placeId: _placeId,
-            layer: _slappedLayer,
+            height: _slapHeight,
             stickerId: _stickerId,
             slappedAt: block.timestamp,
+            size: size,
             player: msg.sender
         });
         _board[_placeId].slaps[_board[_placeId].slapCount] = _slappedTokenId;
+        // if (size > 1) {
+        //     // TODO write slap at all covered places
+        //     uint x = 2;
+        // }
+
         _board[_placeId].slapCount++;
 
         emit Transfer(msg.sender, address(this), _slappedTokenId);
