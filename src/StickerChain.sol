@@ -4,6 +4,7 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "erc721a/contracts/ERC721A.sol";
 import {StickerDesign} from "./StickerDesigns.sol";
 import "block-places/BlockPlaces.sol";
+import "forge-std/console.sol";
 
 struct Slap {
     uint256 slapId;
@@ -107,6 +108,7 @@ contract StickerChain is Ownable, ERC721A {
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
         }
+        console.log("GOT HERE 1");
         uint256 slapCount = _board[_placeId].slapCount;
         if (_offset >= slapCount) {
             return (0, new Slap[](0));
@@ -120,9 +122,16 @@ contract StickerChain is Ownable, ERC721A {
         int256 min = int(slapCount) - int(_offset) - int(_limit);
         uint256 minUint = min < 0 ? 0 : uint(min);
         uint256 length = startUint >= minUint ? startUint - minUint : 0;
+        console.log("startUint", startUint);
+        console.log("minUint", minUint);
+
+        console.log("length", length);
+        console.log("GOT HERE 2");
         if (length == 0) {
             return (0, new Slap[](0));
         }
+        console.log("GOT HERE 2.5");
+
         Slap[] memory slaps = new Slap[](uint(length));
         for (uint i = uint(startUint); i >= minUint; i--) {
             uint256 slapId = _board[_placeId].slaps[i];
@@ -137,6 +146,7 @@ contract StickerChain is Ownable, ERC721A {
                 player: storedSlap.player
             });
         }
+        console.log("GOT HERE 3");
         return (length, slaps);
     }
 
