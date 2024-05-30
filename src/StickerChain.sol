@@ -108,7 +108,6 @@ contract StickerChain is Ownable, ERC721A {
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
         }
-        console.log("GOT HERE 1");
         uint256 slapCount = _board[_placeId].slapCount;
         if (_offset >= slapCount) {
             return (0, new Slap[](0));
@@ -119,24 +118,19 @@ contract StickerChain is Ownable, ERC721A {
             revert InvalidStart();
         }
         uint256 startUint = uint(start);
-        int256 min = int(slapCount) - int(_offset) - int(_limit);
+        uint256 calculatedLimit = _limit == 0 ? startUint : _limit;
+        int256 min = int(slapCount) - int(_offset) - int(calculatedLimit);
         uint256 minUint = min < 0 ? 0 : uint(min);
         uint256 length = startUint >= minUint ? startUint - minUint : 0;
-        console.log("startUint", startUint);
-        console.log("minUint", minUint);
-
-        console.log("length", length);
-        console.log("GOT HERE 2");
         if (length == 0) {
             return (0, new Slap[](0));
         }
-        console.log("GOT HERE 2.5");
-
         Slap[] memory slaps = new Slap[](uint(length));
-        for (uint i = uint(startUint); i >= minUint; i--) {
+        uint resultIndex = 0;
+        for (uint i = uint(startUint); i > minUint; i--) {
             uint256 slapId = _board[_placeId].slaps[i];
             StoredSlap memory storedSlap = _slaps[slapId];
-            slaps[i] = Slap({
+            slaps[resultIndex] = Slap({
                 slapId: slapId,
                 stickerId: storedSlap.stickerId,
                 placeId: storedSlap.placeId,
@@ -145,8 +139,8 @@ contract StickerChain is Ownable, ERC721A {
                 size: storedSlap.size,
                 player: storedSlap.player
             });
+            resultIndex++;
         }
-        console.log("GOT HERE 3");
         return (length, slaps);
     }
 
@@ -162,25 +156,31 @@ contract StickerChain is Ownable, ERC721A {
         }
 
         uint _slappedTokenId = _nextTokenId();
-        uint _slapHeight = _board[_placeId].slapCount + 1;
         _mint(msg.sender, 1);
 
+        uint _originSlapHeight = _board[_placeId].slapCount + 1;
         _slaps[_slappedTokenId] = StoredSlap({
             placeId: _placeId,
-            height: _slapHeight,
+            height: _originSlapHeight,
             stickerId: _stickerId,
             slappedAt: block.timestamp,
             size: size,
             player: msg.sender
         });
-        _board[_placeId].slaps[_board[_placeId].slapCount] = _slappedTokenId;
-        // if (size > 1) {
-        //     // TODO write slap at all covered places
-        //     uint x = 2;
-        // }
-
-        _board[_placeId].slapCount++;
-
+        if (size == 1) {
+            _board[_placeId].slaps[_originSlapHeight] = _slappedTokenId;
+            _board[_placeId].slapCount = _originSlapHeight;
+        } else {
+            // write slap to all covered places
+            uint _localSlapHeight;
+            uint[] memory placeIds = BlockPlaces.placeIdsInSquare(_placeId, size);
+            for (uint i = 0; i < placeIds.length; i++) {
+                _localSlapHeight = _board[placeIds[i]].slapCount + 1;
+                _board[placeIds[i]].slaps[_localSlapHeight] = _slappedTokenId;
+                _board[placeIds[i]].slapCount = _localSlapHeight;
+            }
+        }
+        emit StickerSlapped(_placeId, _stickerId, msg.sender, size);
         emit Transfer(msg.sender, address(this), _slappedTokenId);
     }
 
