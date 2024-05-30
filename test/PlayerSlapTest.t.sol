@@ -103,11 +103,92 @@ contract PlayerSlapTest is Test {
         vm.deal(address1, 2 ether);
         vm.prank(address1);
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 2);
-        // load stickers from place
-        (uint total, Slap[] memory slaps) = stickerChain.getPlaceSlaps(placeIdUnionSquare, 0, 0);
+        // load stickers from covered places
+        uint total;
+        Slap[] memory slaps;
+        (total, slaps) = stickerChain.getPlaceSlaps(placeIdUnionSquare, 0, 0);
         assertEq(total, 1);
         assertEq(slaps[0].stickerId, exampleStickerId1);
         assertEq(slaps[0].player, address1);
         assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147619623, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147619619, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147618595, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        // sanity check adjacent place is empty
+        (total, slaps) = stickerChain.getPlaceSlaps(7147620647, 0, 0);
+        assertEq(total, 0);
+    }
+
+    function testCreateSlapOfSize3() public {
+        vm.deal(address1, 2 ether);
+        vm.prank(address1);
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 3);
+        // load stickers from covered places
+        uint total;
+        Slap[] memory slaps;
+        (total, slaps) = stickerChain.getPlaceSlaps(placeIdUnionSquare, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147619623, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147619619, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147618595, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        // ring 3
+        (total, slaps) = stickerChain.getPlaceSlaps(7147620647, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147620643, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147620639, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147619615, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        (total, slaps) = stickerChain.getPlaceSlaps(7147618591, 0, 0);
+        assertEq(total, 1);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        // sanity check adjacent place is empty
+        (total, slaps) = stickerChain.getPlaceSlaps(7147621671, 0, 0);
+        assertEq(total, 0);
+
+
+
     }
 }
