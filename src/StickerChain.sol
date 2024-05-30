@@ -41,7 +41,7 @@ struct StoredPlace {
 }
 
 contract StickerChain is Ownable, ERC721A {
-    event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint8 size);
+    event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint8 size);
 
     error InvalidPlaceId(uint256 placeId);
     error InvalidStart();
@@ -180,7 +180,7 @@ contract StickerChain is Ownable, ERC721A {
                 _board[placeIds[i]].slapCount = _localSlapHeight;
             }
         }
-        emit StickerSlapped(_placeId, _stickerId, msg.sender, size);
+        emit StickerSlapped(_placeId, _stickerId, msg.sender, _slappedTokenId, size);
         emit Transfer(msg.sender, address(this), _slappedTokenId);
     }
 
