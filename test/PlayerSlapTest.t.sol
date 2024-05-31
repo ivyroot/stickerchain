@@ -20,7 +20,7 @@ contract PlayerSlapTest is Test {
     // Setup function to deploy the StickerDesigns contract before each test
     function setUp() public {
         stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
-        stickerChain = new StickerChain(slapFee);
+        stickerChain = new StickerChain(slapFee, payable(address(stickerDesigns)));
 
         bytes memory metadataCID = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
         uint256 price = 0.1 ether;

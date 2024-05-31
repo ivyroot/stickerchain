@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "erc721a/contracts/ERC721A.sol";
-import {StickerDesign} from "./StickerDesigns.sol";
+import {StickerDesign, StickerDesigns} from "./StickerDesigns.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
 
@@ -46,13 +46,16 @@ contract StickerChain is Ownable, ERC721A {
     error InvalidPlaceId(uint256 placeId);
     error InvalidStart();
 
+    StickerDesigns immutable public stickerDesignsContract;
+
     uint256 public slapFee;
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
 
-    constructor(uint _initialSlapFee) Ownable(msg.sender) ERC721A("StickerChain", "SLAP")  {
+    constructor(uint _initialSlapFee, address payable _stickerDesignsAddress) Ownable(msg.sender) ERC721A("StickerChain", "SLAP")  {
         slapFee = _initialSlapFee;
+        stickerDesignsContract = StickerDesigns(_stickerDesignsAddress);
     }
 
     function getPlace(uint _placeId) external view returns (Place memory) {
