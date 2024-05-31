@@ -39,11 +39,12 @@ contract StickerDesigns is Ownable {
     error CannotModifyEndTime();
     error InvalidAccount();
     error InvalidRecipient();
+    error InvalidStickerDesignId(uint256 stickerId);
 
     address payable public adminFeeRecipient;
     uint256 public publisherReputationFee;
     uint256 public stickerRegistrationFee;
-    uint256 private nextStickerDesignId = 1;
+    uint256 public nextStickerDesignId = 1;
 
     mapping (address => bool) private goodStandingPublishers;
     mapping (address => bool) private bannedPublishers;
@@ -59,6 +60,12 @@ contract StickerDesigns is Ownable {
 
     // View methods
 
+    function assertValidStickerDesign(uint256 _stickerId) external view {
+        if (!_isValidStickerId(_stickerId))  {
+            revert InvalidStickerDesignId(_stickerId);
+        }
+    }
+
     function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {
         return _readStickerDesign(_stickerId);
     }
@@ -71,8 +78,14 @@ contract StickerDesigns is Ownable {
         return designs;
     }
 
+    function _isValidStickerId(uint256 _stickerId) internal view returns (bool) {
+        return _stickerId > 0 && _stickerId < nextStickerDesignId && !bannedStickerDesigns[_stickerId];
+    }
+
     function _readStickerDesign(uint256 _stickerId) internal view returns (StickerDesign memory result) {
-        return bannedStickerDesigns[_stickerId] ? result : _stickerDesigns[_stickerId];
+        if (_isValidStickerId(_stickerId)) {
+            result = _stickerDesigns[_stickerId];
+        }
     }
 
     function isPublisherInGoodStanding(address _publisher) external view returns (bool) {

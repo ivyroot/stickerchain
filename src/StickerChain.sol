@@ -44,6 +44,7 @@ contract StickerChain is Ownable, ERC721A {
     event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint8 size);
 
     error InvalidPlaceId(uint256 placeId);
+    error PlayerIsBanned();
     error InvalidStart();
 
     StickerDesigns immutable public stickerDesignsContract;
@@ -52,6 +53,8 @@ contract StickerChain is Ownable, ERC721A {
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
+
+    mapping (address => bool) private _bannedPlayers;
 
     constructor(uint _initialSlapFee, address payable _stickerDesignsAddress) Ownable(msg.sender) ERC721A("StickerChain", "SLAP")  {
         slapFee = _initialSlapFee;
@@ -151,12 +154,20 @@ contract StickerChain is Ownable, ERC721A {
         return 1;
     }
 
+    function nextSlapId() external view returns (uint256) {
+        return _nextTokenId();
+    }
+
     function slap(uint _placeId, uint _stickerId, uint8 size) external payable {
+        if (_bannedPlayers[msg.sender]) {
+            revert PlayerIsBanned();
+        }
         require(msg.value >= slapFee, "StickerChain: insufficient funds");
         (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
         }
+        stickerDesignsContract.assertValidStickerDesign(_stickerId);
 
         uint _slappedTokenId = _nextTokenId();
         _mint(msg.sender, 1);
@@ -185,6 +196,18 @@ contract StickerChain is Ownable, ERC721A {
         }
         emit StickerSlapped(_placeId, _stickerId, msg.sender, _slappedTokenId, size);
         emit Transfer(msg.sender, address(this), _slappedTokenId);
+    }
+
+
+    // admin methods
+    function setSlapFee(uint _newSlapFee) external onlyOwner {
+        slapFee = _newSlapFee;
+    }
+
+    function setPlayersBanned(address[] calldata _players, bool _banned) external onlyOwner {
+        for (uint i = 0; i < _players.length; i++) {
+            _bannedPlayers[_players[i]] = _banned;
+        }
     }
 
 }

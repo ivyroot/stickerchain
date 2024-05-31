@@ -42,7 +42,7 @@ contract ViewerTest is Test {
     }
 
     // Test publishing a sticker design with the fee for a first-time publisher
-    function testViewSingleStickerDesign() public {
+    function testViewSingleStickerDesign() public view {
         StickerDesign memory sticker = stickerDesigns.getStickerDesign(newStickerId1);
         assertEq(sticker.metadataCID, metadataCID1);
         assertEq(sticker.price, uint64(0.1 ether));
@@ -52,7 +52,7 @@ contract ViewerTest is Test {
     }
 
     //
-    function testViewTwoStickerDesigns() public {
+    function testViewTwoStickerDesigns() public view {
         uint256[] memory stickerIds = new uint256[](2);
         stickerIds[0] = newStickerId1;
         stickerIds[1] = newStickerId2;
