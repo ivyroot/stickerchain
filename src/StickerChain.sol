@@ -87,9 +87,9 @@ contract StickerChain is Ownable, ERC721A {
 
     }
 
-    function getSlap(uint _slapId) external view returns (Slap memory) {
+    function _readSlap(uint256 _slapId) internal view returns (Slap memory result) {
         StoredSlap memory storedSlap = _slaps[_slapId];
-        Slap memory loadedSlap  = Slap({
+        result = Slap({
             slapId: _slapId,
             stickerId: storedSlap.stickerId,
             placeId: storedSlap.placeId,
@@ -98,12 +98,16 @@ contract StickerChain is Ownable, ERC721A {
             size: storedSlap.size,
             player: storedSlap.player
         });
-        return loadedSlap;
     }
+
+    function getSlap(uint _slapId) external view returns (Slap memory) {
+        return _readSlap(_slapId);
+    }
+
     function getSlaps(uint[] calldata _slapIds) external view returns (Slap[] memory) {
         Slap[] memory slaps = new Slap[](_slapIds.length);
         for (uint i = 0; i < _slapIds.length; i++) {
-            slaps[i] = this.getSlap(_slapIds[i]);
+            slaps[i] = _readSlap(_slapIds[i]);
         }
         return slaps;
     }
@@ -134,17 +138,8 @@ contract StickerChain is Ownable, ERC721A {
         Slap[] memory slaps = new Slap[](uint(length));
         uint resultIndex = 0;
         for (uint i = uint(startUint); i > minUint; i--) {
-            uint256 slapId = _board[_placeId].slaps[i];
-            StoredSlap memory storedSlap = _slaps[slapId];
-            slaps[resultIndex] = Slap({
-                slapId: slapId,
-                stickerId: storedSlap.stickerId,
-                placeId: storedSlap.placeId,
-                height: storedSlap.height,
-                slappedAt: storedSlap.slappedAt,
-                size: storedSlap.size,
-                player: storedSlap.player
-            });
+            uint256 _slapId = _board[_placeId].slaps[i];
+            slaps[resultIndex] = _readSlap(_slapId);
             resultIndex++;
         }
         return (length, slaps);
