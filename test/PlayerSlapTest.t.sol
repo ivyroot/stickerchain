@@ -40,6 +40,25 @@ contract PlayerSlapTest is Test {
         exampleStickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
     }
 
+    // validate cannot slap invalid sticker id
+    function testSlapInvalidStickerIdTooLow() public {
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerDesigns.InvalidStickerDesignId.selector, 0)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, 0, 1);
+    }
+
+    function testSlapInvalidStickerTooHigh() public {
+        uint nextStickerId = stickerDesigns.nextStickerDesignId();
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerDesigns.InvalidStickerDesignId.selector, nextStickerId)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, nextStickerId, 1);
+    }
 
     // Test slapping a sticker on a place
     function testSlapOneSticker() public {
