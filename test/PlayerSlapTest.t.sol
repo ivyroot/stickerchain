@@ -13,6 +13,7 @@ contract PlayerSlapTest is Test {
     uint256 public slapFee = 0.001 ether;
     uint256 private exampleStickerId1;
     uint256 private placeIdUnionSquare = 7147618599;
+    uint256 private placeIdHollywoodSign = 4126216247;
     address address1 = address(0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97);
     address address2 = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
@@ -60,8 +61,8 @@ contract PlayerSlapTest is Test {
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, nextStickerId, 1);
     }
 
-    // Test slapping a sticker on a place
-    function testSlapOneSticker() public {
+    // Test slapping a sticker and accessing via slap id
+    function testSlapOneStickerAndGetIt() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
@@ -72,6 +73,26 @@ contract PlayerSlapTest is Test {
         assertEq(slap.slappedAt, block.timestamp);
     }
 
+    function testSlapTwoStickersAndGetThem() public {
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        stickerChain.slap{value: slapFee}(placeIdHollywoodSign, exampleStickerId1, 1);
+        uint[] memory slapIds = new uint[](2);
+        slapIds[0] = 1;
+        slapIds[1] = 2;
+        Slap[] memory slaps = stickerChain.getSlaps(slapIds);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].slappedAt, block.timestamp);
+        assertEq(slaps[1].stickerId, exampleStickerId1);
+        assertEq(slaps[1].placeId, placeIdHollywoodSign);
+        assertEq(slaps[1].player, address1);
+        assertEq(slaps[1].slappedAt, block.timestamp);
+    }
+
+    // Test slapping a sticker and accessing via place
     function testGetPlaceSlapsWithOneSticker() public {
         vm.deal(address1, 2 ether);
         vm.prank(address1);
