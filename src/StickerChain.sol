@@ -199,9 +199,9 @@ contract StickerChain is Ownable, ERC721A {
         slapFee = _newSlapFee;
     }
 
-    function setPlayersBanned(address[] calldata _players, bool _banned) external onlyOwner {
+    function banPlayers(address[] calldata _players, bool undoBan) external onlyOwner {
         for (uint i = 0; i < _players.length; i++) {
-            _bannedPlayers[_players[i]] = _banned;
+            _bannedPlayers[_players[i]] = !undoBan;
         }
     }
 

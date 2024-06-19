@@ -61,6 +61,32 @@ contract PlayerSlapTest is Test {
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, nextStickerId, 1);
     }
 
+    // test cannot slap banned sticker design
+    function testSlapBannedSticker() public {
+        uint[] memory banStickerIds = new uint[](1);
+        banStickerIds[0] = exampleStickerId1;
+        stickerDesigns.banStickerDesigns(banStickerIds, false);
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerDesigns.InvalidStickerDesignId.selector, exampleStickerId1)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+    }
+
+    // test banned player cannot slap
+    function testBannedPlayerCannotSlap() public {
+        address[] memory banPlayers = new address[](1);
+        banPlayers[0] = address1;
+        stickerChain.banPlayers(banPlayers, false);
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.PlayerIsBanned.selector)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+    }
+
     // Test slapping a sticker and accessing via slap id
     function testSlapOneStickerAndGetIt() public {
         vm.deal(address1, 20 ether);
