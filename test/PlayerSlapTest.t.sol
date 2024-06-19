@@ -12,8 +12,10 @@ contract PlayerSlapTest is Test {
     uint256 public newStickerFee = 0.0005 ether;
     uint256 public slapFee = 0.001 ether;
     uint256 private exampleStickerId1;
+    uint256 private exampleStickerId2;
     uint256 private placeIdUnionSquare = 7147618599;
     uint256 private placeIdHollywoodSign = 4126216247;
+    address adminAddress = address(this);
     address address1 = address(0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97);
     address address2 = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
@@ -25,7 +27,7 @@ contract PlayerSlapTest is Test {
 
         bytes memory metadataCID = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
         uint256 price = 0.1 ether;
-        address publisher = address(this);
+        address publisher = adminAddress;
         vm.deal(publisher, 20 ether);
         vm.prank(publisher);
 
@@ -39,6 +41,16 @@ contract PlayerSlapTest is Test {
 
         uint256 feeAmount = publisherFee + newStickerFee;
         exampleStickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+
+        NewStickerDesign memory newStickerDesign2 = NewStickerDesign({
+            payoutAddress: address3,
+            price: uint64(0.0 ether),
+            limitCount: 0,
+            limitTime: 0,
+            metadataCID: metadataCID
+        });
+        exampleStickerId2 = stickerDesigns.publishStickerDesign{value: newStickerFee}(newStickerDesign2);
+
     }
 
     // validate cannot slap invalid sticker id
@@ -103,7 +115,7 @@ contract PlayerSlapTest is Test {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
-        stickerChain.slap{value: slapFee}(placeIdHollywoodSign, exampleStickerId1, 1);
+        stickerChain.slap{value: slapFee}(placeIdHollywoodSign, exampleStickerId2, 1);
         uint[] memory slapIds = new uint[](2);
         slapIds[0] = 1;
         slapIds[1] = 2;
@@ -112,10 +124,34 @@ contract PlayerSlapTest is Test {
         assertEq(slaps[0].placeId, placeIdUnionSquare);
         assertEq(slaps[0].player, address1);
         assertEq(slaps[0].slappedAt, block.timestamp);
-        assertEq(slaps[1].stickerId, exampleStickerId1);
+        assertEq(slaps[1].stickerId, exampleStickerId2);
         assertEq(slaps[1].placeId, placeIdHollywoodSign);
         assertEq(slaps[1].player, address1);
         assertEq(slaps[1].slappedAt, block.timestamp);
+    }
+
+    // test slapping a sticker and then having the design be banned, removing it
+    function testSlapTwoStickersBanOneAndThenGetThem() public {
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        stickerChain.slap{value: slapFee}(placeIdHollywoodSign, exampleStickerId2, 1);
+        uint[] memory banStickerIds = new uint[](1);
+        banStickerIds[0] = exampleStickerId2;
+        vm.startPrank(adminAddress);
+        stickerDesigns.banStickerDesigns(banStickerIds, false);
+        uint[] memory slapIds = new uint[](2);
+        slapIds[0] = 1;
+        slapIds[1] = 2;
+        Slap[] memory slaps = stickerChain.getSlaps(slapIds);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].slappedAt, block.timestamp);
+        assertEq(slaps[1].stickerId, 0);
+        assertEq(slaps[1].placeId, 0);
+        assertEq(slaps[1].player, address(0));
+        assertEq(slaps[1].slappedAt, 0);
     }
 
     // Test slapping a sticker and accessing via place

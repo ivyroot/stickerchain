@@ -89,6 +89,9 @@ contract StickerChain is Ownable, ERC721A {
 
     function _readSlap(uint256 _slapId) internal view returns (Slap memory result) {
         StoredSlap memory storedSlap = _slaps[_slapId];
+        if (stickerDesignsContract.isBannedStickerDesign(storedSlap.stickerId)) {
+            return result;
+        }
         result = Slap({
             slapId: _slapId,
             stickerId: storedSlap.stickerId,
