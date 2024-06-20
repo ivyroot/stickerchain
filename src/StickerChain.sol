@@ -43,8 +43,10 @@ struct StoredPlace {
 contract StickerChain is Ownable, ERC721A {
     event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint8 size);
 
+    error InsufficientFunds();
     error InvalidPlaceId(uint256 placeId);
     error PlayerIsBanned();
+    error SlapNotAllowed(uint256 stickerId);
     error InvalidStart();
 
     StickerDesigns immutable public stickerDesignsContract;
@@ -53,6 +55,7 @@ contract StickerChain is Ownable, ERC721A {
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
+    mapping (uint256 => uint256) private _stickerDesignSlapCounts;
 
     mapping (address => bool) private _bannedPlayers;
 
@@ -157,20 +160,28 @@ contract StickerChain is Ownable, ERC721A {
     }
 
     function slap(uint _placeId, uint _stickerId, uint8 size) external payable {
+        // validate slap inputs
         if (_bannedPlayers[msg.sender]) {
             revert PlayerIsBanned();
         }
-        require(msg.value >= slapFee, "StickerChain: insufficient funds");
         (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
         }
-        stickerDesignsContract.assertValidStickerDesign(_stickerId);
+        if (msg.value < slapFee) {
+            revert InsufficientFunds();
+        }
+        if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, _stickerId, _stickerDesignSlapCounts[_stickerId])) {
+            revert SlapNotAllowed(_stickerId);
+        }
 
+        // mint slap token
         uint _slappedTokenId = _nextTokenId();
         _mint(msg.sender, 1);
 
+        // store slap data
         uint _originSlapHeight = _board[_placeId].slapCount + 1;
+        _stickerDesignSlapCounts[_stickerId] += 1;
         _slaps[_slappedTokenId] = StoredSlap({
             placeId: _placeId,
             height: _originSlapHeight,

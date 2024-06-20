@@ -62,10 +62,32 @@ contract StickerDesigns is Ownable {
 
     // View methods
 
-    function assertValidStickerDesign(uint256 _stickerId) external view {
-        if (!_isValidStickerId(_stickerId))  {
-            revert InvalidStickerDesignId(_stickerId);
+    function accountCanSlapSticker(address _account, uint256 _stickerId, uint256 _currentSlaps) external view  returns (bool) {
+        if (!_isValidStickerId(_stickerId)) {
+            return false;
         }
+        if (_isCappedStickerDesign(_stickerId)) {
+            return false;
+        }
+        if ((_stickerDesigns[_stickerId].limit > 0) &&
+            (_currentSlaps >= _stickerDesigns[_stickerId].limit)) {
+            return false;
+        }
+        address gate = _stickerDesigns[_stickerId].limitToHolders;
+        if (gate != address(0)) {
+            (bool success, bytes memory returnData) = gate.staticcall(
+                abi.encodeWithSignature("balanceOf(address)", _account)
+            );
+            if (!success) {
+                // invalid gate contract, whomp whomp
+                return false;
+            }
+            uint256 balance = abi.decode(returnData, (uint256));
+            if (balance == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {

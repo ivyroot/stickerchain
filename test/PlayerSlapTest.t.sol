@@ -20,7 +20,6 @@ contract PlayerSlapTest is Test {
     address address2 = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
-    // Setup function to deploy the StickerDesigns contract before each test
     function setUp() public {
         stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(slapFee, payable(address(stickerDesigns)));
@@ -60,7 +59,7 @@ contract PlayerSlapTest is Test {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         vm.expectRevert(
-            abi.encodeWithSelector(StickerDesigns.InvalidStickerDesignId.selector, 0)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, 0)
         );
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, 0, 1);
     }
@@ -70,7 +69,7 @@ contract PlayerSlapTest is Test {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         vm.expectRevert(
-            abi.encodeWithSelector(StickerDesigns.InvalidStickerDesignId.selector, nextStickerId)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, nextStickerId)
         );
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, nextStickerId, 1);
     }
@@ -83,7 +82,7 @@ contract PlayerSlapTest is Test {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         vm.expectRevert(
-            abi.encodeWithSelector(StickerDesigns.InvalidStickerDesignId.selector, exampleStickerId1)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, exampleStickerId1)
         );
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
     }
