@@ -79,7 +79,7 @@ contract StickerDesigns is Ownable {
                 abi.encodeWithSignature("balanceOf(address)", _account)
             );
             if (!success) {
-                // invalid gate contract, whomp whomp
+                // gate contract tried to change state
                 return false;
             }
             uint256 balance = abi.decode(returnData, (uint256));

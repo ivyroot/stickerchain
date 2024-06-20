@@ -79,6 +79,69 @@ contract SlapLimitsTest is Test {
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
     }
 
+    // validate can slap sticker limited to holders if balance is non-zero in holder contract
+    function testLimitToHoldersCanSlapIfHolder() public {
+        BalanceCheckerAllow balanceCheckerAllow = new BalanceCheckerAllow();
+
+        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+            payoutAddress: address(0),
+            price: uint64(0),
+            limitCount: 8,
+            limitTime: 0,
+            limitToHolders: address(balanceCheckerAllow),
+            metadataCID: metadataCID1
+        });
+
+        // publish sticker gated by balance check which always returns 1
+        vm.deal(publisher, 20 ether);
+        vm.prank(publisher);
+        uint256 feeAmount = publisherFee + newStickerFee;
+        uint stickerId1;
+        stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+
+        // slap sticker with balance check that always returns 1
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        uint nextSlapId = stickerChain.nextSlapId();
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+
+        Slap memory slap = stickerChain.getSlap(nextSlapId);
+        assertEq(slap.stickerId, stickerId1);
+        assertEq(slap.placeId, placeIdUnionSquare);
+        assertEq(slap.size, 1);
+        assertEq(slap.slappedAt, block.timestamp);
+        assertEq(slap.player, address1);
+    }
+
+    // validate slap throws if balance check contract writes on check
+    function testLimitToHoldersThrowsIfExternalContractChangesState() public {
+        BalanceCheckerWriteOnCheck balanceCheckerWriteOnCheck = new BalanceCheckerWriteOnCheck();
+
+        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+            payoutAddress: address(0),
+            price: uint64(0),
+            limitCount: 8,
+            limitTime: 0,
+            limitToHolders: address(balanceCheckerWriteOnCheck),
+            metadataCID: metadataCID1
+        });
+
+        // publish sticker gated by balance check which writes on check
+        vm.deal(publisher, 20 ether);
+        vm.prank(publisher);
+        uint256 feeAmount = publisherFee + newStickerFee;
+        uint stickerId1;
+        stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+
+        // try to slap sticker with balance check that writes on check
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+    }
+
 
 
 }
