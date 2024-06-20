@@ -208,6 +208,13 @@ contract StickerDesigns is Ownable {
         emit StickerCapped(_stickerId);
     }
 
+    function setStickerLimitToHolders(uint256 _stickerId, address _holders) public {
+        if (!_canModifyStickerDesign(msg.sender, _stickerId)) {
+            revert PublisherPermissionsIssue();
+        }
+        _stickerDesigns[_stickerId].limitToHolders = _holders;
+    }
+
     // Admin methods
 
     function _persistAdminFeeRecipient(address newRecipient) internal {
