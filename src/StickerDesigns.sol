@@ -7,6 +7,7 @@ struct NewStickerDesign {
     uint64 price;
     uint64 limitCount;
     uint64 limitTime;
+    address limitToHolders;
     bytes metadataCID;
 }
 
@@ -18,6 +19,7 @@ struct StickerDesign {
     uint64 price;
     uint64 limit;
     uint64 endTime;
+    address limitToHolders;
     bytes metadataCID;
 }
 
@@ -128,6 +130,7 @@ contract StickerDesigns is Ownable {
             publishedAt: uint64(block.timestamp),
             price: newDesign.price,
             limit: newDesign.limitCount,
+            limitToHolders: newDesign.limitToHolders,
             endTime: endTime,
             metadataCID: newDesign.metadataCID
         });

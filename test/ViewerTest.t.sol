@@ -26,6 +26,7 @@ contract ViewerTest is Test {
             price: uint64(0.1 ether),
             limitCount: 0,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadataCID1
         });
         NewStickerDesign memory newStickerDesign2 = NewStickerDesign({
@@ -33,6 +34,7 @@ contract ViewerTest is Test {
             price: uint64(0.0 ether),
             limitCount: 0,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadataCID2
         });
         bool inGoodStanding = stickerDesigns.isPublisherInGoodStanding(publisher);

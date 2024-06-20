@@ -27,6 +27,7 @@ contract StickerDesignsTest is Test {
             price: uint64(price),
             limitCount: 0,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadataCID
         });
 
@@ -55,6 +56,7 @@ contract StickerDesignsTest is Test {
             price: uint64(price),
             limitCount: 0,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadataCID
         });
 
@@ -80,6 +82,7 @@ contract StickerDesignsTest is Test {
             price: uint64(price),
             limitCount: 0,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadata1CID
         });
         NewStickerDesign memory newStickerDesign2 = NewStickerDesign({
@@ -87,6 +90,7 @@ contract StickerDesignsTest is Test {
             price: uint64(price),
             limitCount: 0,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadata2CID
         });
 

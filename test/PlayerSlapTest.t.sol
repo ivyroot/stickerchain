@@ -36,6 +36,7 @@ contract PlayerSlapTest is Test {
             price: uint64(price),
             limitCount: 8,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadataCID
         });
 
@@ -47,6 +48,7 @@ contract PlayerSlapTest is Test {
             price: uint64(0.0 ether),
             limitCount: 0,
             limitTime: 0,
+            limitToHolders: address(0),
             metadataCID: metadataCID
         });
         exampleStickerId2 = stickerDesigns.publishStickerDesign{value: newStickerFee}(newStickerDesign2);
