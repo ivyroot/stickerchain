@@ -46,6 +46,11 @@ contract SlapLimitsTest is Test {
 
 
     function setUp() public {
+        vm.deal(publisher, 20 ether);
+        vm.deal(adminAddress, 20 ether);
+        vm.deal(address1, 20 ether);
+        vm.deal(address2, 20 ether);
+        vm.deal(address3, 20 ether);
         stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(slapFee, payable(address(stickerDesigns)));
     }
@@ -64,14 +69,12 @@ contract SlapLimitsTest is Test {
         });
 
         // publish sticker gated by balance check which always returns 0
-        vm.deal(publisher, 20 ether);
         vm.prank(publisher);
         uint256 feeAmount = publisherFee + newStickerFee;
         uint stickerId1;
         stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
 
         // try to slap sticker with balance check that always returns 0
-        vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
@@ -93,14 +96,12 @@ contract SlapLimitsTest is Test {
         });
 
         // publish sticker gated by balance check which always returns 1
-        vm.deal(publisher, 20 ether);
         vm.prank(publisher);
         uint256 feeAmount = publisherFee + newStickerFee;
         uint stickerId1;
         stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
 
         // slap sticker with balance check that always returns 1
-        vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         uint nextSlapId = stickerChain.nextSlapId();
         stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
@@ -127,14 +128,83 @@ contract SlapLimitsTest is Test {
         });
 
         // publish sticker gated by balance check which writes on check
-        vm.deal(publisher, 20 ether);
         vm.prank(publisher);
         uint256 feeAmount = publisherFee + newStickerFee;
         uint stickerId1;
         stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
 
         // try to slap sticker with balance check that writes on check
-        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+    }
+
+    // validate design with limit of 3 can only be slapped 3 times
+    function testLimitCount() public {
+        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+            payoutAddress: address(0),
+            price: uint64(0),
+            limitCount: 3,
+            limitTime: 0,
+            limitToHolders: address(0),
+            metadataCID: metadataCID1
+        });
+
+        // publish sticker with limit of 3
+        vm.prank(publisher);
+        uint256 feeAmount = publisherFee + newStickerFee;
+        uint stickerId1;
+        stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+
+        // slap sticker 3 times
+        vm.startPrank(address1);
+        stickerChain.nextSlapId();
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+        stickerChain.nextSlapId();
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+
+        vm.startPrank(address2);
+        stickerChain.nextSlapId();
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+        // try to slap sticker a 4th time
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+    }
+
+    // validate sticker cannot be slapped after published caps it
+    function testCappingSticker() public {
+        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+            payoutAddress: address(0),
+            price: uint64(0),
+            limitCount: 0,
+            limitTime: 0,
+            limitToHolders: address(0),
+            metadataCID: metadataCID1
+        });
+
+        // publish sticker with no limit
+        vm.prank(publisher);
+        uint256 feeAmount = publisherFee + newStickerFee;
+        uint stickerId1;
+        stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+
+        // slap sticker
+        vm.startPrank(address1);
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+
+        // cap sticker
+        vm.startPrank(publisher);
+        stickerDesigns.capSticker(stickerId1);
+
+        // advance by 1 second and 1 block
+        skip(1);
+        vm.roll(block.number + 1);
+
+        // try to slap sticker again
         vm.startPrank(address1);
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
@@ -143,5 +213,39 @@ contract SlapLimitsTest is Test {
     }
 
 
+    // validate sticker cannot be slapped after time limit is reached
+    function testStickerLimitTime() public {
+        uint currentTime = block.timestamp;
+        uint64 expirationTime = uint64(currentTime + 60);
+        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+            payoutAddress: address(0),
+            price: uint64(0),
+            limitCount: 0,
+            limitTime: expirationTime,
+            limitToHolders: address(0),
+            metadataCID: metadataCID1
+        });
+
+        // publish sticker with no limit
+        vm.prank(publisher);
+        uint256 feeAmount = publisherFee + newStickerFee;
+        uint stickerId1;
+        stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+
+        // slap sticker
+        vm.startPrank(address1);
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+
+        // advance by 2 minutes and 8 blocks
+        skip(120);
+        vm.roll(block.number + 8);
+
+        // try to slap sticker again
+        vm.startPrank(address1);
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+        );
+        stickerChain.slap{value: slapFee}(placeIdUnionSquare, stickerId1, 1);
+    }
 
 }
