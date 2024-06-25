@@ -13,6 +13,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     uint public coinCount;
     uint public addNewCoinFee;
     address public adminFeeRecipient;
+
     event AdminTransferFailure(address indexed recipient, uint amount);
 
     error PaymentMethodNotAllowed();
