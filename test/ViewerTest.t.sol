@@ -24,6 +24,7 @@ contract ViewerTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0.1 ether),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
@@ -32,6 +33,7 @@ contract ViewerTest is Test {
         NewStickerDesign memory newStickerDesign2 = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0.0 ether),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),

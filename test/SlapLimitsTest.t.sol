@@ -59,9 +59,10 @@ contract SlapLimitsTest is Test {
     function testLimitToHoldersCannotSlapIfNotHolder() public {
         BalanceCheckerDeny balanceCheckerDeny = new BalanceCheckerDeny();
 
-        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+        NewStickerDesign memory newStickerDesignA = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0),
+            paymentMethodId: 0,
             limitCount: 8,
             limitTime: 0,
             limitToHolders: address(balanceCheckerDeny),
@@ -72,7 +73,7 @@ contract SlapLimitsTest is Test {
         vm.prank(publisher);
         uint256 feeAmount = publisherFee + newStickerFee;
         uint stickerId1;
-        stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+        stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesignA);
 
         // try to slap sticker with balance check that always returns 0
         vm.startPrank(address1);
@@ -89,6 +90,7 @@ contract SlapLimitsTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0),
+            paymentMethodId: 0,
             limitCount: 8,
             limitTime: 0,
             limitToHolders: address(balanceCheckerAllow),
@@ -121,6 +123,7 @@ contract SlapLimitsTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0),
+            paymentMethodId: 0,
             limitCount: 8,
             limitTime: 0,
             limitToHolders: address(balanceCheckerWriteOnCheck),
@@ -146,6 +149,7 @@ contract SlapLimitsTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0),
+            paymentMethodId: 0,
             limitCount: 3,
             limitTime: 0,
             limitToHolders: address(0),
@@ -180,6 +184,7 @@ contract SlapLimitsTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
@@ -220,6 +225,7 @@ contract SlapLimitsTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: expirationTime,
             limitToHolders: address(0),

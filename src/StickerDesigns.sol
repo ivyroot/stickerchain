@@ -5,6 +5,7 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 struct NewStickerDesign {
     address payoutAddress;
     uint64 price;
+    uint256 paymentMethodId; // 0 for ETH
     uint64 limitCount;
     uint64 limitTime;
     address limitToHolders;
@@ -17,6 +18,7 @@ struct StickerDesign {
     address payoutAddress;
     uint64 publishedAt;
     uint64 price;
+    uint256 paymentMethodId; // 0 for ETH
     uint64 limit;
     uint64 endTime;
     address limitToHolders;
@@ -151,6 +153,7 @@ contract StickerDesigns is Ownable {
             payoutAddress: newDesign.payoutAddress,
             publishedAt: uint64(block.timestamp),
             price: newDesign.price,
+            paymentMethodId: newDesign.paymentMethodId,
             limit: newDesign.limitCount,
             limitToHolders: newDesign.limitToHolders,
             endTime: endTime,

@@ -25,6 +25,7 @@ contract StickerDesignsTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(price),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
@@ -54,6 +55,7 @@ contract StickerDesignsTest is Test {
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(price),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
@@ -80,6 +82,7 @@ contract StickerDesignsTest is Test {
         NewStickerDesign memory newStickerDesign1 = NewStickerDesign({
             payoutAddress: payoutAddress,
             price: uint64(price),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
@@ -88,6 +91,7 @@ contract StickerDesignsTest is Test {
         NewStickerDesign memory newStickerDesign2 = NewStickerDesign({
             payoutAddress: payoutAddress,
             price: uint64(price),
+            paymentMethodId: 0,
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
