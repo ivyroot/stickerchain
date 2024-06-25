@@ -8,6 +8,7 @@ interface IPaymentMethod {
 
     event CoinAdded(address indexed coin, uint indexed coinId);
     event CoinBanned(address indexed coin, uint indexed coinId);
+    event CoinUnbanned(address indexed coin, uint indexed coinId);
 
     // list payment methods
     function getPaymentMethod(uint _paymentMethodId) external view returns (IERC20);

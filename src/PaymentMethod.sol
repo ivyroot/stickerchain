@@ -116,7 +116,9 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     function banCoins(address[] memory _coins, bool _undoBan) public onlyOwner {
         for (uint i = 0; i < _coins.length; i++) {
             bannedCoins[_coins[i]] = !_undoBan;
-            if (!_undoBan) {
+            if (_undoBan) {
+                emit CoinUnbanned(_coins[i], coinsLookup[_coins[i]]);
+            } else {
                 emit CoinBanned(_coins[i], coinsLookup[_coins[i]]);
             }
         }
