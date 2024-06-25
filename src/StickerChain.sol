@@ -48,6 +48,7 @@ contract StickerChain is Ownable, ERC721A {
     error PlayerIsBanned();
     error SlapNotAllowed(uint256 stickerId);
     error InvalidStart();
+    error InvalidArguments();
 
     StickerDesigns immutable public stickerDesignsContract;
 
@@ -160,10 +161,26 @@ contract StickerChain is Ownable, ERC721A {
     }
 
     function slap(uint _placeId, uint _stickerId, uint8 size) external payable {
-        // validate slap inputs
         if (_bannedPlayers[msg.sender]) {
             revert PlayerIsBanned();
         }
+        _executeSlap(_placeId, _stickerId, size);
+    }
+
+    function multiSlap(uint[] calldata _placeIds, uint[] calldata _stickerIds, uint8[] calldata sizes) external payable {
+        if (_bannedPlayers[msg.sender]) {
+            revert PlayerIsBanned();
+        }
+        if (_placeIds.length != _stickerIds.length || _placeIds.length != sizes.length) {
+            revert InvalidArguments();
+        }
+        for (uint i = 0; i < _placeIds.length; i++) {
+            _executeSlap(_placeIds[i], _stickerIds[i], sizes[i]);
+        }
+    }
+
+    function _executeSlap(uint _placeId, uint _stickerId, uint8 size) internal {
+        // validate slap inputs
         (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
         if (!isValid) {
             revert InvalidPlaceId(_placeId);

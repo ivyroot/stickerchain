@@ -131,6 +131,36 @@ contract PlayerSlapTest is Test {
         assertEq(slaps[1].slappedAt, block.timestamp);
     }
 
+    // test slapping two stickers via multiSlap
+    function testSlapTwoStickersViaMultiSlap() public {
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        uint[] memory placeIds = new uint[](2);
+        placeIds[0] = placeIdUnionSquare;
+        placeIds[1] = placeIdHollywoodSign;
+        uint[] memory stickerIds = new uint[](2);
+        stickerIds[0] = exampleStickerId1;
+        stickerIds[1] = exampleStickerId2;
+        uint8[] memory sizes = new uint8[](2);
+        sizes[0] = 1;
+        sizes[1] = 1;
+        uint[] memory slapIds = new uint[](2);
+        slapIds[0] = stickerChain.nextSlapId();
+        slapIds[1] = slapIds[0] + 1;
+        stickerChain.multiSlap{value: 2 * slapFee}(placeIds, stickerIds, sizes);
+        // validate slaps
+        Slap[] memory slaps = stickerChain.getSlaps(slapIds);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[0].player, address1);
+        assertEq(slaps[0].slappedAt, block.timestamp);
+        assertEq(slaps[1].stickerId, exampleStickerId2);
+        assertEq(slaps[1].placeId, placeIdHollywoodSign);
+        assertEq(slaps[1].player, address1);
+        assertEq(slaps[1].slappedAt, block.timestamp);
+    }
+
+
     // test slapping a sticker and then having the design be banned, removing it
     function testSlapTwoStickersBanOneAndThenGetThem() public {
         vm.deal(address1, 20 ether);
