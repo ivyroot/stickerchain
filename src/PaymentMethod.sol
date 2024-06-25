@@ -13,6 +13,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     uint public coinCount;
     uint public addNewCoinFee;
     address public adminFeeRecipient;
+    event AdminTransferFailure(address indexed recipient, uint amount);
 
     error PaymentMethodNotAllowed();
     error AddressNotAllowed();
@@ -28,19 +29,16 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         return bannedAddresses[_address];
     }
 
-    function _paymentMethodIdIsValid(uint _paymentMethodId) private view returns (bool) {
+    function _getPaymentMethod(uint _paymentMethodId) private view returns (IERC20 coin) {
         address _coinAddress = coins[_paymentMethodId];
         if (bannedCoins[_coinAddress]) {
-            return false;
+            return coin;
         }
-        return _paymentMethodId <= coinCount && _paymentMethodId > 0;
+        coin = IERC20(_coinAddress);
     }
 
-    function getPaymentMethod(uint _paymentMethodId) public view returns (address) {
-        if (!_paymentMethodIdIsValid(_paymentMethodId)) {
-            return address(0);
-        }
-        return coins[_paymentMethodId];
+    function getPaymentMethod(uint _paymentMethodId) public view returns (IERC20 coin) {
+        coin = _getPaymentMethod(_paymentMethodId);
     }
 
     function getIdOfPaymentMethod(address _coinAddress) public view returns (uint) {
@@ -52,24 +50,25 @@ contract PaymentMethod is Ownable, IPaymentMethod {
 
     function addressCanPay(uint _paymentMethodId, address _address, uint _amount) public view
         returns (bool) {
-        if (!_paymentMethodIdIsValid(_paymentMethodId)) {
+        IERC20 _coin = _getPaymentMethod(_paymentMethodId);
+        if (address(_coin) == address(0)) {
             return false;
         }
-        IERC20 _coin = IERC20(coins[_paymentMethodId]);
         uint accountAllowance = _coin.allowance(_address, address(this));
         return accountAllowance >= _amount;
     }
 
     function chargeAddressForPayment(uint _paymentMethodId, address _address, uint _amount) public
         returns (bool) {
-        if (!_paymentMethodIdIsValid(_paymentMethodId)) {
+        IERC20 _coin = _getPaymentMethod(_paymentMethodId);
+        if (address(_coin) == address(0)) {
             revert PaymentMethodNotAllowed();
         }
-        IERC20 _coin = IERC20(coins[_paymentMethodId]);
         return _coin.transferFrom(_address, msg.sender, _amount);
     }
 
-    function addNewCoin(address _coinAddress) public payable returns (bool) {
+    // public function to add coin
+    function addNewCoin(address _coinAddress) public payable returns (uint) {
         if (_isBannedAccount(msg.sender)) {
             revert AddressNotAllowed();
         }
@@ -77,20 +76,18 @@ contract PaymentMethod is Ownable, IPaymentMethod {
             revert IncorrectFeePayment();
         }
         (bool success,) = adminFeeRecipient.call{value: msg.value}("");
-        if (success) {
-            _addNewCoin(_coinAddress);
-            return true;
-        }else {
-            return false;
+        if (!success) {
+            emit AdminTransferFailure(adminFeeRecipient, msg.value);
         }
+        return _addNewCoin(_coinAddress);
     }
 
     // admin function to add coin
-    function importCoin(address _coinAddress) public onlyOwner {
-        _addNewCoin(_coinAddress);
+    function importCoin(address _coinAddress) public onlyOwner returns (uint) {
+        return _addNewCoin(_coinAddress);
     }
 
-    function _addNewCoin(address _coinAddress) private {
+    function _addNewCoin(address _coinAddress) private returns (uint) {
         if (coinsLookup[_coinAddress] != 0) {
             revert CoinAlreadyExists();
         }
@@ -98,6 +95,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         coins[coinCount] = _coinAddress;
         coinsLookup[_coinAddress] = coinCount;
         emit CoinAdded(_coinAddress, coinCount);
+        return coinCount;
     }
 
 

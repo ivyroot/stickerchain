@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.24;
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 
 interface IPaymentMethod {
@@ -9,7 +10,7 @@ interface IPaymentMethod {
     event CoinBanned(address indexed coin, uint indexed coinId);
 
     // list payment methods
-    function getPaymentMethod(uint _paymentMethodId) external view returns (address);
+    function getPaymentMethod(uint _paymentMethodId) external view returns (IERC20);
     function getIdOfPaymentMethod(address _coinAddress) external view returns (uint);
 
     // charge an address using a payment method
@@ -18,10 +19,10 @@ interface IPaymentMethod {
 
     // add a payment method, self-serve
     function addNewCoinFee() external view returns (uint);
-    function addNewCoin(address _coinAddress) external payable returns (bool);
+    function addNewCoin(address _coinAddress) external payable returns (uint);
 
     // add a payment method, admin
-    function importCoin(address _coinAddress) external;
+    function importCoin(address _coinAddress) external returns (uint);
 
     // set new coin fee, admin
     function setAddNewCoinFee(uint _fee) external;
