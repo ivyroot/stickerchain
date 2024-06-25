@@ -42,6 +42,21 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         coin = _getPaymentMethod(_paymentMethodId);
     }
 
+    function getPaymentMethods(uint _offset, uint _count) external view returns (IERC20[] memory) {
+        if (_offset >= coinCount) {
+            return new IERC20[](0);
+        }
+        uint max = _offset + _count;
+        if (max > coinCount) {
+            max = coinCount;
+        }
+        IERC20[] memory _coins = new IERC20[](max - _offset);
+        for (uint i = _offset; i < max; i++) {
+            _coins[i - _offset] = _getPaymentMethod(i);
+        }
+        return _coins;
+    }
+
     function getIdOfPaymentMethod(address _coinAddress) public view returns (uint) {
         if (bannedCoins[_coinAddress]) {
             return 0;

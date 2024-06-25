@@ -12,6 +12,7 @@ interface IPaymentMethod {
 
     // list payment methods
     function getPaymentMethod(uint _paymentMethodId) external view returns (IERC20);
+    function getPaymentMethods(uint _offset, uint _count) external view returns (IERC20[] memory);
     function getIdOfPaymentMethod(address _coinAddress) external view returns (uint);
 
     // charge an address using a payment method
