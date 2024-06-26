@@ -143,7 +143,7 @@ contract PlayerSlapTest is Test {
         uint[] memory stickerIds = new uint[](2);
         stickerIds[0] = exampleStickerId1;
         stickerIds[1] = exampleStickerId2;
-        uint8[] memory sizes = new uint8[](2);
+        uint64[] memory sizes = new uint64[](2);
         sizes[0] = 1;
         sizes[1] = 1;
         uint[] memory slapIds = new uint[](2);

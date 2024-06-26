@@ -12,8 +12,14 @@ struct Slap {
     uint256 placeId;
     uint256 height;
     uint256 slappedAt;
-    uint8 size;
+    uint64 size;
     address player;
+}
+
+struct NewSlap {
+    uint256 placeId;
+    uint256 stickerId;
+    uint64 size;
 }
 
 struct StoredSlap {
@@ -21,7 +27,7 @@ struct StoredSlap {
     uint256 height;
     uint256 stickerId;
     uint256 slappedAt;
-    uint8 size;
+    uint64 size;
     address player;
 }
 
@@ -35,13 +41,20 @@ struct Place {
     uint256 slapCount;
 }
 
+struct PaymentMethodTotal {
+    uint256 paymentMethodId;
+    uint256 total;
+    uint256 addlFundsRequired;
+    uint256 addlAllowanceRequired;
+}
+
 struct StoredPlace {
     uint256 slapCount;
     mapping (uint256 => uint256) slaps;
 }
 
 contract StickerChain is Ownable, ERC721A {
-    event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint8 size);
+    event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint64 size);
 
     error InsufficientFunds();
     error InvalidPlaceId(uint256 placeId);
@@ -160,26 +173,63 @@ contract StickerChain is Ownable, ERC721A {
         return _nextTokenId();
     }
 
-    function slap(uint _placeId, uint _stickerId, uint8 size) external payable {
+    function priceOfSlap(NewSlap calldata _maybeSlap) external view returns (PaymentMethodTotal memory paymentMethod) {
+        (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_maybeSlap.placeId);
+        if (!isValid) {
+            revert InvalidPlaceId(_maybeSlap.placeId);
+        }
+        if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, _maybeSlap.stickerId, _stickerDesignSlapCounts[_maybeSlap.stickerId])) {
+            revert SlapNotAllowed(_maybeSlap.stickerId);
+        }
+        paymentMethod = PaymentMethodTotal({
+            paymentMethodId: 0,
+            total: slapFee * _maybeSlap.size,
+            addlFundsRequired: slapFee,
+            addlAllowanceRequired: 0
+        });
+    }
+
+    function slap(NewSlap calldata _newSlap) external payable {
         if (_bannedPlayers[msg.sender]) {
             revert PlayerIsBanned();
         }
-        _executeSlap(_placeId, _stickerId, size);
+        _executeSlap(_newSlap.placeId, _newSlap.stickerId, _newSlap.size);
     }
 
-    function multiSlap(uint[] calldata _placeIds, uint[] calldata _stickerIds, uint8[] calldata sizes) external payable {
+    function priceOfMultiSlap(NewSlap[] calldata _newSlaps)
+    external view
+    returns (PaymentMethodTotal[] memory paymentMethods) {
+        uint paymentMethodCount = 1;
+        paymentMethods = new PaymentMethodTotal[](1);
+        paymentMethods[0] = PaymentMethodTotal({
+            paymentMethodId: 0,
+            total: 0,
+            addlFundsRequired: 0,
+            addlAllowanceRequired: 0
+        });
+        for (uint i = 0; i < _newSlaps.length; i++) {
+            (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_newSlaps[i].placeId);
+            if (!isValid) {
+                revert InvalidPlaceId(_newSlaps[i].placeId);
+            }
+            uint currStickerId = _newSlaps[i].stickerId;
+            if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, currStickerId, _stickerDesignSlapCounts[_currStickerId])) {
+                revert SlapNotAllowed(currStickerId);
+            }
+            paymentMethods[0].total += slapFee;
+        }
+    }
+
+    function multiSlap(NewSlap[] calldata _newSlaps) external payable {
         if (_bannedPlayers[msg.sender]) {
             revert PlayerIsBanned();
         }
-        if (_placeIds.length != _stickerIds.length || _placeIds.length != sizes.length) {
-            revert InvalidArguments();
-        }
-        for (uint i = 0; i < _placeIds.length; i++) {
-            _executeSlap(_placeIds[i], _stickerIds[i], sizes[i]);
+        for (uint i = 0; i < _newSlaps.length; i++) {
+            _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
     }
 
-    function _executeSlap(uint _placeId, uint _stickerId, uint8 size) internal {
+    function _executeSlap(uint _placeId, uint _stickerId, uint64 size) internal {
         // validate slap inputs
         (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
         if (!isValid) {
