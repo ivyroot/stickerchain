@@ -64,23 +64,23 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         return coinsLookup[_coinAddress];
     }
 
-    function addressCanPay(uint _paymentMethodId, address _address, uint _amount) public view
+    function addressCanPay(uint _paymentMethodId, address _address, address _recipient, uint _amount) public view
         returns (bool) {
         IERC20 _coin = _getPaymentMethod(_paymentMethodId);
         if (address(_coin) == address(0)) {
             return false;
         }
-        uint accountAllowance = _coin.allowance(_address, address(this));
+        uint accountAllowance = _coin.allowance(_address, _recipient);
         return accountAllowance >= _amount;
     }
 
-    function chargeAddressForPayment(uint _paymentMethodId, address _address, uint _amount) public
+    function chargeAddressForPayment(uint _paymentMethodId, address _address, address _recipient, uint _amount) public
         returns (bool) {
         IERC20 _coin = _getPaymentMethod(_paymentMethodId);
         if (address(_coin) == address(0)) {
             revert PaymentMethodNotAllowed();
         }
-        return _coin.transferFrom(_address, msg.sender, _amount);
+        return _coin.transferFrom(_address, _recipient, _amount);
     }
 
     // public function to add coin
