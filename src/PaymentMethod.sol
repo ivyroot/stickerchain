@@ -26,20 +26,12 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         addNewCoinFee = _addNewCoinFee;
     }
 
-    function _isBannedAccount(address _address) private view returns (bool) {
-        return bannedAddresses[_address];
-    }
-
-    function _getPaymentMethod(uint _paymentMethodId) private view returns (IERC20 coin) {
+    function getPaymentMethod(uint _paymentMethodId) public view returns (IERC20 coin) {
         address _coinAddress = coins[_paymentMethodId];
         if (bannedCoins[_coinAddress]) {
             return coin;
         }
         coin = IERC20(_coinAddress);
-    }
-
-    function getPaymentMethod(uint _paymentMethodId) public view returns (IERC20 coin) {
-        coin = _getPaymentMethod(_paymentMethodId);
     }
 
     function getPaymentMethods(uint _offset, uint _count) external view returns (IERC20[] memory) {
@@ -52,7 +44,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         }
         IERC20[] memory _coins = new IERC20[](max - _offset);
         for (uint i = _offset; i < max; i++) {
-            _coins[i - _offset] = _getPaymentMethod(i);
+            _coins[i - _offset] = getPaymentMethod(i);
         }
         return _coins;
     }
@@ -66,7 +58,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
 
     function addressCanPay(uint _paymentMethodId, address _address, address _recipient, uint _amount) public view
         returns (bool) {
-        IERC20 _coin = _getPaymentMethod(_paymentMethodId);
+        IERC20 _coin = getPaymentMethod(_paymentMethodId);
         if (address(_coin) == address(0)) {
             return false;
         }
@@ -76,7 +68,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
 
     function chargeAddressForPayment(uint _paymentMethodId, address _address, address _recipient, uint _amount) public
         returns (bool) {
-        IERC20 _coin = _getPaymentMethod(_paymentMethodId);
+        IERC20 _coin = getPaymentMethod(_paymentMethodId);
         if (address(_coin) == address(0)) {
             revert PaymentMethodNotAllowed();
         }
@@ -85,7 +77,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
 
     // public function to add coin
     function addNewCoin(address _coinAddress) public payable returns (uint) {
-        if (_isBannedAccount(msg.sender)) {
+        if (bannedAddresses[msg.sender]) {
             revert AddressNotAllowed();
         }
         if (msg.value != addNewCoinFee) {
