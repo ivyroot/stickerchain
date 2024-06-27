@@ -4,9 +4,11 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "../src/StickerDesigns.sol";
 import "../src/StickerChain.sol";
+import "../src/PaymentMethod.sol";
 
 contract PlayerSlapTest is Test {
     StickerDesigns stickerDesigns;
+    PaymentMethod paymentMethod;
     StickerChain stickerChain;
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
@@ -22,7 +24,8 @@ contract PlayerSlapTest is Test {
 
     function setUp() public {
         stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
-        stickerChain = new StickerChain(slapFee, payable(address(stickerDesigns)));
+        paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
+        stickerChain = new StickerChain(slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
 
         bytes memory metadataCID = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
         uint256 price = 0.1 ether;
@@ -60,20 +63,30 @@ contract PlayerSlapTest is Test {
     function testSlapInvalidStickerIdTooLow() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
+        NewSlap memory newSlap = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: 0,
+            size: 1
+        });
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, 0)
         );
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, 0, 1);
+        stickerChain.slap{value: slapFee}(newSlap);
     }
 
     function testSlapInvalidStickerTooHigh() public {
         uint nextStickerId = stickerDesigns.nextStickerDesignId();
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
+        NewSlap memory newSlap = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: nextStickerId,
+            size: 1
+        });
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, nextStickerId)
         );
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, nextStickerId, 1);
+        stickerChain.slap{value: slapFee}(newSlap);
     }
 
     // test cannot slap banned sticker design
@@ -83,10 +96,15 @@ contract PlayerSlapTest is Test {
         stickerDesigns.banStickerDesigns(banStickerIds, false);
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
+        NewSlap memory newSlap = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, exampleStickerId1)
         );
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        stickerChain.slap{value: slapFee}(newSlap);
     }
 
     // test banned player cannot slap
@@ -96,17 +114,27 @@ contract PlayerSlapTest is Test {
         stickerChain.banPlayers(banPlayers, false);
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
+        NewSlap memory newSlap = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.PlayerIsBanned.selector)
         );
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        stickerChain.slap{value: slapFee}(newSlap);
     }
 
     // Test slapping a sticker and accessing via slap id
     function testSlapOneStickerAndGetIt() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        NewSlap memory newSlap = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        stickerChain.slap{value: slapFee}(newSlap);
         Slap memory slap = stickerChain.getSlap(1);
         assertEq(slap.stickerId, exampleStickerId1);
         assertEq(slap.placeId, placeIdUnionSquare);
@@ -117,8 +145,18 @@ contract PlayerSlapTest is Test {
     function testSlapTwoStickersAndGetThem() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
-        stickerChain.slap{value: slapFee}(placeIdHollywoodSign, exampleStickerId2, 1);
+        NewSlap memory newSlap1 = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        NewSlap memory newSlap2 = NewSlap({
+            placeId: placeIdHollywoodSign,
+            stickerId: exampleStickerId2,
+            size: 1
+        });
+        stickerChain.slap{value: slapFee}(newSlap1);
+        stickerChain.slap{value: slapFee}(newSlap2);
         uint[] memory slapIds = new uint[](2);
         slapIds[0] = 1;
         slapIds[1] = 2;
@@ -137,19 +175,22 @@ contract PlayerSlapTest is Test {
     function testSlapTwoStickersViaMultiSlap() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
-        uint[] memory placeIds = new uint[](2);
-        placeIds[0] = placeIdUnionSquare;
-        placeIds[1] = placeIdHollywoodSign;
-        uint[] memory stickerIds = new uint[](2);
-        stickerIds[0] = exampleStickerId1;
-        stickerIds[1] = exampleStickerId2;
-        uint64[] memory sizes = new uint64[](2);
-        sizes[0] = 1;
-        sizes[1] = 1;
+        NewSlap[] memory newSlaps = new NewSlap[](2);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        newSlaps[1] = NewSlap({
+            placeId: placeIdHollywoodSign,
+            stickerId: exampleStickerId2,
+            size: 1
+        });
+
         uint[] memory slapIds = new uint[](2);
         slapIds[0] = stickerChain.nextSlapId();
         slapIds[1] = slapIds[0] + 1;
-        stickerChain.multiSlap{value: 2 * slapFee}(placeIds, stickerIds, sizes);
+        stickerChain.multiSlap{value: 2 * slapFee}(newSlaps);
         // validate slaps
         Slap[] memory slaps = stickerChain.getSlaps(slapIds);
         assertEq(slaps[0].stickerId, exampleStickerId1);
@@ -167,8 +208,18 @@ contract PlayerSlapTest is Test {
     function testSlapTwoStickersBanOneAndThenGetThem() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
-        stickerChain.slap{value: slapFee}(placeIdHollywoodSign, exampleStickerId2, 1);
+        NewSlap memory newSlap1 = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        NewSlap memory newSlap2 = NewSlap({
+            placeId: placeIdHollywoodSign,
+            stickerId: exampleStickerId2,
+            size: 1
+        });
+        stickerChain.slap{value: slapFee}(newSlap1);
+        stickerChain.slap{value: slapFee}(newSlap2);
         uint[] memory banStickerIds = new uint[](1);
         banStickerIds[0] = exampleStickerId2;
         vm.startPrank(adminAddress);
@@ -191,7 +242,12 @@ contract PlayerSlapTest is Test {
     function testGetPlaceSlapsWithOneSticker() public {
         vm.deal(address1, 2 ether);
         vm.prank(address1);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        NewSlap memory newSlap1 = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        stickerChain.slap{value: slapFee}(newSlap1);
         // load stickers from place
         (uint total, Slap[] memory slaps) = stickerChain.getPlaceSlaps(placeIdUnionSquare, 0, 0);
         assertEq(total, 1);
@@ -204,18 +260,24 @@ contract PlayerSlapTest is Test {
         vm.deal(address1, 1 ether);
         vm.deal(address2, 1 ether);
 
+        NewSlap memory newSlap1 = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+
         // slap first sticker
         uint timestamp1 = 1717108737;
         vm.warp(timestamp1);
         vm.prank(address1);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        stickerChain.slap{value: slapFee}(newSlap1);
 
         // slap second sticker
         vm.roll(50 + block.number);
         vm.warp(2600 + block.timestamp);
         uint timestamp2 = block.timestamp;
         vm.prank(address2);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 1);
+        stickerChain.slap{value: slapFee}(newSlap1);
 
         // load stickers from place
         (uint total, Slap[] memory slaps) = stickerChain.getPlaceSlaps(placeIdUnionSquare, 0, 0);
@@ -237,7 +299,13 @@ contract PlayerSlapTest is Test {
     function testCreateSlapOfSize2() public {
         vm.deal(address1, 2 ether);
         vm.prank(address1);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 2);
+        NewSlap memory newSlapSize2 = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 2
+        });
+
+        stickerChain.slap{value: slapFee}(newSlapSize2);
         // load stickers from covered places
         uint total;
         Slap[] memory slaps;
@@ -269,7 +337,12 @@ contract PlayerSlapTest is Test {
     function testCreateSlapOfSize3() public {
         vm.deal(address1, 2 ether);
         vm.prank(address1);
-        stickerChain.slap{value: slapFee}(placeIdUnionSquare, exampleStickerId1, 3);
+        NewSlap memory newSlapSize3 = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 3
+        });
+        stickerChain.slap{value: slapFee}(newSlapSize3);
         // load stickers from covered places
         uint total;
         Slap[] memory slaps;

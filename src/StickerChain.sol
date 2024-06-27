@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "erc721a/contracts/ERC721A.sol";
+import {IPaymentMethod} from "./IPaymentMethod.sol";
 import {StickerDesign, StickerDesigns} from "./StickerDesigns.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
@@ -64,6 +65,7 @@ contract StickerChain is Ownable, ERC721A {
     error InvalidArguments();
 
     StickerDesigns immutable public stickerDesignsContract;
+    IPaymentMethod immutable public paymentMethodContract;
 
     uint256 public slapFee;
 
@@ -73,9 +75,11 @@ contract StickerChain is Ownable, ERC721A {
 
     mapping (address => bool) private _bannedPlayers;
 
-    constructor(uint _initialSlapFee, address payable _stickerDesignsAddress) Ownable(msg.sender) ERC721A("StickerChain", "SLAP")  {
+    constructor(uint _initialSlapFee, address payable _stickerDesignsAddress, address payable _paymentMethodAddress)
+        Ownable(msg.sender) ERC721A("StickerChain", "SLAP")  {
         slapFee = _initialSlapFee;
         stickerDesignsContract = StickerDesigns(_stickerDesignsAddress);
+        paymentMethodContract = IPaymentMethod(_paymentMethodAddress);
     }
 
     function getPlace(uint _placeId) external view returns (Place memory) {
@@ -213,7 +217,7 @@ contract StickerChain is Ownable, ERC721A {
                 revert InvalidPlaceId(_newSlaps[i].placeId);
             }
             uint currStickerId = _newSlaps[i].stickerId;
-            if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, currStickerId, _stickerDesignSlapCounts[_currStickerId])) {
+            if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, currStickerId, _stickerDesignSlapCounts[currStickerId])) {
                 revert SlapNotAllowed(currStickerId);
             }
             paymentMethods[0].total += slapFee;
