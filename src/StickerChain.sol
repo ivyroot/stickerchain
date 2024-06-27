@@ -68,6 +68,9 @@ contract StickerChain is Ownable, ERC721A {
     IPaymentMethod immutable public paymentMethodContract;
 
     uint256 public slapFee;
+    uint256 public slapFeeForSize(uint _size) view returns (uint) {
+        return slapFee * _size * _size * _size;
+    }
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
