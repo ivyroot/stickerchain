@@ -53,9 +53,9 @@ contract SlapLimitsTest is Test {
         vm.deal(address1, 20 ether);
         vm.deal(address2, 20 ether);
         vm.deal(address3, 20 ether);
-        stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
+        stickerDesigns = new StickerDesigns(adminAddress, 0.002 ether, 0.0005 ether);
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
-        stickerChain = new StickerChain(slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
+        stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
     }
 
     // validate cannot slap sticker limited to holders if balance is zero in holder contract

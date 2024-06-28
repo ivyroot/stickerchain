@@ -81,8 +81,8 @@ contract StickerChain is Ownable, ERC721A {
 
     mapping (address => bool) private _bannedPlayers;
 
-    constructor(uint _initialSlapFee, address payable _stickerDesignsAddress, address payable _paymentMethodAddress)
-        Ownable(msg.sender) ERC721A("StickerChain", "SLAP")  {
+    constructor(address _initialAdmin, uint _initialSlapFee, address payable _stickerDesignsAddress, address payable _paymentMethodAddress)
+        Ownable(_initialAdmin) ERC721A("StickerChain", "SLAP")  {
         slapFee = _initialSlapFee;
         stickerDesignsContract = StickerDesigns(_stickerDesignsAddress);
         paymentMethodContract = IPaymentMethod(_paymentMethodAddress);

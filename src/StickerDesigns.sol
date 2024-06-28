@@ -61,8 +61,8 @@ contract StickerDesigns is Ownable {
     mapping (uint256 => bool) private bannedStickerDesigns;
     mapping (uint256 => StickerDesign) private _stickerDesigns;
 
-    constructor(address _adminFeeRecipient, uint _reputationFee, uint _registrationFee) Ownable(msg.sender) {
-        _persistAdminFeeRecipient(_adminFeeRecipient);
+    constructor(address _initialAdmin, uint _reputationFee, uint _registrationFee) Ownable(_initialAdmin) {
+        _persistAdminFeeRecipient(_initialAdmin);
         publisherReputationFee = _reputationFee;
         stickerRegistrationFee = _registrationFee;
     }

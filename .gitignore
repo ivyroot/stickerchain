@@ -6,6 +6,9 @@ out/
 !/broadcast
 /broadcast/*/31337/
 /broadcast/**/dry-run/
+broadcast/01_DeployStickers.sol/*/run-*.json
+!broadcast/01_DeployStickers.sol/*/run-latest.json
+
 
 # Docs
 docs/

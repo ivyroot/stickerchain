@@ -21,8 +21,8 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     error IncorrectFeePayment();
     error CoinAlreadyExists();
 
-    constructor(address _feeRecipient, uint _addNewCoinFee) Ownable(msg.sender) {
-        adminFeeRecipient = _feeRecipient;
+    constructor(address _initialAdmin, uint _addNewCoinFee) Ownable(_initialAdmin) {
+        adminFeeRecipient = _initialAdmin;
         addNewCoinFee = _addNewCoinFee;
     }
 

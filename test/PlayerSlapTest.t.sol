@@ -24,9 +24,9 @@ contract PlayerSlapTest is Test {
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
     function setUp() public {
-        stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
+        stickerDesigns = new StickerDesigns(adminAddress, 0.002 ether, 0.0005 ether);
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
-        stickerChain = new StickerChain(slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
+        stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
 
         bytes memory metadataCID = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
         address publisher = adminAddress;
