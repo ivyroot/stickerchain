@@ -199,7 +199,7 @@ contract StickerChain is Ownable, ERC721A {
         return totalCost;
     }
 
-    function costOfSlaps(address _player, NewSlap[] calldata _newSlaps)
+    function totalCostsOfSlaps(address _player, NewSlap[] calldata _newSlaps)
     public view
     returns (PaymentMethodTotal[] memory costs)
     {
@@ -242,7 +242,7 @@ contract StickerChain is Ownable, ERC721A {
             issues[issueCount] = SlapIssue({issueCode: IssueType.PlayerNotAllowed, recordId: 0, value: 0});
             issueCount++;
         }
-        PaymentMethodTotal[] memory costs = costOfSlaps(_player, _newSlaps);
+        PaymentMethodTotal[] memory costs = totalCostsOfSlaps(_player, _newSlaps);
         uint paymentMethodCount = costs.length;
         for (uint i = 0; i < paymentMethodCount; i++) {
             if (i == 0) {
