@@ -60,7 +60,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         returns (uint balanceNeeded, uint allowanceNeeded) {
         IERC20 _coin = getPaymentMethod(_paymentMethodId);
         if (address(_coin) == address(0)) {
-            return false;
+            return (0, 0);
         }
         uint accountBalance = _coin.balanceOf(_address);
         uint accountAllowance = _coin.allowance(_address, _recipient);

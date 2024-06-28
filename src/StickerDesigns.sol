@@ -101,6 +101,13 @@ contract StickerDesigns is Ownable {
         return _readStickerDesign(_stickerId);
     }
 
+    function getStickerDesignPrice(uint256 _stickerId) external view returns (uint256 paymentMethodId, uint64 price) {
+        if (_isValidStickerId(_stickerId)) {
+            paymentMethodId = _stickerDesigns[_stickerId].paymentMethodId;
+            price = _stickerDesigns[_stickerId].price;
+        }
+    }
+
     function getStickerDesigns(uint256[] calldata _stickerIds) external view returns (StickerDesign[] memory) {
         StickerDesign[] memory designs = new StickerDesign[](_stickerIds.length);
         for (uint256 i = 0; i < _stickerIds.length; i++) {

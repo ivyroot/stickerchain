@@ -74,9 +74,6 @@ contract StickerChain is Ownable, ERC721A {
     IPaymentMethod immutable public paymentMethodContract;
 
     uint256 public slapFee;
-    uint256 public slapFeeForSize(uint _size) view returns (uint) {
-        return slapFee * _size * _size * _size;
-    }
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
@@ -89,6 +86,10 @@ contract StickerChain is Ownable, ERC721A {
         slapFee = _initialSlapFee;
         stickerDesignsContract = StickerDesigns(_stickerDesignsAddress);
         paymentMethodContract = IPaymentMethod(_paymentMethodAddress);
+    }
+
+    function slapFeeForSize(uint _size) public view returns (uint) {
+        return slapFee * _size * _size * _size;
     }
 
     function getPlace(uint _placeId) external view returns (Place memory) {
@@ -187,49 +188,37 @@ contract StickerChain is Ownable, ERC721A {
     }
 
     function costOfSlaps(address _player, NewSlap[] calldata _newSlaps)
-    external view
+    public view
     returns (PaymentMethodTotal[] memory costs)
     {
         uint _newSlapCount = _newSlaps.length;
-        if (_newSlapCount == 1) {
-            if (_newSlaps[0].paymentMethodId == 0) {
-                costs = new PaymentMethodTotal[](1);
-                costs[0].total = slapFeeForSize(_newSlaps[0].size) + _newSlaps[0].slapFee;
-            }else{
-                costs = new PaymentMethodTotal[](2);
-                costs[0].total = slapFeeForSize(_newSlaps[0].size);
-                costs[1].paymentMethodId = _newSlaps[0].paymentMethodId;
-                costs[1].total = _newSlaps[0].slapFee;
-            }
-            return costs;
-        }
         // multiple slaps, up to (slap count) payment methods
         uint paymentMethodArraySize = _newSlapCount;
-        paymentMethodTotals = new PaymentMethodTotal[](paymentMethodArraySize);
+        costs = new PaymentMethodTotal[](paymentMethodArraySize);
         uint paymentMethodCount = 1;
         for (uint i = 0; i < _newSlapCount; i++) {
-            paymentMethodTotals[0].total += slapFeeForSize(_newSlaps[i].size);
-            if (_newSlaps[i].paymentMethodId != 0) {
+            costs[0].total += slapFeeForSize(_newSlaps[i].size);
+            (uint paymentMethodId, uint64 price) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            if (paymentMethodId != 0) {
                 bool found = false;
                 for (uint j = 1; j < paymentMethodCount; j++) {
-                    if (paymentMethodTotals[j].paymentMethodId == _newSlaps[i].paymentMethodId) {
-                        paymentMethodTotals[j].total += _newSlaps[i].slapFee;
+                    if (costs[j].paymentMethodId == paymentMethodId) {
+                        costs[j].total += price;
                         found = true;
                         break;
                     }
                 }
-                if (!found && paymentMethodCount < paymentMethodArraySize) {
-                    paymentMethodTotals[paymentMethodCount].paymentMethodId = _newSlaps[i].paymentMethodId;
-                    paymentMethodTotals[paymentMethodCount].total = _newSlaps[i].slapFee;
+                if (!found) {
+                    costs[paymentMethodCount].paymentMethodId = paymentMethodId;
+                    costs[paymentMethodCount].total = price;
                     paymentMethodCount++;
                 }
             }
         }
-        return paymentMethodTotals;
     }
 
     function checkSlaps(address _player, NewSlap[] calldata _newSlaps)
-    external view
+    public view
     returns (SlapIssue[] memory issues)
     {
         uint slapCount = _newSlaps.length;
@@ -282,22 +271,26 @@ contract StickerChain is Ownable, ERC721A {
             revert PlayerIsBanned();
         }
         uint slapCount = _newSlaps.length;
+        uint totalBill;
+        uint stickerPaymentMethodId;
+        uint64 stickerPrice;
         slapIds = new uint256[](slapCount);
         for (uint i = 0; i < _newSlaps.length; i++) {
-            if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId])) {
+            if (stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]) != 0) {
                 revert SlapNotAllowed(_newSlaps[i].stickerId);
             }
-            ethTotal += slapFeeForSize(_newSlaps[i].size);
-            if (_newSlaps[i].paymentMethodId == 0) {
-                ethTotal += _newSlaps[i].slapFee;
+            totalBill += slapFeeForSize(_newSlaps[i].size);
+            (stickerPaymentMethodId, stickerPrice) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            if (stickerPaymentMethodId == 0) {
+                totalBill += stickerPrice;
             }else{
-                if (!paymentMethodContract.chargeAddressForPayment(_newSlaps[i].paymentMethodId, msg.sender, address(this), _newSlaps[i].slapFee)) {
-                    revert InsufficientFunds(_newSlaps[i].paymentMethodId);
+                if (!paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(this), stickerPrice)) {
+                    revert InsufficientFunds(stickerPaymentMethodId);
                 }
             }
             slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
-        if (msg.value < ethTotal) {
+        if (msg.value < totalBill) {
             revert InsufficientFunds(0);
         }
         return slapIds;
