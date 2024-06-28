@@ -67,6 +67,13 @@ contract StickerDesigns is Ownable {
         stickerRegistrationFee = _registrationFee;
     }
 
+    function costToPublish(address _publisher) external view returns (uint256) {
+        if (bannedPublishers[_publisher]) {
+            revert PublisherPermissionsIssue();
+        }
+        return goodStandingPublishers[_publisher] ? stickerRegistrationFee : publisherReputationFee + stickerRegistrationFee;
+    }
+
 
     // View methods
 
