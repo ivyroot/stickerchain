@@ -187,6 +187,18 @@ contract StickerChain is Ownable, ERC721A {
         return _nextTokenId();
     }
 
+    function baseTokenCostOfSlaps(NewSlap[] calldata _newSlaps) public view returns (uint256) {
+        uint256 totalCost;
+        for (uint i = 0; i < _newSlaps.length; i++) {
+            totalCost += slapFeeForSize(_newSlaps[i].size);
+            (uint paymentMethodId, uint64 price) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            if (paymentMethodId == 0) {
+                totalCost += price;
+            }
+        }
+        return totalCost;
+    }
+
     function costOfSlaps(address _player, NewSlap[] calldata _newSlaps)
     public view
     returns (PaymentMethodTotal[] memory costs)
