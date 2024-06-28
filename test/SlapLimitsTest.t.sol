@@ -80,7 +80,8 @@ contract SlapLimitsTest is Test {
 
         // try to slap sticker with balance check that always returns 0
         vm.startPrank(address1);
-        NewSlap memory newSlap = NewSlap({
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
             placeId: placeIdUnionSquare,
             stickerId: stickerId1,
             size: 1
@@ -88,7 +89,7 @@ contract SlapLimitsTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
         );
-        stickerChain.slap{value: slapFee}(newSlap);
+        stickerChain.slap{value: slapFee}(newSlaps);
     }
 
     // validate can slap sticker limited to holders if balance is non-zero in holder contract
@@ -114,12 +115,13 @@ contract SlapLimitsTest is Test {
         // slap sticker with balance check that always returns 1
         vm.startPrank(address1);
         uint nextSlapId = stickerChain.nextSlapId();
-        NewSlap memory newSlap = NewSlap({
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
             placeId: placeIdUnionSquare,
             stickerId: stickerId1,
             size: 1
         });
-        stickerChain.slap{value: slapFee}(newSlap);
+        stickerChain.slap{value: slapFee}(newSlaps);
 
         Slap memory slap = stickerChain.getSlap(nextSlapId);
         assertEq(slap.stickerId, stickerId1);
@@ -151,7 +153,8 @@ contract SlapLimitsTest is Test {
 
         // try to slap sticker with balance check that writes on check
         vm.startPrank(address1);
-        NewSlap memory newSlap = NewSlap({
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
             placeId: placeIdUnionSquare,
             stickerId: stickerId1,
             size: 1
@@ -159,7 +162,7 @@ contract SlapLimitsTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
         );
-        stickerChain.slap{value: slapFee}(newSlap);
+        stickerChain.slap{value: slapFee}(newSlaps);
     }
 
     // validate design with limit of 3 can only be slapped 3 times
@@ -182,7 +185,8 @@ contract SlapLimitsTest is Test {
 
         // slap sticker 3 times
         vm.startPrank(address1);
-        NewSlap memory newSlap = NewSlap({
+        NewSlap[] memory newSlap = new NewSlap[](1);
+        newSlap[0] = NewSlap({
             placeId: placeIdUnionSquare,
             stickerId: stickerId1,
             size: 1
@@ -221,7 +225,8 @@ contract SlapLimitsTest is Test {
         stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
 
         // slap sticker
-        NewSlap memory newSlap = NewSlap({
+        NewSlap[] memory newSlap = new NewSlap[](1);
+        newSlap[0] = NewSlap({
             placeId: placeIdUnionSquare,
             stickerId: stickerId1,
             size: 1
@@ -268,7 +273,8 @@ contract SlapLimitsTest is Test {
 
         // slap sticker
         vm.startPrank(address1);
-        NewSlap memory newSlap = NewSlap({
+        NewSlap[] memory newSlap = new NewSlap[](1);
+        newSlap[0] = NewSlap({
             placeId: placeIdUnionSquare,
             stickerId: stickerId1,
             size: 1

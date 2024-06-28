@@ -191,6 +191,9 @@ contract StickerChain is Ownable, ERC721A {
     public view
     returns (PaymentMethodTotal[] memory costs)
     {
+        if (_bannedPlayers[_player]) {
+            revert PlayerIsBanned();
+        }
         uint _newSlapCount = _newSlaps.length;
         // multiple slaps, up to (slap count) payment methods
         uint paymentMethodArraySize = _newSlapCount;
@@ -291,7 +294,7 @@ contract StickerChain is Ownable, ERC721A {
             slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
         if (msg.value < totalBill) {
-            revert InsufficientFunds(0);
+            revert InsufficientFunds(totalBill);
         }
         return slapIds;
     }

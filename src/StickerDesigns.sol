@@ -95,6 +95,7 @@ contract StickerDesigns is Ownable {
                 return PLAYER_NOT_ALLOWED;
             }
         }
+        return 0;
     }
 
     function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {
