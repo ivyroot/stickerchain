@@ -45,8 +45,14 @@ struct Place {
 struct PaymentMethodTotal {
     uint256 paymentMethodId;
     uint256 total;
-    uint256 addlFundsRequired;
-    uint256 addlAllowanceRequired;
+}
+
+enum IssueType { InvalidPlace, PlayerNotAllowed, StickerNotAllowed, ObjectiveNotAllowed, InsufficientFunds, InsufficientAllowance}
+
+struct SlapIssue {
+    IssueType issueCode;
+    uint256 recordId;
+    uint256 value;
 }
 
 struct StoredPlace {
@@ -57,12 +63,12 @@ struct StoredPlace {
 contract StickerChain is Ownable, ERC721A {
     event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint64 size);
 
-    error InsufficientFunds();
+    error InsufficientFunds(uint256 paymentMethodId);
     error InvalidPlaceId(uint256 placeId);
     error PlayerIsBanned();
     error SlapNotAllowed(uint256 stickerId);
     error InvalidStart();
-    error InvalidArguments();
+    error NoValidSlap();
 
     StickerDesigns immutable public stickerDesignsContract;
     IPaymentMethod immutable public paymentMethodContract;
@@ -180,82 +186,139 @@ contract StickerChain is Ownable, ERC721A {
         return _nextTokenId();
     }
 
-    function priceOfSlap(NewSlap calldata _maybeSlap) external view returns (PaymentMethodTotal memory paymentMethod) {
-        (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_maybeSlap.placeId);
-        if (!isValid) {
-            revert InvalidPlaceId(_maybeSlap.placeId);
-        }
-        if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, _maybeSlap.stickerId, _stickerDesignSlapCounts[_maybeSlap.stickerId])) {
-            revert SlapNotAllowed(_maybeSlap.stickerId);
-        }
-        paymentMethod = PaymentMethodTotal({
-            paymentMethodId: 0,
-            total: slapFee * _maybeSlap.size,
-            addlFundsRequired: slapFee,
-            addlAllowanceRequired: 0
-        });
-    }
-
-    function slap(NewSlap calldata _newSlap) external payable {
-        if (_bannedPlayers[msg.sender]) {
-            revert PlayerIsBanned();
-        }
-        _executeSlap(_newSlap.placeId, _newSlap.stickerId, _newSlap.size);
-    }
-
-    function priceOfMultiSlap(NewSlap[] calldata _newSlaps)
+    function costOfSlaps(address _player, NewSlap[] calldata _newSlaps)
     external view
-    returns (PaymentMethodTotal[] memory paymentMethods) {
+    returns (PaymentMethodTotal[] memory costs)
+    {
+        uint _newSlapCount = _newSlaps.length;
+        if (_newSlapCount == 1) {
+            if (_newSlaps[0].paymentMethodId == 0) {
+                costs = new PaymentMethodTotal[](1);
+                costs[0].total = slapFeeForSize(_newSlaps[0].size) + _newSlaps[0].slapFee;
+            }else{
+                costs = new PaymentMethodTotal[](2);
+                costs[0].total = slapFeeForSize(_newSlaps[0].size);
+                costs[1].paymentMethodId = _newSlaps[0].paymentMethodId;
+                costs[1].total = _newSlaps[0].slapFee;
+            }
+            return costs;
+        }
+        // multiple slaps, up to (slap count) payment methods
+        uint paymentMethodArraySize = _newSlapCount;
+        paymentMethodTotals = new PaymentMethodTotal[](paymentMethodArraySize);
         uint paymentMethodCount = 1;
-        paymentMethods = new PaymentMethodTotal[](1);
-        paymentMethods[0] = PaymentMethodTotal({
-            paymentMethodId: 0,
-            total: 0,
-            addlFundsRequired: 0,
-            addlAllowanceRequired: 0
-        });
-        for (uint i = 0; i < _newSlaps.length; i++) {
-            (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_newSlaps[i].placeId);
-            if (!isValid) {
-                revert InvalidPlaceId(_newSlaps[i].placeId);
+        for (uint i = 0; i < _newSlapCount; i++) {
+            paymentMethodTotals[0].total += slapFeeForSize(_newSlaps[i].size);
+            if (_newSlaps[i].paymentMethodId != 0) {
+                bool found = false;
+                for (uint j = 1; j < paymentMethodCount; j++) {
+                    if (paymentMethodTotals[j].paymentMethodId == _newSlaps[i].paymentMethodId) {
+                        paymentMethodTotals[j].total += _newSlaps[i].slapFee;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found && paymentMethodCount < paymentMethodArraySize) {
+                    paymentMethodTotals[paymentMethodCount].paymentMethodId = _newSlaps[i].paymentMethodId;
+                    paymentMethodTotals[paymentMethodCount].total = _newSlaps[i].slapFee;
+                    paymentMethodCount++;
+                }
             }
-            uint currStickerId = _newSlaps[i].stickerId;
-            if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, currStickerId, _stickerDesignSlapCounts[currStickerId])) {
-                revert SlapNotAllowed(currStickerId);
+        }
+        return paymentMethodTotals;
+    }
+
+    function checkSlaps(address _player, NewSlap[] calldata _newSlaps)
+    external view
+    returns (SlapIssue[] memory issues)
+    {
+        uint slapCount = _newSlaps.length;
+        uint issueCount;
+        if (_bannedPlayers[_player]) {
+            issues[issueCount] = SlapIssue({issueCode: IssueType.PlayerNotAllowed, recordId: 0, value: 0});
+            issueCount++;
+        }
+        PaymentMethodTotal[] memory costs = costOfSlaps(_player, _newSlaps);
+        uint paymentMethodCount = costs.length;
+        for (uint i = 0; i < paymentMethodCount; i++) {
+            if (i == 0) {
+                uint playerEthBalance = address(_player).balance;
+                if (costs[0].total > playerEthBalance) {
+                    uint neededEth = costs[0].total - playerEthBalance;
+                    issues[issueCount] = SlapIssue({issueCode: IssueType.InsufficientFunds, recordId: 0, value: neededEth});
+                    issueCount++;
+                }
+                continue;
             }
-            paymentMethods[0].total += slapFee;
+            (uint balanceNeeded, uint allowanceNeeded) = paymentMethodContract.addressCanPay(costs[i].paymentMethodId, _player, address(this), costs[i].total);
+            if (balanceNeeded > 0) {
+                issues[issueCount] = SlapIssue({issueCode: IssueType.InsufficientFunds, recordId: costs[i].paymentMethodId, value: balanceNeeded});
+                issueCount++;
+            }
+            if (allowanceNeeded > 0) {
+                issues[issueCount] = SlapIssue({issueCode: IssueType.InsufficientAllowance, recordId: costs[i].paymentMethodId, value: allowanceNeeded});
+                issueCount++;
+            }
+        }
+        for (uint i = 0; i < slapCount; i++) {
+            uint playerSlapCheckCode = stickerDesignsContract.accountCanSlapSticker(_player, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]);
+            if (playerSlapCheckCode != 0) {
+                issues[issueCount] = SlapIssue({issueCode: IssueType.StickerNotAllowed, recordId:  _newSlaps[i].stickerId, value: playerSlapCheckCode});
+                issueCount++;
+            }
+            (bool placeIsValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_newSlaps[i].placeId);
+            if (!placeIsValid) {
+                issues[issueCount] = SlapIssue({issueCode: IssueType.InvalidPlace, recordId: _newSlaps[i].placeId, value: 0});
+                issueCount++;
+            }
         }
     }
 
-    function multiSlap(NewSlap[] calldata _newSlaps) external payable {
+    function slap(NewSlap[] calldata _newSlaps)
+    external payable
+    returns (uint256[] memory slapIds)
+    {
         if (_bannedPlayers[msg.sender]) {
             revert PlayerIsBanned();
         }
+        uint slapCount = _newSlaps.length;
+        slapIds = new uint256[](slapCount);
         for (uint i = 0; i < _newSlaps.length; i++) {
-            _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
+            if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId])) {
+                revert SlapNotAllowed(_newSlaps[i].stickerId);
+            }
+            ethTotal += slapFeeForSize(_newSlaps[i].size);
+            if (_newSlaps[i].paymentMethodId == 0) {
+                ethTotal += _newSlaps[i].slapFee;
+            }else{
+                if (!paymentMethodContract.chargeAddressForPayment(_newSlaps[i].paymentMethodId, msg.sender, address(this), _newSlaps[i].slapFee)) {
+                    revert InsufficientFunds(_newSlaps[i].paymentMethodId);
+                }
+            }
+            slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
+        if (msg.value < ethTotal) {
+            revert InsufficientFunds(0);
+        }
+        return slapIds;
     }
 
-    function _executeSlap(uint _placeId, uint _stickerId, uint64 size) internal {
+    function _executeSlap(uint _placeId, uint _stickerId, uint64 size) internal returns (uint) {
         // validate slap inputs
         (bool isValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_placeId);
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
-        }
-        if (msg.value < slapFee) {
-            revert InsufficientFunds();
-        }
-        if (!stickerDesignsContract.accountCanSlapSticker(msg.sender, _stickerId, _stickerDesignSlapCounts[_stickerId])) {
-            revert SlapNotAllowed(_stickerId);
         }
 
         // mint slap token
         uint _slappedTokenId = _nextTokenId();
         _mint(msg.sender, 1);
 
+        // track sticker design slap count
+        _stickerDesignSlapCounts[_stickerId] += 1;
+
         // store slap data
         uint _originSlapHeight = _board[_placeId].slapCount + 1;
-        _stickerDesignSlapCounts[_stickerId] += 1;
         _slaps[_slappedTokenId] = StoredSlap({
             placeId: _placeId,
             height: _originSlapHeight,
@@ -279,6 +342,7 @@ contract StickerChain is Ownable, ERC721A {
         }
         emit StickerSlapped(_placeId, _stickerId, msg.sender, _slappedTokenId, size);
         emit Transfer(msg.sender, address(this), _slappedTokenId);
+        return _slappedTokenId;
     }
 
 

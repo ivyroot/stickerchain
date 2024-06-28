@@ -2,6 +2,12 @@
 pragma solidity ^0.8.13;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
+uint constant STICKER_CAPPED = 101;
+uint constant STICKER_SOLD_OUT = 102;
+uint constant PLAYER_NOT_ALLOWED = 103;
+uint constant STICKER_NOT_FOUND = 404;
+uint constant GATE_BROKEN = 411;
+
 struct NewStickerDesign {
     address payoutAddress;
     uint64 price;
@@ -64,16 +70,16 @@ contract StickerDesigns is Ownable {
 
     // View methods
 
-    function accountCanSlapSticker(address _account, uint256 _stickerId, uint256 _currentSlaps) external view  returns (bool) {
+    function accountCanSlapSticker(address _account, uint256 _stickerId, uint256 _currentSlaps) external view  returns (uint) {
         if (!_isValidStickerId(_stickerId)) {
-            return false;
+            return STICKER_NOT_FOUND;
         }
         if (_isCappedStickerDesign(_stickerId)) {
-            return false;
+            return STICKER_CAPPED;
         }
         if ((_stickerDesigns[_stickerId].limit > 0) &&
             (_currentSlaps >= _stickerDesigns[_stickerId].limit)) {
-            return false;
+            return STICKER_SOLD_OUT;
         }
         address gate = _stickerDesigns[_stickerId].limitToHolders;
         if (gate != address(0)) {
@@ -82,14 +88,13 @@ contract StickerDesigns is Ownable {
             );
             if (!success) {
                 // gate contract tried to change state
-                return false;
+                return GATE_BROKEN;
             }
             uint256 balance = abi.decode(returnData, (uint256));
             if (balance == 0) {
-                return false;
+                return PLAYER_NOT_ALLOWED;
             }
         }
-        return true;
     }
 
     function getStickerDesign(uint256 _stickerId) external view returns (StickerDesign memory) {

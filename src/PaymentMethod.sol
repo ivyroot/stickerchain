@@ -57,13 +57,15 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     }
 
     function addressCanPay(uint _paymentMethodId, address _address, address _recipient, uint _amount) public view
-        returns (bool) {
+        returns (uint balanceNeeded, uint allowanceNeeded) {
         IERC20 _coin = getPaymentMethod(_paymentMethodId);
         if (address(_coin) == address(0)) {
             return false;
         }
+        uint accountBalance = _coin.balanceOf(_address);
         uint accountAllowance = _coin.allowance(_address, _recipient);
-        return accountAllowance >= _amount;
+        balanceNeeded = _amount > accountBalance ? _amount - accountBalance : 0;
+        allowanceNeeded = _amount > accountAllowance ? _amount - accountAllowance : 0;
     }
 
     function chargeAddressForPayment(uint _paymentMethodId, address _address, address _recipient, uint _amount) public
