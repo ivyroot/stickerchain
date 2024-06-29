@@ -351,7 +351,6 @@ contract StickerChain is Ownable, ERC721A {
             }
         }
         emit StickerSlapped(_placeId, _stickerId, msg.sender, _slappedTokenId, size);
-        emit Transfer(msg.sender, address(this), _slappedTokenId);
         return _slappedTokenId;
     }
 
