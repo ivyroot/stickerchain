@@ -23,6 +23,9 @@ contract PlayerSlapTest is Test {
     address address2 = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
+    receive() external payable {}
+    fallback() external payable {}
+
     function setUp() public {
         stickerDesigns = new StickerDesigns(adminAddress, 0.002 ether, 0.0005 ether);
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);

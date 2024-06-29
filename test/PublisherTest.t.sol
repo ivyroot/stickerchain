@@ -9,6 +9,9 @@ contract StickerDesignsTest is Test {
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
 
+    receive() external payable {}
+    fallback() external payable {}
+
     // Setup function to deploy the StickerDesigns contract before each test
     function setUp() public {
         stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);

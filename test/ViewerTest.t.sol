@@ -15,6 +15,8 @@ contract ViewerTest is Test {
     bytes metadataCID1 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
     bytes metadataCID2 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54422196e3d342611';
 
+    receive() external payable {}
+    fallback() external payable {}
 
     // Setup function to deploy the StickerDesigns contract before each test
     function setUp() public {

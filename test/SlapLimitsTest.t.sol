@@ -46,6 +46,8 @@ contract SlapLimitsTest is Test {
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
     bytes metadataCID1 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
 
+    receive() external payable {}
+    fallback() external payable {}
 
     function setUp() public {
         vm.deal(publisher, 20 ether);
@@ -73,8 +75,8 @@ contract SlapLimitsTest is Test {
         });
 
         // publish sticker gated by balance check which always returns 0
-        vm.prank(publisher);
-        uint256 feeAmount = publisherFee + newStickerFee;
+        vm.startPrank(publisher);
+        uint256 feeAmount = stickerDesigns.costToPublish(publisher);
         uint stickerId1;
         stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesignA);
 
@@ -292,5 +294,6 @@ contract SlapLimitsTest is Test {
         );
         stickerChain.slap{value: slapFee}(newSlap);
     }
+
 
 }

@@ -70,8 +70,10 @@ contract StickerChain is Ownable, ERC721A {
     error InvalidStart();
     error NoValidSlap();
 
-    StickerDesigns immutable public stickerDesignsContract;
-    IPaymentMethod immutable public paymentMethodContract;
+    StickerDesigns public stickerDesignsContract;
+    bool public stickerDesignsContractIsLocked;
+    IPaymentMethod public paymentMethodContract;
+    bool public paymentMethodContractIsLocked;
 
     uint256 public slapFee;
 
@@ -363,6 +365,27 @@ contract StickerChain is Ownable, ERC721A {
         for (uint i = 0; i < _players.length; i++) {
             _bannedPlayers[_players[i]] = !undoBan;
         }
+    }
+
+    // change the StickerDesigns contract address
+    function setStickerDesignsContract(address payable _newStickerDesignsAddress) external onlyOwner {
+        require(!stickerDesignsContractIsLocked, 'StickerChain: StickerDesigns contract is locked');
+        require(_newStickerDesignsAddress != address(0), 'StickerChain: StickerDesigns contract address cannot be 0');
+        stickerDesignsContract = StickerDesigns(_newStickerDesignsAddress);
+    }
+    function lockStickerDesignsContract() external onlyOwner {
+        stickerDesignsContractIsLocked = true;
+    }
+
+    // change the PaymentMethod contract address
+    function setPaymentMethodContract(address payable _newPaymentMethodAddress) external onlyOwner {
+        require(!paymentMethodContractIsLocked, 'StickerChain: PaymentMethod contract is locked');
+        require(_newPaymentMethodAddress != address(0), 'StickerChain: PaymentMethod contract address cannot be 0');
+        paymentMethodContract = IPaymentMethod(_newPaymentMethodAddress);
+    }
+
+    function lockPaymentMethodContract() external onlyOwner {
+        paymentMethodContractIsLocked = true;
     }
 
 }

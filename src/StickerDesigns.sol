@@ -183,8 +183,8 @@ contract StickerDesigns is Ownable {
             goodStandingPublishers[msg.sender] = true;
         }
         nextStickerDesignId++;
-        emit StickerDesignPublished(newStickerId, msg.sender, newDesign.payoutAddress, newDesign.metadataCID);
         adminFeeRecipient.transfer(msg.value);
+        emit StickerDesignPublished(newStickerId, msg.sender, newDesign.payoutAddress, newDesign.metadataCID);
         return newStickerId;
     }
 

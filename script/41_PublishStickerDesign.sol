@@ -6,6 +6,7 @@ import "forge-std/console.sol";
 import "../src/StickerChain.sol";
 import "../src/StickerDesigns.sol";
 
+
 contract PublishStickerDesign is Script {
     function run() external {
         address payable stickerDesignsContractAddress = payable(vm.envAddress('STICKER_DESIGNS_CONTRACT'));
@@ -24,10 +25,12 @@ contract PublishStickerDesign is Script {
         });
 
 
-        uint256 feeAmount = StickerDesigns.costToPublish(address(this));
+        uint256 feeAmount = stickerDesigns.costToPublish(address(this));
 
         vm.startBroadcast();
         uint256 newStickerId = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
         vm.stopBroadcast();
+
+        console.log('New Sticker ID:', newStickerId);
     }
 }
