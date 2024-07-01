@@ -89,7 +89,7 @@ contract SlapLimitsTest is Test {
             size: 1
         });
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 103)
         );
         stickerChain.slap{value: slapFee}(newSlaps);
     }
@@ -162,7 +162,7 @@ contract SlapLimitsTest is Test {
             size: 1
         });
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 411)
         );
         stickerChain.slap{value: slapFee}(newSlaps);
     }
@@ -203,7 +203,7 @@ contract SlapLimitsTest is Test {
         stickerChain.slap{value: slapFee}(newSlap);
         // try to slap sticker a 4th time
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 102)
         );
         stickerChain.slap{value: slapFee}(newSlap);
     }
@@ -247,7 +247,7 @@ contract SlapLimitsTest is Test {
         // try to slap sticker again
         vm.startPrank(address1);
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 101)
         );
         stickerChain.slap{value: slapFee}(newSlap);
     }
@@ -290,7 +290,7 @@ contract SlapLimitsTest is Test {
         // try to slap sticker again
         vm.startPrank(address1);
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 101)
         );
         stickerChain.slap{value: slapFee}(newSlap);
     }

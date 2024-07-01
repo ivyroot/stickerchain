@@ -66,7 +66,7 @@ contract StickerChain is Ownable, ERC721A {
     error InsufficientFunds(uint256 paymentMethodId);
     error InvalidPlaceId(uint256 placeId);
     error PlayerIsBanned();
-    error SlapNotAllowed(uint256 stickerId);
+    error SlapNotAllowed(uint256 stickerId, uint256 reason);
     error InvalidStart();
     error NoValidSlap();
 
@@ -292,9 +292,11 @@ contract StickerChain is Ownable, ERC721A {
         uint stickerPaymentMethodId;
         uint64 stickerPrice;
         slapIds = new uint256[](slapCount);
+        uint slapIssue;
         for (uint i = 0; i < _newSlaps.length; i++) {
-            if (stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]) != 0) {
-                revert SlapNotAllowed(_newSlaps[i].stickerId);
+            slapIssue = stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]);
+            if (slapIssue != 0) {
+                revert SlapNotAllowed(_newSlaps[i].stickerId, slapIssue);
             }
             totalBill += slapFeeForSize(_newSlaps[i].size);
             (stickerPaymentMethodId, stickerPrice) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);

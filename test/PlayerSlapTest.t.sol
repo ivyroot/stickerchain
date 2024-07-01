@@ -74,7 +74,7 @@ contract PlayerSlapTest is Test {
         });
 
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, 0)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, 0, 404)
         );
         stickerChain.slap{value: slapFee}(newSlaps);
     }
@@ -90,7 +90,7 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, nextStickerId)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, nextStickerId, 404)
         );
         stickerChain.slap{value: slapFee}(newSlaps);
     }
@@ -109,7 +109,7 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, exampleStickerId1)
+            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, exampleStickerId1, 404)
         );
         stickerChain.slap{value: slapFee}(newSlaps);
     }
