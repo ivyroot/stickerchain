@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {ReentrancyGuardTransient} from "openzeppelin-contracts/contracts/utils/ReentrancyGuardTransient.sol";
 import "erc721a/contracts/ERC721A.sol";
 import {IPaymentMethod} from "./IPaymentMethod.sol";
 import {StickerDesign, StickerDesigns} from "./StickerDesigns.sol";
@@ -60,7 +61,7 @@ struct StoredPlace {
     mapping (uint256 => uint256) slaps;
 }
 
-contract StickerChain is Ownable, ERC721A {
+contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint64 size);
 
     error InsufficientFunds(uint256 paymentMethodId);
@@ -281,7 +282,7 @@ contract StickerChain is Ownable, ERC721A {
     }
 
     function slap(NewSlap[] calldata _newSlaps)
-    external payable
+    external payable nonReentrant
     returns (uint256[] memory slapIds)
     {
         if (_bannedPlayers[msg.sender]) {
