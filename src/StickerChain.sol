@@ -283,7 +283,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     function slap(NewSlap[] calldata _newSlaps)
     external payable nonReentrant
-    returns (uint256[] memory slapIds)
+    returns (uint256[] memory slapIds, uint256[] memory slapStatuses)
     {
         if (_bannedPlayers[msg.sender]) {
             revert PlayerIsBanned();
@@ -297,17 +297,19 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         for (uint i = 0; i < _newSlaps.length; i++) {
             slapIssue = stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]);
             if (slapIssue != 0) {
-                revert SlapNotAllowed(_newSlaps[i].stickerId, slapIssue);
+                slapStatuses[i] = slapIssue;
+                continue;
+            }
+            (stickerPaymentMethodId, stickerPrice) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            if (stickerPaymentMethodId != 0) {
+                if (!paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(this), stickerPrice)) {
+                    slapStatuses[i] = ERC20_PAYMENT_FAILED;
+                    continue;
+                }
+            }else{
+                totalBill += stickerPrice;
             }
             totalBill += slapFeeForSize(_newSlaps[i].size);
-            (stickerPaymentMethodId, stickerPrice) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
-            if (stickerPaymentMethodId == 0) {
-                totalBill += stickerPrice;
-            }else{
-                if (!paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(this), stickerPrice)) {
-                    revert InsufficientFunds(stickerPaymentMethodId);
-                }
-            }
             slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
         if (msg.value < totalBill) {

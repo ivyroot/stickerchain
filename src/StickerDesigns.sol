@@ -6,6 +6,7 @@ uint constant STICKER_CAPPED = 101;
 uint constant STICKER_SOLD_OUT = 102;
 uint constant PLAYER_NOT_ALLOWED = 103;
 uint constant STICKER_NOT_FOUND = 404;
+uint constant ERC20_PAYMENT_FAILED = 505;
 uint constant GATE_BROKEN = 411;
 
 struct NewStickerDesign {
