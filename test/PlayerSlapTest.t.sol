@@ -72,11 +72,11 @@ contract PlayerSlapTest is Test {
             stickerId: 0,
             size: 1
         });
-
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, 0, 404)
-        );
-        stickerChain.slap{value: slapFee}(newSlaps);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlaps);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 404);
     }
 
     function testSlapInvalidStickerTooHigh() public {
@@ -89,10 +89,11 @@ contract PlayerSlapTest is Test {
             stickerId: nextStickerId,
             size: 1
         });
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, nextStickerId, 404)
-        );
-        stickerChain.slap{value: slapFee}(newSlaps);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlaps);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 404);
     }
 
     // test cannot slap banned sticker design
@@ -108,10 +109,12 @@ contract PlayerSlapTest is Test {
             stickerId: exampleStickerId1,
             size: 1
         });
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, exampleStickerId1, 404)
-        );
-        stickerChain.slap{value: slapFee}(newSlaps);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlaps);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 404);
+
     }
 
     // test banned player cannot slap
@@ -169,7 +172,7 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps2);
-        (uint256[] memory slapIds) = stickerChain.slap{value: calculatedSlapCost}(newSlaps2);
+        (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps2);
         assertEq(slapIds.length, 2);
         Slap[] memory slaps = stickerChain.getSlaps(slapIds);
         assertEq(slaps[0].stickerId, exampleStickerId1);
@@ -201,7 +204,7 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps2);
-        (uint256[] memory slapIds) = stickerChain.slap{value: calculatedSlapCost}(newSlaps2);
+        (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps2);
 
         // admin bans sticker from second slap
         uint[] memory banStickerIds = new uint[](1);
@@ -233,7 +236,7 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         uint costOfSlaps = stickerChain.baseTokenCostOfSlaps(newSlaps1);
-        (uint256[] memory slapIds) = stickerChain.slap{value: costOfSlaps}(newSlaps1);
+        (uint256[] memory slapIds,) = stickerChain.slap{value: costOfSlaps}(newSlaps1);
         assertEq(slapIds.length, 1);
 
         // load stickers from place

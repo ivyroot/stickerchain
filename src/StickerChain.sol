@@ -4,7 +4,7 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ReentrancyGuardTransient} from "openzeppelin-contracts/contracts/utils/ReentrancyGuardTransient.sol";
 import "erc721a/contracts/ERC721A.sol";
 import {IPaymentMethod} from "./IPaymentMethod.sol";
-import {StickerDesign, StickerDesigns} from "./StickerDesigns.sol";
+import {StickerDesign, StickerDesigns, ERC20_PAYMENT_FAILED} from "./StickerDesigns.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
 
@@ -69,7 +69,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     error PlayerIsBanned();
     error SlapNotAllowed(uint256 stickerId, uint256 reason);
     error InvalidStart();
-    error NoValidSlap();
+    error NoValidSlaps();
 
     StickerDesigns public stickerDesignsContract;
     bool public stickerDesignsContractIsLocked;
@@ -293,6 +293,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         uint stickerPaymentMethodId;
         uint64 stickerPrice;
         slapIds = new uint256[](slapCount);
+        slapStatuses = new uint256[](slapCount);
         uint slapIssue;
         for (uint i = 0; i < _newSlaps.length; i++) {
             slapIssue = stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]);
@@ -315,7 +316,9 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         if (msg.value < totalBill) {
             revert InsufficientFunds(totalBill);
         }
-        return slapIds;
+        if (msg.value > totalBill) {
+            payable(msg.sender).transfer(msg.value - totalBill);
+        }
     }
 
     function _executeSlap(uint _placeId, uint _stickerId, uint64 size) internal returns (uint) {

@@ -88,10 +88,11 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 103)
-        );
-        stickerChain.slap{value: slapFee}(newSlaps);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlaps);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 103);
     }
 
     // validate can slap sticker limited to holders if balance is non-zero in holder contract
@@ -116,16 +117,16 @@ contract SlapLimitsTest is Test {
 
         // slap sticker with balance check that always returns 1
         vm.startPrank(address1);
-        uint nextSlapId = stickerChain.nextSlapId();
         NewSlap[] memory newSlaps = new NewSlap[](1);
         newSlaps[0] = NewSlap({
             placeId: placeIdUnionSquare,
             stickerId: stickerId1,
             size: 1
         });
-        stickerChain.slap{value: slapFee}(newSlaps);
+        (uint256[] memory slapIds, ) =stickerChain.slap{value: slapFee}(newSlaps);
+        assertEq(slapIds.length, 1);
 
-        Slap memory slap = stickerChain.getSlap(nextSlapId);
+        Slap memory slap = stickerChain.getSlap(slapIds[0]);
         assertEq(slap.stickerId, stickerId1);
         assertEq(slap.placeId, placeIdUnionSquare);
         assertEq(slap.size, 1);
@@ -161,10 +162,11 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 411)
-        );
-        stickerChain.slap{value: slapFee}(newSlaps);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) =  stickerChain.slap{value: slapFee}(newSlaps);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 411);
     }
 
     // validate design with limit of 3 can only be slapped 3 times
@@ -193,19 +195,16 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        stickerChain.nextSlapId();
         stickerChain.slap{value: slapFee}(newSlap);
-        stickerChain.nextSlapId();
         stickerChain.slap{value: slapFee}(newSlap);
-
         vm.startPrank(address2);
-        stickerChain.nextSlapId();
         stickerChain.slap{value: slapFee}(newSlap);
         // try to slap sticker a 4th time
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 102)
-        );
-        stickerChain.slap{value: slapFee}(newSlap);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 102);
     }
 
     // validate sticker cannot be slapped after published caps it
@@ -246,10 +245,11 @@ contract SlapLimitsTest is Test {
 
         // try to slap sticker again
         vm.startPrank(address1);
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 101)
-        );
-        stickerChain.slap{value: slapFee}(newSlap);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 101);
     }
 
 
@@ -289,10 +289,11 @@ contract SlapLimitsTest is Test {
 
         // try to slap sticker again
         vm.startPrank(address1);
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.SlapNotAllowed.selector, stickerId1, 101)
-        );
-        stickerChain.slap{value: slapFee}(newSlap);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap);
+        assertEq(slapIds.length, 1);
+        assertEq(slapIds[0], 0);
+        assertEq(slapIssues.length, 1);
+        assertEq(slapIssues[0], 101);
     }
 
 
