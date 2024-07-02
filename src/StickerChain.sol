@@ -67,9 +67,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     error InsufficientFunds(uint256 paymentMethodId);
     error InvalidPlaceId(uint256 placeId);
     error PlayerIsBanned();
-    error SlapNotAllowed(uint256 stickerId, uint256 reason);
     error InvalidStart();
-    error NoValidSlaps();
 
     StickerDesigns public stickerDesignsContract;
     bool public stickerDesignsContractIsLocked;
