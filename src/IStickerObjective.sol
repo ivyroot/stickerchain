@@ -11,7 +11,7 @@ interface IStickerObjective {
 
     function stickerChain() external view returns (address);
 
-    function dev(uint _objectiveId) external view returns (address);
+    function dev() external view returns (address);
 
     function costOfSlaps(address player, FreshSlap[] calldata slaps) external view
         returns (uint baseCoinCost, address erc20Coin, uint erc20Cost);
