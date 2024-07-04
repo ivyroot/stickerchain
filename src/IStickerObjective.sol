@@ -13,6 +13,10 @@ interface IStickerObjective {
 
     function dev() external view returns (address);
 
+    function name() external view returns (string memory);
+
+    function url() external view returns (string memory);
+
     function costOfSlaps(address player, FreshSlap[] calldata slaps) external view
         returns (uint baseCoinCost, address erc20Coin, uint erc20Cost);
 

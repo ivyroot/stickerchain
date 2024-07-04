@@ -4,10 +4,8 @@ import {IStickerObjective} from "./IStickerObjective.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 
-
 contract StickerObjectives is Ownable {
-    mapping (uint => address) public objectives;
-    mapping (uint => address) public devs;
+    mapping (uint => IStickerObjective) public objectives;
     mapping (address => uint) public objectivesLookup;
     mapping (address => bool) public bannedObjectives;
     mapping (address => bool) public bannedAddresses;
@@ -31,11 +29,11 @@ contract StickerObjectives is Ownable {
     }
 
     function getObjective(uint _objectiveId) public view returns (IStickerObjective objective) {
-        address _objectiveAddress = objectives[_objectiveId];
-        if (bannedObjectives[_objectiveAddress]) {
+        IStickerObjective loadedObjective = objectives[_objectiveId];
+        if (bannedObjectives[address(loadedObjective)]) {
             return objective;
         }
-        objective = IStickerObjective(_objectiveAddress);
+        objective = loadedObjective;
     }
 
     function getObjectives(uint _offset, uint _count) external view returns (IStickerObjective[] memory) {
@@ -60,7 +58,10 @@ contract StickerObjectives is Ownable {
         return objectivesLookup[_objectiveAddress];
     }
 
-    function addNewObjective(IStickerObjective _objective) external payable returns (uint) {
+    function addNewObjective(IStickerObjective _objective)
+        external payable
+        returns (uint) {
+
         if (msg.value != addNewObjectiveFee) {
             revert IncorrectFeePayment();
         }
@@ -75,8 +76,7 @@ contract StickerObjectives is Ownable {
             revert AddressNotAllowed();
         }
         uint _objectiveId = objectiveCount;
-        objectives[_objectiveId] = address(_objective);
-        devs[_objectiveId] = _dev;
+        objectives[_objectiveId] = _objective;
         objectivesLookup[address(_objective)] = _objectiveId;
         objectiveCount++;
         emit NewObjective(address(_objective), _objectiveId, _dev);
