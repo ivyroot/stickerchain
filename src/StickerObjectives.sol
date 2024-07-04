@@ -6,8 +6,8 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract StickerObjectives is Ownable {
     address public immutable stickerChain;
-    mapping (uint => IStickerObjective) public objectives;
-    mapping (address => uint) public objectivesLookup;
+    mapping (uint => IStickerObjective) private objectives;
+    mapping (address => uint) private objectivesLookup;
     mapping (address => bool) public bannedObjectives;
     mapping (address => bool) public bannedAddresses;
     uint public objectiveCount;

@@ -6,8 +6,8 @@ import {IPaymentMethod} from "./IPaymentMethod.sol";
 
 
 contract PaymentMethod is Ownable, IPaymentMethod {
-    mapping (uint => address) public coins;
-    mapping (address => uint) public coinsLookup;
+    mapping (uint => address) private coins;
+    mapping (address => uint) private coinsLookup;
     mapping (address => bool) public bannedCoins;
     mapping (address => bool) public bannedAddresses;
     uint public coinCount;
