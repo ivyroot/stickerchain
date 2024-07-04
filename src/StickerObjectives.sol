@@ -5,6 +5,7 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 
 contract StickerObjectives is Ownable {
+    address public immutable stickerChain;
     mapping (uint => IStickerObjective) public objectives;
     mapping (address => uint) public objectivesLookup;
     mapping (address => bool) public bannedObjectives;
@@ -23,7 +24,8 @@ contract StickerObjectives is Ownable {
     error IncorrectFeePayment();
     error ObjectiveAlreadyExists();
 
-    constructor(address _initialAdmin, uint _addNewObjectiveFee) Ownable(_initialAdmin) {
+    constructor(address _stickerChain, address _initialAdmin, uint _addNewObjectiveFee) Ownable(_initialAdmin) {
+        stickerChain = _stickerChain;
         adminFeeRecipient = _initialAdmin;
         addNewObjectiveFee = _addNewObjectiveFee;
     }
@@ -73,6 +75,9 @@ contract StickerObjectives is Ownable {
         }
         address _dev = _objective.dev();
         if (bannedAddresses[_dev] || _dev == address(0)) {
+            revert AddressNotAllowed();
+        }
+        if (_objective.stickerChain() != stickerChain) {
             revert AddressNotAllowed();
         }
         uint _objectiveId = objectiveCount;

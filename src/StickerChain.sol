@@ -5,6 +5,7 @@ import {ReentrancyGuardTransient} from "openzeppelin-contracts/contracts/utils/R
 import "erc721a/contracts/ERC721A.sol";
 import {IPaymentMethod} from "./IPaymentMethod.sol";
 import {StickerDesign, StickerDesigns, ERC20_PAYMENT_FAILED} from "./StickerDesigns.sol";
+import {StickerObjectives} from "./StickerObjectives.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
 
@@ -73,6 +74,8 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     bool public stickerDesignsContractIsLocked;
     IPaymentMethod public paymentMethodContract;
     bool public paymentMethodContractIsLocked;
+    StickerObjectives public stickerObjectivesContract;
+    bool public stickerObjectivesContractIsLocked;
 
     uint256 public slapFee;
 
@@ -391,6 +394,17 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     function lockPaymentMethodContract() external onlyOwner {
         paymentMethodContractIsLocked = true;
+    }
+
+    // change the StickerObjectives contract address
+    function setStickerObjectivesContract(address payable _newStickerObjectivesAddress) external onlyOwner {
+        require(!stickerObjectivesContractIsLocked, 'StickerChain: StickerObjectives contract is locked');
+        require(_newStickerObjectivesAddress != address(0), 'StickerChain: StickerObjectives contract address cannot be 0');
+        stickerObjectivesContract = StickerObjectives(_newStickerObjectivesAddress);
+    }
+
+    function lockStickerObjectivesContract() external onlyOwner {
+        stickerObjectivesContractIsLocked = true;
     }
 
 }
