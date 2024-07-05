@@ -88,7 +88,8 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlaps);
+        uint256[] memory objectives;
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlaps, objectives);
         assertEq(slapIds.length, 1);
         assertEq(slapIds[0], 0);
         assertEq(slapIssues.length, 1);
@@ -123,7 +124,8 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        (uint256[] memory slapIds, ) =stickerChain.slap{value: slapFee}(newSlaps);
+        uint256[] memory objectives;
+        (uint256[] memory slapIds, ) = stickerChain.slap{value: slapFee}(newSlaps, objectives);
         assertEq(slapIds.length, 1);
 
         Slap memory slap = stickerChain.getSlap(slapIds[0]);
@@ -162,7 +164,8 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        (uint256[] memory slapIds, uint256[] memory slapIssues) =  stickerChain.slap{value: slapFee}(newSlaps);
+        uint256[] memory objectives;
+        (uint256[] memory slapIds, uint256[] memory slapIssues) =  stickerChain.slap{value: slapFee}(newSlaps, objectives);
         assertEq(slapIds.length, 1);
         assertEq(slapIds[0], 0);
         assertEq(slapIssues.length, 1);
@@ -195,12 +198,13 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        stickerChain.slap{value: slapFee}(newSlap);
-        stickerChain.slap{value: slapFee}(newSlap);
+        uint256[] memory objectives;
+        stickerChain.slap{value: slapFee}(newSlap, objectives);
+        stickerChain.slap{value: slapFee}(newSlap, objectives);
         vm.startPrank(address2);
-        stickerChain.slap{value: slapFee}(newSlap);
+        stickerChain.slap{value: slapFee}(newSlap, objectives);
         // try to slap sticker a 4th time
-        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap, objectives);
         assertEq(slapIds.length, 1);
         assertEq(slapIds[0], 0);
         assertEq(slapIssues.length, 1);
@@ -233,7 +237,8 @@ contract SlapLimitsTest is Test {
             size: 1
         });
         vm.startPrank(address1);
-        stickerChain.slap{value: slapFee}(newSlap);
+        uint256[] memory objectives;
+        stickerChain.slap{value: slapFee}(newSlap, objectives);
 
         // cap sticker
         vm.startPrank(publisher);
@@ -245,7 +250,7 @@ contract SlapLimitsTest is Test {
 
         // try to slap sticker again
         vm.startPrank(address1);
-        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap, objectives);
         assertEq(slapIds.length, 1);
         assertEq(slapIds[0], 0);
         assertEq(slapIssues.length, 1);
@@ -281,7 +286,8 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        stickerChain.slap{value: slapFee}(newSlap);
+        uint256[] memory objectives;
+        stickerChain.slap{value: slapFee}(newSlap, objectives);
 
         // advance by 2 minutes and 8 blocks
         skip(120);
@@ -289,7 +295,7 @@ contract SlapLimitsTest is Test {
 
         // try to slap sticker again
         vm.startPrank(address1);
-        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap);
+        (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap, objectives);
         assertEq(slapIds.length, 1);
         assertEq(slapIds[0], 0);
         assertEq(slapIssues.length, 1);

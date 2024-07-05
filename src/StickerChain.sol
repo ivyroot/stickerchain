@@ -6,6 +6,7 @@ import "erc721a/contracts/ERC721A.sol";
 import {IPaymentMethod} from "./IPaymentMethod.sol";
 import {StickerDesign, StickerDesigns, ERC20_PAYMENT_FAILED} from "./StickerDesigns.sol";
 import {StickerObjectives} from "./StickerObjectives.sol";
+import {FreshSlap, IStickerObjective} from "./IStickerObjective.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
 
@@ -282,7 +283,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
     }
 
-    function slap(NewSlap[] calldata _newSlaps)
+    function slap(NewSlap[] calldata _newSlaps, uint256[] calldata _objectives)
     external payable nonReentrant
     returns (uint256[] memory slapIds, uint256[] memory slapStatuses)
     {
@@ -291,6 +292,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
         uint slapCount = _newSlaps.length;
         uint totalBill;
+        uint slapSuccessCount;
         uint stickerPaymentMethodId;
         uint64 stickerPrice;
         slapIds = new uint256[](slapCount);
@@ -312,8 +314,42 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 totalBill += stickerPrice;
             }
             totalBill += slapFeeForSize(_newSlaps[i].size);
+            slapSuccessCount++;
             slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
+        // call any provided objectives
+        if (_objectives.length > 0 && slapSuccessCount > 0) {
+            // make a list of only slaps that succeeded
+            FreshSlap[] memory freshSlaps = new FreshSlap[](slapSuccessCount);
+            uint currSlapIndex;
+            for (uint i = 0; i < slapCount; i++) {
+                if (slapStatuses[i] == 0) {
+                    freshSlaps[currSlapIndex] = FreshSlap({
+                        slapId: slapIds[i],
+                        placeId: _newSlaps[i].placeId,
+                        stickerId: _newSlaps[i].stickerId,
+                        size: _newSlaps[i].size
+                    });
+                    currSlapIndex++;
+                }
+            }
+            // pass the list of slaps to each objective
+            for (uint i = 0; i < _objectives.length; i++) {
+                IStickerObjective obj = stickerObjectivesContract.getObjective(_objectives[i]);
+                if (address(obj) == address(0)) {
+                    continue;
+                }
+                (uint baseCoinCost, address erc20Coin, uint erc20Cost) = obj.costOfSlaps(msg.sender, freshSlaps);
+                if (erc20Coin != address(0)) {
+                    if (!paymentMethodContract.chargeAddressForPayment(paymentMethodContract.getIdOfPaymentMethod(erc20Coin), msg.sender, address(this), erc20Cost)) {
+                        continue;
+                    }
+                }
+                totalBill += baseCoinCost;
+                obj.slapInObjective(msg.sender, freshSlaps);
+            }
+        }
+
         if (msg.value < totalBill) {
             revert InsufficientFunds(totalBill);
         }
