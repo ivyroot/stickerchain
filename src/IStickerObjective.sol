@@ -11,20 +11,20 @@ interface IStickerObjective {
 
     function stickerChain() external view returns (address);
 
-    function dev() external view returns (address);
+    function owner() external view returns (address);
 
-    function objectiveName() external view returns (string memory);
+    function name() external view returns (string memory);
 
     function url() external view returns (string memory);
 
-    // optional, return empty array if not implemented
-    // for example objectives which apply to all places
+    // 0 == ¯\_(ツ)_/¯
+    function placeCount() external view returns (uint);
+
+    // [] == ¯\_(ツ)_/¯
     function placeList() external view returns (uint[] memory);
 
-    function placeInObjective(uint placeId) external view returns (bool);
-
     function costOfSlaps(address player, FreshSlap[] calldata slaps) external view
-        returns (uint baseCoinCost, address erc20Coin, uint erc20Cost);
+        returns (uint paymentMethodId, uint cost, address recipient);
 
     function slapInObjective(address player, FreshSlap[] calldata slaps) external payable
         returns (uint[] memory includedSlapIds);

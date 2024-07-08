@@ -73,8 +73,8 @@ contract StickerObjectives is Ownable {
         if (objectivesLookup[address(_objective)] != 0) {
             revert ObjectiveAlreadyExists();
         }
-        address _dev = _objective.dev();
-        if (bannedAddresses[_dev] || _dev == address(0)) {
+        address _objectiveOwner = _objective.owner();
+        if (bannedAddresses[_objectiveOwner] || _objectiveOwner == address(0) || _objectiveOwner != msg.sender){
             revert AddressNotAllowed();
         }
         if (_objective.stickerChain() != stickerChain) {
@@ -84,7 +84,7 @@ contract StickerObjectives is Ownable {
         objectives[_objectiveId] = _objective;
         objectivesLookup[address(_objective)] = _objectiveId;
         objectiveCount++;
-        emit NewObjective(address(_objective), _objectiveId, _dev);
+        emit NewObjective(address(_objective), _objectiveId, _objectiveOwner);
         return _objectiveId;
     }
 
