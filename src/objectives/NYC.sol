@@ -33,6 +33,9 @@ struct PlaceSlapInfo {
 }
 
 contract NYC is ERC20, IStickerObjective, Ownable {
+
+    error InvalidCaller();
+
     uint256 immutable public genesisTime;
     address immutable public stickerChain;
     address public feeRecipient;
@@ -183,6 +186,9 @@ contract NYC is ERC20, IStickerObjective, Ownable {
     }
 
     function slapInObjective(address, FreshSlap[] calldata slaps) public payable override returns (uint[] memory includedSlapIds) {
+        if (msg.sender != stickerChain) {
+            revert InvalidCaller();
+        }
         includedSlapIds = new uint[](slaps.length);
         uint _emissionRate = getOrUpdateEmissionRate();
         for (uint i = 0; i < slaps.length; i++) {
