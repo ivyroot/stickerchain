@@ -13,6 +13,15 @@ import {IStickerObjective, FreshSlap} from "../IStickerObjective.sol";
 //    \__ \ |   ` | \   /| |
 //    (   / | |\  |  | | | |____
 //     |_|  |_| \_|  |_|  \_____|
+//
+//
+//    Slaps at Block Places in NYC earn $NYC based on how many
+//    seconds they are live in the objective.
+//
+//    ( EMISSION RATE * SECONDS LIVE ) accrues to a sticker
+//    at the time it is slapped over.
+//
+//    The emission rate decreases every week.
 
 
 
@@ -24,8 +33,9 @@ struct PlaceSlapInfo {
 }
 
 contract NYC is ERC20, IStickerObjective, Ownable {
-    uint256 immutable public genesis;
+    uint256 immutable public genesisTime;
     address immutable public stickerChain;
+    address public feeRecipient;
     string public url;
     uint256 public paymentMethodId;
     uint256 public slapFee;
@@ -33,18 +43,36 @@ contract NYC is ERC20, IStickerObjective, Ownable {
     mapping (uint => bool) public placeIncluded;
     mapping (uint => PlaceSlapInfo) public currentSlaps;
 
+    uint private emissionRate;
+    uint private lastUpdateOfEmissionRate;
 
     constructor(address _stickerChain, address _initialAdmin, string memory _name, string memory _ticker, string memory _url)
         Ownable(_initialAdmin)
         ERC20(_name, _ticker)
     {
-        genesis = block.timestamp;
         stickerChain = _stickerChain;
+        feeRecipient = _initialAdmin;
+
+        genesisTime = block.timestamp;
+        emissionRate = 1 ether;
+        lastUpdateOfEmissionRate = genesisTime;
+
         url = _url;
         uint[] memory places = placeList();
         for (uint i = 0; i < placeCount; i++) {
             placeIncluded[places[i]] = true;
         }
+    }
+
+
+    uint private constant decayFactor = 9 * (1 ether / 10); // 0.9 represented as a fraction of 1 ether
+
+    function getOrUpdateEmissionRate() private returns (uint) {
+        if ((block.timestamp - lastUpdateOfEmissionRate) > 604800) {
+            emissionRate = emissionRate * decayFactor / 1 ether;
+            lastUpdateOfEmissionRate = block.timestamp;
+        }
+        return emissionRate;
     }
 
     function name() public view override(ERC20, IStickerObjective) returns (string memory) {
@@ -60,15 +88,16 @@ contract NYC is ERC20, IStickerObjective, Ownable {
         url = _url;
     }
 
+    function setFeeRecipient(address _feeRecipient) external onlyOwner {
+        feeRecipient = _feeRecipient;
+    }
+
     // owner only method to set slap fee
-    function setSlapFee(uint256 _slapFee) external onlyOwner {
+    function setSlapFee(uint256 _paymentMethodId, uint256 _slapFee) external onlyOwner {
+        paymentMethodId = _paymentMethodId;
         slapFee = _slapFee;
     }
 
-    // owner only method to set payment method id
-    function setPaymentMethodId(uint256 _paymentMethodId) external onlyOwner {
-        paymentMethodId = _paymentMethodId;
-    }
 
     function placeList() public pure override returns (uint[] memory _places) {
         _places = new uint[](placeCount);
@@ -149,17 +178,19 @@ contract NYC is ERC20, IStickerObjective, Ownable {
                 totalCost += slapFee;
             }
         }
-        return (0, totalCost, owner());
+        return (paymentMethodId, totalCost, feeRecipient);
     }
 
     function slapInObjective(address, FreshSlap[] calldata slaps) public payable override returns (uint[] memory includedSlapIds) {
         includedSlapIds = new uint[](slaps.length);
+        uint emissionRate = getOrUpdateEmissionRate();
         for (uint i = 0; i < slaps.length; i++) {
             if (placeIncluded[slaps[i].placeId]) {
                 // emit tokens to slapped over player
                 PlaceSlapInfo memory currentSlap = currentSlaps[slaps[i].placeId];
                 address slapOwner = IERC721(stickerChain).ownerOf(currentSlap.slapId);
-                _mint(slapOwner, 1000); // TODO dynamic amount
+                uint accruedTotal = (block.timestamp - currentSlap.slapTime) * emissionRate;
+                _mint(slapOwner, accruedTotal);
 
                 // put new slap at place
                  currentSlaps[slaps[i].placeId] = PlaceSlapInfo({
