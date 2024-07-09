@@ -36,10 +36,10 @@ contract NYC is ERC20, IStickerObjective, Ownable {
 
     error InvalidCaller();
 
-    uint256 immutable public genesisTime;
     address immutable public stickerChain;
-    address public feeRecipient;
+    uint256 immutable public genesisTime;
     string public url;
+    address public feeRecipient;
     uint256 public paymentMethodId;
     uint256 public slapFee;
     uint256 public constant placeCount = 65;
