@@ -196,9 +196,11 @@ contract NYC is ERC20, IStickerObjective, Ownable {
             if (placeIncluded[slaps[i].placeId]) {
                 // emit tokens to slapped over player
                 PlaceSlapInfo memory currentSlap = currentSlaps[slaps[i].placeId];
-                address slapOwner = IERC721(stickerChain).ownerOf(currentSlap.slapId);
-                uint accruedTotal = (block.timestamp - currentSlap.slapTime) * _emissionRate;
-                _mint(slapOwner, accruedTotal);
+                if (currentSlap.slapId != 0) {
+                    address slapOwner = IERC721(stickerChain).ownerOf(currentSlap.slapId);
+                    uint accruedTotal = (block.timestamp - currentSlap.slapTime) * _emissionRate;
+                    _mint(slapOwner, accruedTotal);
+                }
 
                 // put new slap at place
                  currentSlaps[slaps[i].placeId] = PlaceSlapInfo({
