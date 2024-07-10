@@ -15,13 +15,14 @@ import {IStickerObjective, FreshSlap} from "../IStickerObjective.sol";
 //     |_|  |_| \_|  |_|  \_____|
 //
 //
-//    Slaps at Block Places in NYC earn $NYC based on how many
-//    seconds they are live in the objective.
+//    Slap at places in NYC to play (see list below).
 //
-//    ( EMISSION RATE * SECONDS LIVE ) accrues to a sticker
+//    Earn $NYC based on how many seconds your slap is up.
+//    EMISSION RATE X SECONDS LIVE accrues to a slap
 //    at the time it is slapped over.
 //
-//    The emission rate decreases every week.
+//    The emission rate decreases by 20% every week.
+//
 
 
 
