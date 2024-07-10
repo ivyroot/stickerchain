@@ -68,7 +68,7 @@ contract NYC is ERC20, IStickerObjective, Ownable {
     }
 
 
-    uint private constant decayFactor = 9 * (1 ether / 10); // 0.9 represented as a fraction of 1 ether
+    uint private constant decayFactor = 8 * (1 ether / 10); // 0.8 represented as a fraction of 1 ether
 
     function getOrUpdateEmissionRate() private returns (uint) {
         // decrease emission rate every week
