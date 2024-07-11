@@ -32,7 +32,6 @@ struct StoredSlap {
     uint256 stickerId;
     uint256 slappedAt;
     uint64 size;
-    address player;
 }
 
 struct Place {
@@ -135,7 +134,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             height: storedSlap.height,
             slappedAt: storedSlap.slappedAt,
             size: storedSlap.size,
-            player: storedSlap.player
+            player: ownerOf(_slapId)
         });
     }
 
@@ -380,8 +379,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             height: _originSlapHeight,
             stickerId: _stickerId,
             slappedAt: block.timestamp,
-            size: size,
-            player: msg.sender
+            size: size
         });
         if (size == 1) {
             _board[_placeId].slaps[_originSlapHeight] = _slappedTokenId;
