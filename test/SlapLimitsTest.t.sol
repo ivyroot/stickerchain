@@ -55,8 +55,8 @@ contract SlapLimitsTest is Test {
         vm.deal(address1, 20 ether);
         vm.deal(address2, 20 ether);
         vm.deal(address3, 20 ether);
-        stickerDesigns = new StickerDesigns(adminAddress, 0.002 ether, 0.0005 ether);
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
+        stickerDesigns = new StickerDesigns(paymentMethod, adminAddress, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
     }
 

@@ -32,8 +32,8 @@ contract Erc20ObjectiveTest is Test {
     fallback() external payable {}
 
     function setUp() public {
-        stickerDesigns = new StickerDesigns(adminAddress, 0.002 ether, 0.0005 ether);
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
+        stickerDesigns = new StickerDesigns(paymentMethod, adminAddress, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
         stickerObjectives = new StickerObjectives(address(stickerChain), adminAddress, 0.002 ether);
         stickerChain.setStickerObjectivesContract(payable(address(stickerObjectives)));

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {IPaymentMethod} from "./IPaymentMethod.sol";
 
 uint constant STICKER_CAPPED = 101;
 uint constant STICKER_SOLD_OUT = 102;
@@ -36,7 +38,7 @@ contract StickerDesigns is Ownable {
     // sticker events
     event StickerDesignPublished(uint256 indexed stickerId, address indexed publisher, address indexed payoutAddress, bytes metadataCID);
     event StickerPublisherChanged(uint256 indexed stickerId, address indexed from, address indexed to);
-    event StickerPriceSet(uint256 indexed stickerId, uint256 price);
+    event StickerPriceSet(uint256 indexed stickerId, uint256 indexed paymentMethodId, uint256 price);
     event StickerEndTimeChanged(uint256 indexed stickerId, uint256 endTime);
     event StickerCapped(uint256 indexed stickerId);
     // admin events
@@ -51,7 +53,9 @@ contract StickerDesigns is Ownable {
     error InvalidAccount();
     error InvalidRecipient();
     error InvalidStickerDesignId(uint256 stickerId);
+    error InvalidPaymentMethodId(uint256 paymentMethodId);
 
+    IPaymentMethod public paymentMethodContract;
     address payable public adminFeeRecipient;
     uint256 public publisherReputationFee;
     uint256 public stickerRegistrationFee;
@@ -62,7 +66,8 @@ contract StickerDesigns is Ownable {
     mapping (uint256 => bool) private bannedStickerDesigns;
     mapping (uint256 => StickerDesign) private _stickerDesigns;
 
-    constructor(address _initialAdmin, uint _reputationFee, uint _registrationFee) Ownable(_initialAdmin) {
+    constructor(IPaymentMethod _payments, address _initialAdmin, uint _reputationFee, uint _registrationFee) Ownable(_initialAdmin) {
+        paymentMethodContract = _payments;
         _persistAdminFeeRecipient(_initialAdmin);
         publisherReputationFee = _reputationFee;
         stickerRegistrationFee = _registrationFee;
@@ -216,12 +221,17 @@ contract StickerDesigns is Ownable {
         _stickerDesigns[_stickerId].payoutAddress = _recipient;
     }
 
-    function setStickerPrice(uint256 _stickerId, uint64 _price) public {
+    function setStickerPrice(uint256 _stickerId, uint256 _paymentMethodId, uint64 _price) public {
         if (!_canModifyStickerDesign(msg.sender, _stickerId)) {
             revert PublisherPermissionsIssue();
         }
+        if ((_paymentMethodId != 0) &&
+            (paymentMethodContract.getPaymentMethod(_paymentMethodId) == IERC20(address(0)))) {
+                revert InvalidPaymentMethodId(_paymentMethodId);
+        }
+        _stickerDesigns[_stickerId].paymentMethodId = _paymentMethodId;
         _stickerDesigns[_stickerId].price = _price;
-        emit StickerPriceSet(_stickerId, _price);
+        emit StickerPriceSet(_stickerId, _paymentMethodId, _price);
     }
 
     function _isCappedStickerDesign(uint256 _stickerId) private view returns (bool) {
@@ -269,6 +279,14 @@ contract StickerDesigns is Ownable {
         }
         adminFeeRecipient = payable(newRecipient);
         emit AdminFeeRecipientChanged(newRecipient);
+    }
+
+    // set payment method contract, ensuring it is not the zero address
+    function setPaymentMethodContract(IPaymentMethod _payments) external onlyOwner {
+        if (address(_payments) == address(0)) {
+            revert InvalidAccount();
+        }
+        paymentMethodContract = _payments;
     }
 
     function setAdminFeeRecipient(address _recipient) external onlyOwner {

@@ -3,18 +3,23 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "../src/StickerDesigns.sol"; // Adjust the path as necessary
+import "../src/PaymentMethod.sol";
 
 contract StickerDesignsTest is Test {
     StickerDesigns stickerDesigns;
+    PaymentMethod paymentMethod;
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
+    address adminAddress = address(this);
+
 
     receive() external payable {}
     fallback() external payable {}
 
     // Setup function to deploy the StickerDesigns contract before each test
     function setUp() public {
-        stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
+        paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
+        stickerDesigns = new StickerDesigns(paymentMethod, msg.sender, 0.002 ether, 0.0005 ether);
     }
 
     // Test publishing a sticker design with the fee for a first-time publisher

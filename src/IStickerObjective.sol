@@ -13,6 +13,8 @@ interface IStickerObjective {
 
     function owner() external view returns (address);
 
+    function feeRecipient() external view returns (address);
+
     function name() external view returns (string memory);
 
     function url() external view returns (string memory);
