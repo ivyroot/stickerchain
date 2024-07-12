@@ -4,6 +4,7 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ReentrancyGuardTransient} from "openzeppelin-contracts/contracts/utils/ReentrancyGuardTransient.sol";
 import "erc721a/contracts/ERC721A.sol";
 import {IPaymentMethod} from "./IPaymentMethod.sol";
+import {IPayoutMethod} from "./IPayoutMethod.sol";
 import {StickerDesign, StickerDesigns, ERC20_PAYMENT_FAILED} from "./StickerDesigns.sol";
 import {StickerObjectives} from "./StickerObjectives.sol";
 import {FreshSlap, IStickerObjective} from "./IStickerObjective.sol";
@@ -70,10 +71,18 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     error PlayerIsBanned();
     error InvalidStart();
 
-    StickerDesigns public stickerDesignsContract;
-    bool public stickerDesignsContractIsLocked;
     IPaymentMethod public paymentMethodContract;
     bool public paymentMethodContractIsLocked;
+
+    IPayoutMethod public publisherPayoutMethod;
+    bool public publisherPayoutMethodIsLocked;
+
+    StickerDesigns public stickerDesignsContract;
+    bool public stickerDesignsContractIsLocked;
+
+    IPayoutMethod public objectivePayoutMethod;
+    bool public objectivePayoutMethodIsLocked;
+
     StickerObjectives public stickerObjectivesContract;
     bool public stickerObjectivesContractIsLocked;
 
@@ -195,7 +204,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         uint256 totalCost;
         for (uint i = 0; i < _newSlaps.length; i++) {
             totalCost += slapFeeForSize(_newSlaps[i].size);
-            (uint paymentMethodId, uint64 price) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            (uint paymentMethodId, uint64 price,) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
             if (paymentMethodId == 0) {
                 totalCost += price;
             }
@@ -217,7 +226,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         uint paymentMethodCount = 1;
         for (uint i = 0; i < _newSlapCount; i++) {
             costs[0].total += slapFeeForSize(_newSlaps[i].size);
-            (uint paymentMethodId, uint64 price) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            (uint paymentMethodId, uint64 price,) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
             if (paymentMethodId != 0) {
                 bool found = false;
                 for (uint j = 1; j < paymentMethodCount; j++) {
@@ -294,6 +303,8 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         uint slapSuccessCount;
         uint stickerPaymentMethodId;
         uint64 stickerPrice;
+        uint stickerBaseTokenPrice;
+        address stickerFeeRecipient;
         slapIds = new uint256[](slapCount);
         slapStatuses = new uint256[](slapCount);
         uint slapIssue;
@@ -303,16 +314,23 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 slapStatuses[i] = slapIssue;
                 continue;
             }
-            (stickerPaymentMethodId, stickerPrice) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
-            if (stickerPaymentMethodId != 0) {
-                if (!paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(this), stickerPrice)) {
-                    slapStatuses[i] = ERC20_PAYMENT_FAILED;
-                    continue;
+            stickerBaseTokenPrice = 0;
+            (stickerPaymentMethodId, stickerPrice, stickerFeeRecipient) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            if (stickerPrice > 0)  {
+                if (stickerPaymentMethodId == 0) {
+                    totalBill += stickerPrice;
+                    stickerBaseTokenPrice = stickerPrice;
+                }else{
+                    if (!paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(publisherPayoutMethod), stickerPrice)) {
+                        slapStatuses[i] = ERC20_PAYMENT_FAILED;
+                        continue;
+                    }
                 }
-            }else{
-                totalBill += stickerPrice;
+                publisherPayoutMethod.deposit{value: stickerBaseTokenPrice}(stickerPaymentMethodId, stickerPrice, stickerFeeRecipient, false);
             }
-            totalBill += slapFeeForSize(_newSlaps[i].size);
+            uint protocolFee = slapFeeForSize(_newSlaps[i].size);
+            publisherPayoutMethod.deposit{value: protocolFee}(0, protocolFee, stickerFeeRecipient, true);
+            totalBill += protocolFee;
             slapSuccessCount++;
             slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
@@ -338,18 +356,20 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 if (address(obj) == address(0)) {
                     continue;
                 }
+                uint objectiveBaseTokenPrice = 0;
                 (uint objPaymentMethodId, uint objCost, address objRecipient) = obj.costOfSlaps(msg.sender, freshSlaps);
-                if (objPaymentMethodId != 0) {
+                if (objPaymentMethodId == 0) {
+                    totalBill += objCost;
+                    objectiveBaseTokenPrice = objCost;
+                }else{
                     if (!paymentMethodContract.chargeAddressForPayment(objPaymentMethodId, msg.sender, objRecipient, objCost)) {
                         continue;
                     }
-                }else{
-                    totalBill += objCost;
                 }
+                objectivePayoutMethod.deposit{value: objectiveBaseTokenPrice}(objPaymentMethodId, objCost, objRecipient, false);
                 obj.slapInObjective(msg.sender, freshSlaps);
             }
         }
-
         if (msg.value < totalBill) {
             revert InsufficientFunds(totalBill);
         }

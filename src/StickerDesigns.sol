@@ -115,10 +115,14 @@ contract StickerDesigns is Ownable {
         return _readStickerDesign(_stickerId);
     }
 
-    function getStickerDesignPrice(uint256 _stickerId) external view returns (uint256 paymentMethodId, uint64 price) {
+    function getStickerDesignPrice(uint256 _stickerId) external view returns (uint256 paymentMethodId, uint64 price, address recipient) {
         if (_isValidStickerId(_stickerId)) {
             paymentMethodId = _stickerDesigns[_stickerId].paymentMethodId;
             price = _stickerDesigns[_stickerId].price;
+            recipient = _stickerDesigns[_stickerId].payoutAddress;
+            if (recipient == address(0)) {
+                recipient = _stickerDesigns[_stickerId].currentPublisher;
+            }
         }
     }
 
