@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "../src/StickerDesigns.sol";
 import "../src/StickerChain.sol";
 import "../src/PaymentMethod.sol";
+import "../src/PayoutMethod.sol";
 import "../src/StickerObjectives.sol";
 import "../src/objectives/NYC.sol";
 
@@ -12,6 +13,8 @@ contract Erc20ObjectiveTest is Test {
     StickerDesigns stickerDesigns;
     PaymentMethod paymentMethod;
     StickerChain stickerChain;
+    PayoutMethod publisherPayoutMethod;
+    PayoutMethod objectivePayoutMethod;
     StickerObjectives stickerObjectives;
     NYC objectiveNYC;
     uint256 objectiveNYCId;
@@ -37,6 +40,12 @@ contract Erc20ObjectiveTest is Test {
         stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
         stickerObjectives = new StickerObjectives(address(stickerChain), adminAddress, 0.002 ether);
         stickerChain.setStickerObjectivesContract(payable(address(stickerObjectives)));
+        publisherPayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
+        objectivePayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
+        stickerChain.setPublisherPayoutMethodContract(payable(address(publisherPayoutMethod)));
+        stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
+
+        // Create an objective and register it
         objectiveNYC = new NYC(address(stickerChain), adminAddress, "TESTNYC", "$TESTNYC", "https://example.com");
         objectiveNYCId = stickerObjectives.addNewObjective{value: 0.002 ether}(objectiveNYC);
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "../src/StickerDesigns.sol";
 import "../src/PaymentMethod.sol";
+import "../src/PayoutMethod.sol";
 import "../src/StickerChain.sol";
 
 
@@ -34,6 +35,8 @@ contract SlapLimitsTest is Test {
     StickerDesigns stickerDesigns;
     PaymentMethod paymentMethod;
     StickerChain stickerChain;
+    PayoutMethod publisherPayoutMethod;
+    PayoutMethod objectivePayoutMethod;
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
     uint256 public slapFee = 0.001 ether;
@@ -58,6 +61,10 @@ contract SlapLimitsTest is Test {
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
         stickerDesigns = new StickerDesigns(paymentMethod, adminAddress, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
+        publisherPayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
+        objectivePayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
+        stickerChain.setPublisherPayoutMethodContract(payable(address(publisherPayoutMethod)));
+        stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
     }
 
     // validate cannot slap sticker limited to holders if balance is zero in holder contract
