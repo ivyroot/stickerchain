@@ -330,8 +330,6 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                         continue;
                     }
                 }
-                console.log("about to deposit from ");
-                console.log(address(this));
                 publisherPayoutMethod.deposit{value: stickerBaseTokenPrice}(address(_chargedCoin), stickerPrice, stickerFeeRecipient, false);
             }
             uint protocolFee = slapFeeForSize(_newSlaps[i].size);

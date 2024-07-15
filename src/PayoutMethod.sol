@@ -29,8 +29,6 @@ contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
 
     // deposit funds, can only be called by the source contract
     function deposit(address _coin, uint _amount, address _recipient, bool _protocolPayment) external payable override {
-        console.log("handling deposit");
-        console.log(msg.sender, sourceContract);
         if (msg.sender != sourceContract) revert OnlySourceContractAllowed(msg.sender);
         if (_coin == address(0) && msg.value != _amount) {
             revert InvalidPaymentAmount(msg.value);
