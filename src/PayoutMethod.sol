@@ -10,71 +10,77 @@ import "forge-std/console.sol";
 
 contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
 
-    address public override sourceContract;
+    error OnlySourceContractAllowed(address);
+    error InvalidPaymentAmount(uint256);
+    error ERC20TransferFailed(address, uint256);
+    error ETHTransferFailed(uint256);
+    error InvalidFeeBasisPoints();
 
-    IPaymentMethod public immutable paymentMethodContract;
+    address public immutable override sourceContract;
 
-    mapping(uint => uint) public override adminFee;
-    mapping(uint => address) public adminFeeRecipient;
+    mapping(address => uint) public override adminFee;
+    mapping(address => address) public adminFeeRecipient;
 
-    mapping(address account => mapping(uint256 paymentMethod => uint256)) public override balanceOf;
+    mapping(address account => mapping(address coin => uint256)) public override balanceOf;
 
-    constructor(address _paymentMethodContract, address _initialAdmin) Ownable(_initialAdmin) {
-        paymentMethodContract = IPaymentMethod(_paymentMethodContract);
+    constructor(address _sourceContract, address _initialAdmin) Ownable(_initialAdmin) {
+        sourceContract = _sourceContract;
     }
 
     // deposit funds, can only be called by the source contract
-    function deposit(uint _paymentTypeId, uint _amount, address _recipient, bool _protocolPayment) external payable override {
-        require(msg.sender == sourceContract, "PayoutMethod: only source contract can deposit");
-        if (_paymentTypeId == 0 && msg.value != _amount) {
-            revert("PayoutMethod: msg.value must be equal to amount for paymentTypeId 0");
+    function deposit(address _coin, uint _amount, address _recipient, bool _protocolPayment) external payable override {
+        console.log("handling deposit");
+        console.log(msg.sender, sourceContract);
+        if (msg.sender != sourceContract) revert OnlySourceContractAllowed(msg.sender);
+        if (_coin == address(0) && msg.value != _amount) {
+            revert InvalidPaymentAmount(msg.value);
         }
-        uint _adminFee = _protocolPayment ? 5000 : adminFee[_paymentTypeId];
-        address _adminFeeRecipient = adminFeeRecipient[_paymentTypeId];
+        uint _adminFee = _protocolPayment ? 5000 : adminFee[_coin];
+        address _adminFeeRecipient = adminFeeRecipient[_coin];
         if (_adminFee > 0 && _adminFeeRecipient != address(0)) {
             uint fee = (_amount * _adminFee) / 10000;
-            balanceOf[_adminFeeRecipient][_paymentTypeId] += fee;
+            balanceOf[_adminFeeRecipient][_coin] += fee;
             _amount -= fee;
         }
-        balanceOf[_recipient][_paymentTypeId] += _amount;
-        emit FundsAdded(_paymentTypeId, _recipient, _amount);
+        balanceOf[_recipient][_coin] += _amount;
+        emit FundsAdded(_recipient, _coin, _amount);
     }
 
     // withdraw funds, can only withdraw balances of msg.sender
     // funds will be sent to the recipient or msg.sender if recipient is address(0)
-    function withdraw(uint[] calldata _paymentTypeIds, address _recipient) external nonReentrant override {
+    function withdraw(address[] calldata _coins, address _recipient) external nonReentrant override {
         if (_recipient == address(0)) {
             _recipient = msg.sender;
         }
-        uint _paymentTypeCount = _paymentTypeIds.length;
+        uint _paymentTypeCount = _coins.length;
         for (uint i = 0; i < _paymentTypeCount; i++) {
-            uint _paymentTypeId = _paymentTypeIds[i];
-            uint _amount = balanceOf[msg.sender][_paymentTypeId];
+            address _coin = _coins[i];
+            uint _amount = balanceOf[msg.sender][_coin];
             if (_amount > 0) {
-                balanceOf[msg.sender][_paymentTypeId] = 0;
-                if (_paymentTypeId == 0) {
+                balanceOf[msg.sender][_coin] = 0;
+                if (_coin == address(0)) {
                     (bool sent, ) = payable(_recipient).call{value: _amount}("");
                     if (!sent) {
-                        revert("PayoutMethod: failed to send ether");
+                        revert ETHTransferFailed(_amount);
                     }
                 } else {
-                    // TODO handle case where token is banned, pending payouts should not be locked
-                    IERC20 _paymentMethod = paymentMethodContract.getPaymentMethod(_paymentTypeId);
-                    bool paid = _paymentMethod.transfer(_recipient, _amount);
+                    bool paid = IERC20(_coin).transfer(_recipient, _amount);
                     if (!paid) {
-                        revert("PayoutMethod: failed to send token");
+                        revert ERC20TransferFailed(_coin, _amount);
                     }
                 }
-                emit FundsWithdrawn(_paymentTypeId, msg.sender, _amount);
+                emit FundsWithdrawn(msg.sender, _coin, _amount);
             }
         }
     }
 
     // owner only function to set fee for payment type
-    function setAdminFee(uint _paymentTypeId, uint _feeBasisPoints) external onlyOwner {
-        require(_feeBasisPoints <= 10000, "PayoutMethod: fee must be <= 10000");
-        adminFee[_paymentTypeId] = _feeBasisPoints;
-        emit PaymentTypeAdminFeeSet(_paymentTypeId, _feeBasisPoints);
+    function setAdminFee(address _coin, uint _feeBasisPoints) external onlyOwner {
+        if (_feeBasisPoints > 10000) {
+            revert InvalidFeeBasisPoints();
+        }
+        adminFee[_coin] = _feeBasisPoints;
+        emit PaymentTypeAdminFeeSet(_coin, _feeBasisPoints);
     }
 
 }

@@ -41,7 +41,7 @@ contract NYC is ERC20, IStickerObjective, Ownable {
     uint256 immutable public genesisTime;
     string public url;
     address public feeRecipient;
-    uint256 public paymentMethodId;
+    address public paymentCoin;
     uint256 public slapFee;
     uint256 public constant placeCount = 65;
     mapping (uint => bool) public placeIncluded;
@@ -98,8 +98,8 @@ contract NYC is ERC20, IStickerObjective, Ownable {
     }
 
     // owner only method to set slap fee
-    function setSlapFee(uint256 _paymentMethodId, uint256 _slapFee) external onlyOwner {
-        paymentMethodId = _paymentMethodId;
+    function setSlapFee(address _paymentCoinAddress, uint256 _slapFee) external onlyOwner {
+        paymentCoin = _paymentCoinAddress;
         slapFee = _slapFee;
     }
 
@@ -175,7 +175,7 @@ contract NYC is ERC20, IStickerObjective, Ownable {
 
     function costOfSlaps(address, FreshSlap[] calldata slaps)
     public view override
-    returns (uint _paymentMethodId, uint _cost, address _recipient)
+    returns (address, uint, address)
     {
         uint totalCost;
         for (uint i = 0; i < slaps.length; i++) {
@@ -183,7 +183,7 @@ contract NYC is ERC20, IStickerObjective, Ownable {
                 totalCost += slapFee;
             }
         }
-        return (paymentMethodId, totalCost, feeRecipient);
+        return (paymentCoin, totalCost, feeRecipient);
     }
 
     function slapInObjective(address, FreshSlap[] calldata slaps) public payable override returns (uint[] memory includedSlapIds) {

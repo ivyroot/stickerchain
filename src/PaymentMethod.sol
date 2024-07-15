@@ -69,12 +69,13 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     }
 
     function chargeAddressForPayment(uint _paymentMethodId, address _address, address _recipient, uint _amount) public
-        returns (bool) {
+        returns (bool success, IERC20 coin) {
         IERC20 _coin = getPaymentMethod(_paymentMethodId);
         if (address(_coin) == address(0)) {
             revert PaymentMethodNotAllowed();
         }
-        return _coin.transferFrom(_address, _recipient, _amount);
+        coin = _coin;
+        success = coin.transferFrom(_address, _recipient, _amount);
     }
 
     // public function to add coin

@@ -25,8 +25,9 @@ interface IStickerObjective {
     // [] == ¯\_(ツ)_/¯
     function placeList() external view returns (uint[] memory);
 
+    // address(0) = base token of chain (ETH on Base mainnet)
     function costOfSlaps(address player, FreshSlap[] calldata slaps) external view
-        returns (uint paymentMethodId, uint cost, address recipient);
+        returns (address paymentCoinAddress, uint cost, address recipient);
 
     function slapInObjective(address player, FreshSlap[] calldata slaps) external payable
         returns (uint[] memory includedSlapIds);
