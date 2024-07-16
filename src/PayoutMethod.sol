@@ -25,6 +25,7 @@ contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
 
     constructor(address _sourceContract, address _initialAdmin) Ownable(_initialAdmin) {
         sourceContract = _sourceContract;
+        adminFeeRecipient[address(0)] = _initialAdmin;
     }
 
     // deposit funds, can only be called by the source contract

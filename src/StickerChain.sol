@@ -318,6 +318,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 continue;
             }
             stickerBaseTokenPrice = 0;
+            _chargedCoin = IERC20(address(0));
             (stickerPaymentMethodId, stickerPrice, stickerFeeRecipient) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
             if (stickerPrice > 0)  {
                 if (stickerPaymentMethodId == 0) {
