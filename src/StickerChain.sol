@@ -371,7 +371,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                     if (objPaymentMethodId == 0) {
                         continue;
                     }
-                    (chargeSuccess, _chargedCoin) = paymentMethodContract.chargeAddressForPayment(objPaymentMethodId, msg.sender, objRecipient, objCost);
+                    (chargeSuccess, _chargedCoin) = paymentMethodContract.chargeAddressForPayment(objPaymentMethodId, msg.sender, address(objectivePayoutMethod), objCost);
                     if (!chargeSuccess) {
                         continue;
                     }

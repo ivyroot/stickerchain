@@ -15,6 +15,7 @@ contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
     error ERC20TransferFailed(address, uint256);
     error ETHTransferFailed(uint256);
     error InvalidFeeBasisPoints();
+    error InvalidFeeRecipient();
 
     address public immutable override sourceContract;
 
@@ -74,11 +75,15 @@ contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
     }
 
     // owner only function to set fee for payment type
-    function setAdminFee(address _coin, uint _feeBasisPoints) external onlyOwner {
+    function setAdminFee(address _coin, uint _feeBasisPoints, address _feeRecipient) external onlyOwner {
         if (_feeBasisPoints > 10000) {
             revert InvalidFeeBasisPoints();
         }
+        if (_feeRecipient == address(0)) {
+            revert InvalidFeeRecipient();
+        }
         adminFee[_coin] = _feeBasisPoints;
+        adminFeeRecipient[_coin] = _feeRecipient;
         emit PaymentTypeAdminFeeSet(_coin, _feeBasisPoints);
     }
 

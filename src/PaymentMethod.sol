@@ -82,7 +82,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         if (bannedAddresses[msg.sender]) {
             revert AddressNotAllowed();
         }
-        if (msg.value != addNewCoinFee) {
+        if (msg.value != addNewCoinFee && msg.sender != owner()) {
             revert IncorrectFeePayment();
         }
         (bool success,) = adminFeeRecipient.call{value: msg.value}("");

@@ -80,10 +80,10 @@ contract StickerObjectives is Ownable {
         if (_objective.stickerChain() != stickerChain) {
             revert AddressNotAllowed();
         }
+        objectiveCount++;
         uint _objectiveId = objectiveCount;
         objectives[_objectiveId] = _objective;
         objectivesLookup[address(_objective)] = _objectiveId;
-        objectiveCount++;
         emit NewObjective(address(_objective), _objectiveId, _objectiveOwner);
         return _objectiveId;
     }
