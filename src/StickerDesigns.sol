@@ -57,6 +57,7 @@ contract StickerDesigns is Ownable {
 
     IPaymentMethod public paymentMethodContract;
     address payable public adminFeeRecipient;
+    address public operator;
     uint256 public publisherReputationFee;
     uint256 public stickerRegistrationFee;
     uint256 public nextStickerDesignId = 1;
@@ -69,6 +70,7 @@ contract StickerDesigns is Ownable {
     constructor(IPaymentMethod _payments, address _initialAdmin, uint _reputationFee, uint _registrationFee) Ownable(_initialAdmin) {
         paymentMethodContract = _payments;
         _persistAdminFeeRecipient(_initialAdmin);
+        operator = _initialAdmin;
         publisherReputationFee = _reputationFee;
         stickerRegistrationFee = _registrationFee;
     }
@@ -169,7 +171,7 @@ contract StickerDesigns is Ownable {
         }
         bool firstSticker = !goodStandingPublishers[msg.sender];
         uint256 requiredFee = firstSticker ? publisherReputationFee + stickerRegistrationFee : stickerRegistrationFee;
-        if (msg.value != requiredFee) {
+        if (msg.value != requiredFee && msg.sender != operator) {
             revert InvalidPublishingFee(requiredFee);
         }
         uint256 newStickerId = nextStickerDesignId;
@@ -295,6 +297,10 @@ contract StickerDesigns is Ownable {
 
     function setAdminFeeRecipient(address _recipient) external onlyOwner {
         _persistAdminFeeRecipient(_recipient);
+    }
+
+    function setOperator(address _operator) external onlyOwner {
+        operator = _operator;
     }
 
     function setpublisherReputationFee(uint256 _fee) external onlyOwner {
