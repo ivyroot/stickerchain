@@ -115,6 +115,7 @@ contract ObjectivePayoutTest is Test {
         stickerDesigns = new StickerDesigns(paymentMethod, adminAddress, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
         stickerObjectives = new StickerObjectives(address(stickerChain), adminAddress, 0.002 ether);
+        stickerObjectives.enablePublicCreation();
         stickerChain.setStickerObjectivesContract(payable(address(stickerObjectives)));
         publisherPayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
         objectivePayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);

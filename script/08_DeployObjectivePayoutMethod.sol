@@ -13,7 +13,7 @@ contract DeployObjectivePayoutMethod is Script {
         require(stickerChainContractAddress != address(0), 'DeployObjectivePayoutMethod: STICKER_CHAIN_CONTRACT not set');
         StickerChain stickerChain = StickerChain(stickerChainContractAddress);
         vm.startBroadcast();
-        PayoutMethod objectivePayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
+        PayoutMethod objectivePayoutMethod = new PayoutMethod(address(stickerChain),  address(tx.origin));
         stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
         vm.stopBroadcast();
     }

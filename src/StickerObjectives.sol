@@ -7,6 +7,7 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 contract StickerObjectives is Ownable {
     address public immutable stickerChain;
     address public operator;
+    bool public publicCreationEnabled;
     mapping (uint => IStickerObjective) private objectives;
     mapping (address => uint) private objectivesLookup;
     mapping (address => bool) public bannedObjectives;
@@ -24,6 +25,7 @@ contract StickerObjectives is Ownable {
     error AddressNotAllowed();
     error IncorrectFeePayment();
     error ObjectiveAlreadyExists();
+    error PublicCreationDisabled();
 
     constructor(address _stickerChain, address _initialAdmin, uint _addNewObjectiveFee) Ownable(_initialAdmin) {
         stickerChain = _stickerChain;
@@ -66,8 +68,13 @@ contract StickerObjectives is Ownable {
         external payable
         returns (uint) {
 
-        if (msg.value != addNewObjectiveFee && msg.sender != operator) {
-            revert IncorrectFeePayment();
+        if (msg.sender != operator) {
+            if (!publicCreationEnabled) {
+                revert PublicCreationDisabled();
+            }
+            if (msg.value != addNewObjectiveFee) {
+                revert IncorrectFeePayment();
+            }
         }
         if (bannedAddresses[msg.sender] || address(_objective) == address(0)) {
             revert AddressNotAllowed();
@@ -106,6 +113,10 @@ contract StickerObjectives is Ownable {
     // admin function to set operator
     function setOperator(address _operator) public onlyOwner() {
         operator = _operator;
+    }
+
+    function enablePublicCreation() public onlyOwner() {
+        publicCreationEnabled = true;
     }
 
     // admin function to set banned objectives

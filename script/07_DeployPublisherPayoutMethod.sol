@@ -10,10 +10,10 @@ import "../src/PayoutMethod.sol";
 contract DeployPublisherPayoutMethod is Script {
     function run() external {
         address payable stickerChainContractAddress = payable(vm.envAddress('STICKER_CHAIN_CONTRACT'));
-        require(stickerChainContractAddress != address(0), 'DeployStickerObjectives: STICKER_CHAIN_CONTRACT not set');
+        require(stickerChainContractAddress != address(0), 'DeployPublisherPayoutMethod: STICKER_CHAIN_CONTRACT not set');
         StickerChain stickerChain = StickerChain(stickerChainContractAddress);
         vm.startBroadcast();
-        PayoutMethod publisherPayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
+        PayoutMethod publisherPayoutMethod = new PayoutMethod(address(stickerChain), address(tx.origin));
         stickerChain.setPublisherPayoutMethodContract(payable(address(publisherPayoutMethod)));
         vm.stopBroadcast();
     }
