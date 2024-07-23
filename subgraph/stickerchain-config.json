@@ -1,0 +1,44 @@
+{
+    "version": "1",
+    "name": "stickerchain/1.0.0",
+    "abis": {
+      "stickerdesigns": {
+        "path": "./abis/StickerDesigns.json"
+      }
+    },
+    "instances": [
+      {
+        "abi": "stickerdesigns",
+        "address": "0x6AE9ED354d4375E8eEDb20D0003b600bb6e887B4",
+        "startBlock": 12753613,
+        "chain": "base-sepolia",
+        "enrich": {
+          "handlers": {
+            "StickerDesignPublished(indexed uint256,indexed address,indexed address,bytes)": {
+              "calls": {
+                "get_sticker": {
+                  "name": "getStickerDesign",
+                  "params": "event.params.stickerId"
+                }
+              },
+              "entities": {
+                "StickerDesign": {
+                  "id uint256": "event.params.stickerId",
+                  "originalPublisher address": "calls.get_sticker.originalPublisher.toHexString()",
+                  "currentPublisher address": "calls.get_sticker.currentPublisher.toHexString()",
+                  "payoutAddress address": "calls.get_sticker.payoutAddress.toHexString()",
+                  "publishedAt uint64": "calls.get_sticker.publishedAt",
+                  "price uint64": "calls.get_sticker.price",
+                  "paymentMethodId uint256": "calls.get_sticker.paymentMethodId",
+                  "limit uint64": "calls.get_sticker.limit",
+                  "endTime uint64": "calls.get_sticker.endTime",
+                  "limitToHolders address": "calls.get_sticker.limitToHolders.toHexString()",
+                  "metadataCID bytes": "calls.get_sticker.metadataCID.toHexString()"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
