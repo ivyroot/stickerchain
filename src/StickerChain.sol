@@ -3,8 +3,12 @@ pragma solidity ^0.8.24;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ReentrancyGuardTransient} from "openzeppelin-contracts/contracts/utils/ReentrancyGuardTransient.sol";
 import "erc721a/contracts/ERC721A.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {IPaymentMethod} from "./IPaymentMethod.sol";
+import {IPayoutMethod} from "./IPayoutMethod.sol";
 import {StickerDesign, StickerDesigns, ERC20_PAYMENT_FAILED} from "./StickerDesigns.sol";
+import {StickerObjectives} from "./StickerObjectives.sol";
+import {FreshSlap, IStickerObjective} from "./IStickerObjective.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
 
@@ -30,7 +34,6 @@ struct StoredSlap {
     uint256 stickerId;
     uint256 slappedAt;
     uint64 size;
-    address player;
 }
 
 struct Place {
@@ -69,10 +72,20 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     error PlayerIsBanned();
     error InvalidStart();
 
-    StickerDesigns public stickerDesignsContract;
-    bool public stickerDesignsContractIsLocked;
     IPaymentMethod public paymentMethodContract;
     bool public paymentMethodContractIsLocked;
+
+    StickerDesigns public stickerDesignsContract;
+    bool public stickerDesignsContractIsLocked;
+
+    IPayoutMethod public publisherPayoutMethod;
+    bool public publisherPayoutMethodIsLocked;
+
+    StickerObjectives public stickerObjectivesContract;
+    bool public stickerObjectivesContractIsLocked;
+
+    IPayoutMethod public objectivePayoutMethod;
+    bool public objectivePayoutMethodIsLocked;
 
     uint256 public slapFee;
 
@@ -131,7 +144,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             height: storedSlap.height,
             slappedAt: storedSlap.slappedAt,
             size: storedSlap.size,
-            player: storedSlap.player
+            player: ownerOf(_slapId)
         });
     }
 
@@ -192,7 +205,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         uint256 totalCost;
         for (uint i = 0; i < _newSlaps.length; i++) {
             totalCost += slapFeeForSize(_newSlaps[i].size);
-            (uint paymentMethodId, uint64 price) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            (uint paymentMethodId, uint64 price,) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
             if (paymentMethodId == 0) {
                 totalCost += price;
             }
@@ -214,7 +227,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         uint paymentMethodCount = 1;
         for (uint i = 0; i < _newSlapCount; i++) {
             costs[0].total += slapFeeForSize(_newSlaps[i].size);
-            (uint paymentMethodId, uint64 price) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            (uint paymentMethodId, uint64 price,) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
             if (paymentMethodId != 0) {
                 bool found = false;
                 for (uint j = 1; j < paymentMethodCount; j++) {
@@ -279,7 +292,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
     }
 
-    function slap(NewSlap[] calldata _newSlaps)
+    function slap(NewSlap[] calldata _newSlaps, uint256[] calldata _objectives)
     external payable nonReentrant
     returns (uint256[] memory slapIds, uint256[] memory slapStatuses)
     {
@@ -288,28 +301,84 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
         uint slapCount = _newSlaps.length;
         uint totalBill;
+        uint slapSuccessCount;
         uint stickerPaymentMethodId;
         uint64 stickerPrice;
+        uint stickerBaseTokenPrice;
+        address stickerFeeRecipient;
         slapIds = new uint256[](slapCount);
         slapStatuses = new uint256[](slapCount);
         uint slapIssue;
+        bool chargeSuccess;
+        IERC20 _chargedCoin;
         for (uint i = 0; i < _newSlaps.length; i++) {
             slapIssue = stickerDesignsContract.accountCanSlapSticker(msg.sender, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]);
             if (slapIssue != 0) {
                 slapStatuses[i] = slapIssue;
                 continue;
             }
-            (stickerPaymentMethodId, stickerPrice) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
-            if (stickerPaymentMethodId != 0) {
-                if (!paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(this), stickerPrice)) {
-                    slapStatuses[i] = ERC20_PAYMENT_FAILED;
+            stickerBaseTokenPrice = 0;
+            _chargedCoin = IERC20(address(0));
+            (stickerPaymentMethodId, stickerPrice, stickerFeeRecipient) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
+            if (stickerPrice > 0)  {
+                if (stickerPaymentMethodId == 0) {
+                    totalBill += stickerPrice;
+                    stickerBaseTokenPrice = stickerPrice;
+                }else{
+                    (chargeSuccess, _chargedCoin) = paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(publisherPayoutMethod), stickerPrice);
+                    if (!chargeSuccess) {
+                        slapStatuses[i] = ERC20_PAYMENT_FAILED;
+                        continue;
+                    }
+                }
+                publisherPayoutMethod.deposit{value: stickerBaseTokenPrice}(address(_chargedCoin), stickerPrice, stickerFeeRecipient, false);
+            }
+            uint protocolFee = slapFeeForSize(_newSlaps[i].size);
+            publisherPayoutMethod.deposit{value: protocolFee}(address(0), protocolFee, stickerFeeRecipient, true);
+            totalBill += protocolFee;
+            slapSuccessCount++;
+            slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
+        }
+        // call any provided objectives
+        if (_objectives.length > 0 && slapSuccessCount > 0) {
+            // make a list of only slaps that succeeded
+            FreshSlap[] memory freshSlaps = new FreshSlap[](slapSuccessCount);
+            uint currSlapIndex;
+            for (uint i = 0; i < slapCount; i++) {
+                if (slapStatuses[i] == 0) {
+                    freshSlaps[currSlapIndex] = FreshSlap({
+                        slapId: slapIds[i],
+                        placeId: _newSlaps[i].placeId,
+                        stickerId: _newSlaps[i].stickerId,
+                        size: _newSlaps[i].size
+                    });
+                    currSlapIndex++;
+                }
+            }
+            // pass the list of slaps to each objective
+            for (uint i = 0; i < _objectives.length; i++) {
+                IStickerObjective obj = stickerObjectivesContract.getObjective(_objectives[i]);
+                if (address(obj) == address(0)) {
                     continue;
                 }
-            }else{
-                totalBill += stickerPrice;
+                uint objectiveBaseTokenPrice = 0;
+                (address objPaymentCoin, uint objCost, address objRecipient) = obj.costOfSlaps(msg.sender, freshSlaps);
+                if (objPaymentCoin == address(0)) {
+                    totalBill += objCost;
+                    objectiveBaseTokenPrice = objCost;
+                }else{
+                    uint objPaymentMethodId = paymentMethodContract.getIdOfPaymentMethod(objPaymentCoin);
+                    if (objPaymentMethodId == 0) {
+                        continue;
+                    }
+                    (chargeSuccess, _chargedCoin) = paymentMethodContract.chargeAddressForPayment(objPaymentMethodId, msg.sender, address(objectivePayoutMethod), objCost);
+                    if (!chargeSuccess) {
+                        continue;
+                    }
+                }
+                objectivePayoutMethod.deposit{value: objectiveBaseTokenPrice}(objPaymentCoin, objCost, objRecipient, false);
+                obj.slapInObjective(msg.sender, freshSlaps);
             }
-            totalBill += slapFeeForSize(_newSlaps[i].size);
-            slapIds[i] = _executeSlap(_newSlaps[i].placeId, _newSlaps[i].stickerId, _newSlaps[i].size);
         }
         if (msg.value < totalBill) {
             revert InsufficientFunds(totalBill);
@@ -340,8 +409,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             height: _originSlapHeight,
             stickerId: _stickerId,
             slappedAt: block.timestamp,
-            size: size,
-            player: msg.sender
+            size: size
         });
         if (size == 1) {
             _board[_placeId].slaps[_originSlapHeight] = _slappedTokenId;
@@ -372,6 +440,17 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
     }
 
+    // change the PaymentMethod contract address
+    function setPaymentMethodContract(address payable _newPaymentMethodAddress) external onlyOwner {
+        require(!paymentMethodContractIsLocked, 'StickerChain: PaymentMethod contract is locked');
+        require(_newPaymentMethodAddress != address(0), 'StickerChain: PaymentMethod contract address cannot be 0');
+        paymentMethodContract = IPaymentMethod(_newPaymentMethodAddress);
+    }
+
+    function lockPaymentMethodContract() external onlyOwner {
+        paymentMethodContractIsLocked = true;
+    }
+
     // change the StickerDesigns contract address
     function setStickerDesignsContract(address payable _newStickerDesignsAddress) external onlyOwner {
         require(!stickerDesignsContractIsLocked, 'StickerChain: StickerDesigns contract is locked');
@@ -382,15 +461,37 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         stickerDesignsContractIsLocked = true;
     }
 
-    // change the PaymentMethod contract address
-    function setPaymentMethodContract(address payable _newPaymentMethodAddress) external onlyOwner {
-        require(!paymentMethodContractIsLocked, 'StickerChain: PaymentMethod contract is locked');
-        require(_newPaymentMethodAddress != address(0), 'StickerChain: PaymentMethod contract address cannot be 0');
-        paymentMethodContract = IPaymentMethod(_newPaymentMethodAddress);
+    // change the StickerObjectives contract address
+    function setStickerObjectivesContract(address payable _newStickerObjectivesAddress) external onlyOwner {
+        require(!stickerObjectivesContractIsLocked, 'StickerChain: StickerObjectives contract is locked');
+        require(_newStickerObjectivesAddress != address(0), 'StickerChain: StickerObjectives contract address cannot be 0');
+        stickerObjectivesContract = StickerObjectives(_newStickerObjectivesAddress);
     }
 
-    function lockPaymentMethodContract() external onlyOwner {
-        paymentMethodContractIsLocked = true;
+    function lockStickerObjectivesContract() external onlyOwner {
+        stickerObjectivesContractIsLocked = true;
+    }
+
+    // change the Publisher PayoutMethod contract address
+    function setPublisherPayoutMethodContract(address payable _newPublisherPayoutMethodAddress) external onlyOwner {
+        require(!publisherPayoutMethodIsLocked, 'StickerChain: PublisherPayoutMethod contract is locked');
+        require(_newPublisherPayoutMethodAddress != address(0), 'StickerChain: PublisherPayoutMethod contract address cannot be 0');
+        publisherPayoutMethod = IPayoutMethod(_newPublisherPayoutMethodAddress);
+    }
+
+    function lockPublisherPayoutMethodContract() external onlyOwner {
+        publisherPayoutMethodIsLocked = true;
+    }
+
+    // change the Objective PayoutMethod contract address
+    function setObjectivePayoutMethodContract(address payable _newObjectivePayoutMethodAddress) external onlyOwner {
+        require(!objectivePayoutMethodIsLocked, 'StickerChain: ObjectivePayoutMethod contract is locked');
+        require(_newObjectivePayoutMethodAddress != address(0), 'StickerChain: ObjectivePayoutMethod contract address cannot be 0');
+        objectivePayoutMethod = IPayoutMethod(_newObjectivePayoutMethodAddress);
+    }
+
+    function lockObjectivePayoutMethodContract() external onlyOwner {
+        objectivePayoutMethodIsLocked = true;
     }
 
 }

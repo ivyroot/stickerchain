@@ -6,12 +6,13 @@ import {IPaymentMethod} from "./IPaymentMethod.sol";
 
 
 contract PaymentMethod is Ownable, IPaymentMethod {
-    mapping (uint => address) public coins;
-    mapping (address => uint) public coinsLookup;
+    mapping (uint => address) private coins;
+    mapping (address => uint) private coinsLookup;
     mapping (address => bool) public bannedCoins;
     mapping (address => bool) public bannedAddresses;
     uint public coinCount;
     uint public addNewCoinFee;
+    address public operator;
     address public adminFeeRecipient;
 
     event AdminTransferFailure(address indexed recipient, uint amount);
@@ -23,6 +24,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
 
     constructor(address _initialAdmin, uint _addNewCoinFee) Ownable(_initialAdmin) {
         adminFeeRecipient = _initialAdmin;
+        operator = _initialAdmin;
         addNewCoinFee = _addNewCoinFee;
     }
 
@@ -69,12 +71,12 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     }
 
     function chargeAddressForPayment(uint _paymentMethodId, address _address, address _recipient, uint _amount) public
-        returns (bool) {
-        IERC20 _coin = getPaymentMethod(_paymentMethodId);
-        if (address(_coin) == address(0)) {
-            revert PaymentMethodNotAllowed();
+        returns (bool success, IERC20 coin) {
+        coin = getPaymentMethod(_paymentMethodId);
+        if (_paymentMethodId == 0 || address(coin) == address(0)) {
+            return (false, IERC20(address(0)));
         }
-        return _coin.transferFrom(_address, _recipient, _amount);
+        success = coin.transferFrom(_address, _recipient, _amount);
     }
 
     // public function to add coin
@@ -82,7 +84,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         if (bannedAddresses[msg.sender]) {
             revert AddressNotAllowed();
         }
-        if (msg.value != addNewCoinFee) {
+        if (msg.value != addNewCoinFee && msg.sender != operator) {
             revert IncorrectFeePayment();
         }
         (bool success,) = adminFeeRecipient.call{value: msg.value}("");
@@ -120,6 +122,11 @@ contract PaymentMethod is Ownable, IPaymentMethod {
             revert AddressNotAllowed();
         }
         adminFeeRecipient = _recipient;
+    }
+
+    // admin function to set operator
+    function setOperator(address _operator) public onlyOwner {
+        operator = _operator;
     }
 
     // admin function to set banned coins

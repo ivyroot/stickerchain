@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/StickerDesigns.sol"; // Adjust the path as necessary
+import "../src/PaymentMethod.sol";
 
 contract ViewerTest is Test {
     StickerDesigns stickerDesigns;
+    PaymentMethod paymentMethod;
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
+    address adminAddress = address(this);
     address publisher = 0x541EdA6C1171B1253b01f90678475A3Da5B05745;
     uint256 public newStickerId1;
     uint256 public newStickerId2;
@@ -20,7 +23,8 @@ contract ViewerTest is Test {
 
     // Setup function to deploy the StickerDesigns contract before each test
     function setUp() public {
-        stickerDesigns = new StickerDesigns(msg.sender, 0.002 ether, 0.0005 ether);
+        paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
+        stickerDesigns = new StickerDesigns(paymentMethod, msg.sender, 0.002 ether, 0.0005 ether);
         vm.deal(publisher, 20 ether);
         vm.startPrank(publisher);
         NewStickerDesign memory newStickerDesign = NewStickerDesign({
