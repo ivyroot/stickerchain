@@ -1,0 +1,50 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: StickerDesigns
+    network: base-sepolia
+    source:
+      address: "0x6AE9ED354d4375E8eEDb20D0003b600bb6e887B4"
+      abi: StickerDesigns
+      startBlock: 12753613
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - AdminFeeRecipientChanged
+        - OwnershipTransferred
+        - PublisherReputationFeeChanged
+        - StickerCapped
+        - StickerDesignPublished
+        - StickerEndTimeChanged
+        - StickerPriceSet
+        - StickerPublisherChanged
+        - StickerRegistrationFeeChanged
+      abis:
+        - name: StickerDesigns
+          file: ./abis/StickerDesigns.json
+      eventHandlers:
+        - event: AdminFeeRecipientChanged(address)
+          handler: handleAdminFeeRecipientChanged
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: PublisherReputationFeeChanged(uint256)
+          handler: handlePublisherReputationFeeChanged
+        - event: StickerCapped(indexed uint256)
+          handler: handleStickerCapped
+        - event: StickerDesignPublished(indexed uint256,indexed address,indexed address,bytes)
+          handler: handleStickerDesignPublished
+        - event: StickerEndTimeChanged(indexed uint256,uint256)
+          handler: handleStickerEndTimeChanged
+        - event: StickerPriceSet(indexed uint256,indexed uint256,uint256)
+          handler: handleStickerPriceSet
+        - event: StickerPublisherChanged(indexed uint256,indexed address,indexed address)
+          handler: handleStickerPublisherChanged
+        - event: StickerRegistrationFeeChanged(uint256)
+          handler: handleStickerRegistrationFeeChanged
+      file: ./src/sticker-designs.ts

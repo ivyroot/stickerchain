@@ -1,0 +1,8 @@
+{
+  "base-sepolia": {
+    "StickerDesigns": {
+      "address": "0x6AE9ED354d4375E8eEDb20D0003b600bb6e887B4",
+      "startBlock": 12753613
+    }
+  }
+}
