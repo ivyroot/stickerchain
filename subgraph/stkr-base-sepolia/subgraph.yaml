@@ -16,35 +16,32 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - AdminFeeRecipientChanged
-        - OwnershipTransferred
-        - PublisherReputationFeeChanged
-        - StickerCapped
-        - StickerDesignPublished
-        - StickerEndTimeChanged
-        - StickerPriceSet
-        - StickerPublisherChanged
-        - StickerRegistrationFeeChanged
+        - StickerDesign
       abis:
         - name: StickerDesigns
           file: ./abis/StickerDesigns.json
       eventHandlers:
-        - event: AdminFeeRecipientChanged(address)
-          handler: handleAdminFeeRecipientChanged
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
-        - event: PublisherReputationFeeChanged(uint256)
-          handler: handlePublisherReputationFeeChanged
-        - event: StickerCapped(indexed uint256)
-          handler: handleStickerCapped
         - event: StickerDesignPublished(indexed uint256,indexed address,indexed address,bytes)
           handler: handleStickerDesignPublished
-        - event: StickerEndTimeChanged(indexed uint256,uint256)
-          handler: handleStickerEndTimeChanged
-        - event: StickerPriceSet(indexed uint256,indexed uint256,uint256)
-          handler: handleStickerPriceSet
-        - event: StickerPublisherChanged(indexed uint256,indexed address,indexed address)
-          handler: handleStickerPublisherChanged
-        - event: StickerRegistrationFeeChanged(uint256)
-          handler: handleStickerRegistrationFeeChanged
       file: ./src/sticker-designs.ts
+  - kind: ethereum
+    name: StickerChain
+    network: base-sepolia
+    source:
+      address: "0xae2d46B09740a28e869199AEF38251585DD8afe6"
+      abi: StickerChain
+      startBlock: 12753848
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Sticker
+      abis:
+        - name: StickerChain
+          file: ./abis/StickerChain.json
+      eventHandlers:
+        - event: StickerSlapped(indexed uint256,indexed uint256,indexed address,uint256,uint64)
+          handler: handleStickerSlapped
+      file: ./src/sticker-chain.ts
+

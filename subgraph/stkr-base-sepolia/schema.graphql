@@ -1,80 +1,17 @@
-type AdminFeeRecipientChanged @entity(immutable: true) {
-  id: Bytes!
-  newRecipient: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
 
-type OwnershipTransferred @entity(immutable: true) {
-  id: Bytes!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type PublisherReputationFeeChanged @entity(immutable: true) {
-  id: Bytes!
-  newFee: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type StickerCapped @entity(immutable: true) {
-  id: Bytes!
-  stickerId: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type StickerDesignPublished @entity(immutable: true) {
+type StickerDesign @entity(immutable: false) {
   id: Bytes!
   stickerId: BigInt! # uint256
   publisher: Bytes! # address
   payoutAddress: Bytes! # address
   metadataCID: Bytes! # bytes
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
 }
 
-type StickerEndTimeChanged @entity(immutable: true) {
+type Slap @entity(immutable: false) {
   id: Bytes!
+  slapId: BigInt! # uint256
+  placeId: BigInt! # uint256
   stickerId: BigInt! # uint256
-  endTime: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type StickerPriceSet @entity(immutable: true) {
-  id: Bytes!
-  stickerId: BigInt! # uint256
-  paymentMethodId: BigInt! # uint256
-  price: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type StickerPublisherChanged @entity(immutable: true) {
-  id: Bytes!
-  stickerId: BigInt! # uint256
-  from: Bytes! # address
-  to: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-type StickerRegistrationFeeChanged @entity(immutable: true) {
-  id: Bytes!
-  newFee: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  player: Bytes! # address
+  size: BigInt! # uint64
 }

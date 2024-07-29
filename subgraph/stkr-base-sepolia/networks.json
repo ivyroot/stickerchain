@@ -3,6 +3,12 @@
     "StickerDesigns": {
       "address": "0x6AE9ED354d4375E8eEDb20D0003b600bb6e887B4",
       "startBlock": 12753613
+    },
+    "StickerChain": {
+      "address": "0xae2d46B09740a28e869199AEF38251585DD8afe6"
+    },
+    "StickerObjectives": {
+      "address": "0x31be2662511d06DD4D7f44F3AA4904C7e50A0728"
     }
   }
 }
