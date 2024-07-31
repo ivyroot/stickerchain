@@ -1,0 +1,24 @@
+apiVersion: 3
+name: base-sepolia-stkr-subgraph
+status: ACTIVE
+sources:
+  base_sepolia_slap:
+    type: subgraph_entity
+    subgraphs:
+      - name: stkr-subgraph
+        version: '1.2'
+    name: slap
+  base_sepolia_sticker_design:
+    type: subgraph_entity
+    subgraphs:
+      - name: stkr-subgraph
+        version: '1.2'
+    name: sticker_design
+  base_sepolia_sticker_design_metadata:
+    type: subgraph_entity
+    subgraphs:
+      - name: stkr-subgraph
+        version: '1.2'
+    name: sticker_design_metadata
+transforms: {}
+sinks: {}

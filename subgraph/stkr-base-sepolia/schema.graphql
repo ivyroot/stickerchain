@@ -4,8 +4,18 @@ type StickerDesign @entity(immutable: false) {
   stickerId: BigInt! # uint256
   publisher: Bytes! # address
   payoutAddress: Bytes! # address
-  metadataCID: Bytes! # bytes
+  metadataCID: StickerDesignMetadata! # ipfs hash
 }
+
+type StickerDesignMetadata @entity(immutable: true) {
+  id: ID!
+  imageCID: String!
+  filename: String!
+  contentType: String!
+  aspectRatio: BigInt!
+  size: BigInt!
+}
+
 
 type Slap @entity(immutable: false) {
   id: Bytes!
