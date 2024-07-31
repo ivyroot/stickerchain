@@ -1,6 +1,10 @@
-apiVersion: 3
 name: base-sepolia-stkr-subgraph
+version: 4
 status: ACTIVE
+resource_size: s
+save_progress: false
+use_latest_snapshot: false
+apiVersion: 3
 sources:
   base_sepolia_slap:
     type: subgraph_entity
@@ -21,4 +25,31 @@ sources:
         version: '1.2'
     name: sticker_design_metadata
 transforms: {}
-sinks: {}
+sinks:
+  postgres_base_sepolia_slap:
+    type: postgres
+    table: base_sepolia_slap
+    schema: public
+    secret_name: POSTGRES_SECRET_CLZ7T7GFX0
+    description: 'Postgres sink for: base_sepolia_slap'
+    from: base_sepolia_slap
+  postgres_base_sepolia_sticker_design:
+    type: postgres
+    table: base_sepolia_sticker_design
+    schema: public
+    secret_name: POSTGRES_SECRET_CLZ7T7GFX0
+    description: 'Postgres sink for: base_sepolia_sticker_design'
+    from: base_sepolia_sticker_design
+  postgres_base_sepolia_sticker_design_metadata:
+    type: postgres
+    table: base_sepolia_sticker_design_metadata
+    schema: public
+    secret_name: POSTGRES_SECRET_CLZ7T7GFX0
+    description: 'Postgres sink for: base_sepolia_sticker_design_metadata'
+    from: base_sepolia_sticker_design_metadata
+  notifier_sqs_sink:
+      type: sqs
+      from: base_sepolia_sticker_design
+      secret_name: NOTIFY_AWS_SQS_SECRET
+      description: 'notify sqs'
+      url: 'https://sqs.us-east-1.amazonaws.com/533267379374/StickercloudStack-ChainEventQueueE3ED95B5-8W0b9R2gVUuH'
