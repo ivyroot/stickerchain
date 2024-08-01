@@ -12,9 +12,7 @@ import {
 } from "../generated/StickerDesigns/StickerDesigns"
 import {
   StickerDesign,
-  StickerDesignMetadata
 } from "../generated/schema"
-import { StickerDesignMetadata as StickerDesignMetadataTemplate } from "../generated/templates"
 
 
 
@@ -30,33 +28,30 @@ export function handleStickerDesignPublished(
 
   if (event.params.metadataCID) {
     entity.metadataCID = event.params.metadataCID.toHexString()
-    StickerDesignMetadataTemplate.create(entity.metadataCID)
   }
 
   entity.save()
 }
 
+// export function handleStickerDesignMetadata(content: Bytes): void {
+//   let stickerMeta = new StickerDesignMetadata(dataSource.stringParam())
+//   const value = json.fromBytes(content).toObject()
+//   if (value) {
+//     const imageCID = value.get('imageCID')
+//     const filename = value.get('filename')
+//     const contentType = value.get('contentType')
+//     const aspectRatio = value.get('aspectRatio')
+//     const size = value.get('size')
 
+//     if (imageCID == null || filename == null || contentType == null || aspectRatio == null || size == null) {
+//       return
+//     }
 
-export function handleStickerDesignMetadata(content: Bytes): void {
-  let stickerMeta = new StickerDesignMetadata(dataSource.stringParam())
-  const value = json.fromBytes(content).toObject()
-  if (value) {
-    const imageCID = value.get('imageCID')
-    const filename = value.get('filename')
-    const contentType = value.get('contentType')
-    const aspectRatio = value.get('aspectRatio')
-    const size = value.get('size')
-
-    if (imageCID == null || filename == null || contentType == null || aspectRatio == null || size == null) {
-      return
-    }
-
-    stickerMeta.imageCID = imageCID.toString()
-    stickerMeta.filename = filename.toString()
-    stickerMeta.contentType = contentType.toString()
-    stickerMeta.aspectRatio = aspectRatio.toBigInt()
-    stickerMeta.size = size.toBigInt()
-    stickerMeta.save()
-  }
-}
+//     stickerMeta.imageCID = imageCID.toString()
+//     stickerMeta.filename = filename.toString()
+//     stickerMeta.contentType = contentType.toString()
+//     stickerMeta.aspectRatio = aspectRatio.toBigInt()
+//     stickerMeta.size = size.toBigInt()
+//     stickerMeta.save()
+//   }
+// }
