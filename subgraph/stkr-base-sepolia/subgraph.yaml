@@ -23,6 +23,8 @@ dataSources:
       eventHandlers:
         - event: StickerDesignPublished(indexed uint256,indexed address,indexed address,bytes)
           handler: handleStickerDesignPublished
+          calls:
+            getStickerDesign: StickerDesigns[event.address].getStickerDesign(event.params.stickerId)
       file: ./src/sticker-designs.ts
   - kind: ethereum
     name: StickerChain

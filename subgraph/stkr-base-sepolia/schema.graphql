@@ -2,8 +2,15 @@
 type StickerDesign @entity(immutable: false) {
   id: Bytes!
   stickerId: BigInt! # uint256
-  publisher: Bytes! # address
+  originalPublisher: Bytes! # address
+  currentPublisher: Bytes! # address
   payoutAddress: Bytes! # address
+  publishedAt: BigInt! # timestamp
+  price: BigInt!
+  paymentMethodId: BigInt!
+  limit: BigInt!
+  endTime: BigInt!
+  limitToHolders: Bytes #
   metadataCID: String! # ipfs hash
 }
 

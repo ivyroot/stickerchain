@@ -8,7 +8,8 @@ import {
   StickerEndTimeChanged as StickerEndTimeChangedEvent,
   StickerPriceSet as StickerPriceSetEvent,
   StickerPublisherChanged as StickerPublisherChangedEvent,
-  StickerRegistrationFeeChanged as StickerRegistrationFeeChangedEvent
+  StickerRegistrationFeeChanged as StickerRegistrationFeeChangedEvent,
+  StickerDesigns as StickerDesignsContract,
 } from "../generated/StickerDesigns/StickerDesigns"
 import {
   StickerDesign,
@@ -23,8 +24,18 @@ export function handleStickerDesignPublished(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   )
   entity.stickerId = event.params.stickerId
-  entity.publisher = event.params.publisher
+  entity.originalPublisher = event.params.publisher
+  entity.currentPublisher = event.params.publisher
   entity.payoutAddress = event.params.payoutAddress
+
+  const contractInstance = StickerDesignsContract.bind(event.address)
+  const stickerDesign = contractInstance.getStickerDesign(event.params.stickerId)
+  entity.price = stickerDesign.price
+  entity.endTime = stickerDesign.endTime
+  entity.paymentMethodId = stickerDesign.paymentMethodId
+  entity.publishedAt = stickerDesign.publishedAt
+  entity.limit = stickerDesign.limit
+  entity.limitToHolders = stickerDesign.limitToHolders
 
   if (event.params.metadataCID) {
     entity.metadataCID = event.params.metadataCID.toHexString()
