@@ -1,8 +1,8 @@
-specVersion: 1.0.0
 indexerHints:
   prune: auto
 schema:
   file: ./schema.graphql
+specVersion: 1.2.0
 dataSources:
   - kind: ethereum
     name: StickerDesigns
