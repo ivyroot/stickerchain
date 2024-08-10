@@ -111,14 +111,15 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
         }
+        uint slapCount = _board[_placeId].slapCount;
         Place memory place = Place({
             placeId: _placeId,
             lng: lng,
             lngDecimal: lngDecimal,
             lat: lat,
             latDecimal: latDecimal,
-            slap: _board[_placeId].slaps[1],
-            slapCount: _board[_placeId].slapCount
+            slap: _board[_placeId].slaps[slapCount],
+            slapCount: slapCount
         });
         return place;
     }

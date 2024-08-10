@@ -262,6 +262,48 @@ contract PlayerSlapTest is Test {
         assertEq(slaps[0].placeId, placeIdUnionSquare);
     }
 
+   function testGetPlaceAfterTwoSlaps() public {
+        vm.deal(address1, 1 ether);
+        vm.deal(address2, 1 ether);
+
+        NewSlap[] memory newSlaps1 = new NewSlap[](1);
+        newSlaps1[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+
+        uint costOfSlaps = stickerChain.baseTokenCostOfSlaps(newSlaps1);
+        uint256[] memory objectives;
+
+        Place memory place;
+
+        // check place slap
+        place = stickerChain.getPlace(placeIdUnionSquare);
+        assertEq(place.slap, 0);
+
+        // slap first sticker
+        uint timestamp1 = 1717108737;
+        vm.warp(timestamp1);
+        vm.prank(address1);
+        stickerChain.slap{value: costOfSlaps}(newSlaps1, objectives);
+
+        // check place slap
+        place = stickerChain.getPlace(placeIdUnionSquare);
+        assertEq(place.slap, 1);
+
+        // slap sticker again later
+        vm.roll(50 + block.number);
+        vm.warp(2600 + block.timestamp);
+        uint timestamp2 = block.timestamp;
+        vm.prank(address2);
+        stickerChain.slap{value: costOfSlaps}(newSlaps1, objectives);
+
+        // check place slap
+        place = stickerChain.getPlace(placeIdUnionSquare);
+        assertEq(place.slap, 2);
+    }
+
     function testGetPlaceSlapsWithTwoStickers() public {
         vm.deal(address1, 1 ether);
         vm.deal(address2, 1 ether);
