@@ -280,7 +280,7 @@ contract PlayerSlapTest is Test {
 
         // check place slap
         place = stickerChain.getPlace(placeIdUnionSquare);
-        assertEq(place.slap, 0);
+        assertEq(place.slapId, 0);
 
         // slap first sticker
         uint timestamp1 = 1717108737;
@@ -290,7 +290,7 @@ contract PlayerSlapTest is Test {
 
         // check place slap
         place = stickerChain.getPlace(placeIdUnionSquare);
-        assertEq(place.slap, 1);
+        assertEq(place.slapId, 1);
 
         // slap sticker again later
         vm.roll(50 + block.number);
@@ -301,7 +301,7 @@ contract PlayerSlapTest is Test {
 
         // check place slap
         place = stickerChain.getPlace(placeIdUnionSquare);
-        assertEq(place.slap, 2);
+        assertEq(place.slapId, 2);
     }
 
     function testGetPlaceSlapsWithTwoStickers() public {

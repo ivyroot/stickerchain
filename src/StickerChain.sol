@@ -42,7 +42,8 @@ struct Place {
     uint256 lngDecimal;
     uint256 lat;
     uint256 latDecimal;
-    uint256 slap;
+    uint256 stickerId;
+    uint256 slapId;
     uint256 slapCount;
 }
 
@@ -112,13 +113,16 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             revert InvalidPlaceId(_placeId);
         }
         uint slapCount = _board[_placeId].slapCount;
+        uint slapId = _board[_placeId].slaps[slapCount];
+        uint stickerId = getSlapStickerId(slapId);
         Place memory place = Place({
             placeId: _placeId,
             lng: lng,
             lngDecimal: lngDecimal,
             lat: lat,
             latDecimal: latDecimal,
-            slap: _board[_placeId].slaps[slapCount],
+            slapId: slapId,
+            stickerId: stickerId,
             slapCount: slapCount
         });
         return place;
@@ -151,6 +155,14 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     function getSlap(uint _slapId) external view returns (Slap memory) {
         return _readSlap(_slapId);
+    }
+
+    function getSlapStickerId(uint _slapId) public view returns (uint) {
+        uint _stickerId = _slaps[_slapId].stickerId;
+        if (stickerDesignsContract.isBannedStickerDesign(_stickerId)) {
+            return 0;
+        }
+        return _stickerId;
     }
 
     function getSlaps(uint[] calldata _slapIds) external view returns (Slap[] memory) {
