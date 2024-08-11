@@ -158,10 +158,14 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         uint baseSlapFee = stickerChain.slapFeeForSize(1);
-        uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost, baseSlapFee);
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps);
+        // TODO check that calculated costs array is only 1 item long
+        assertGt(calculatedCosts.length, 0);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapBaseTokenCost = calculatedCosts[0].total;
+        assertGt(calculatedSlapBaseTokenCost, baseSlapFee);
         uint256[] memory objectives;
-        stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
         Slap memory slap = stickerChain.getSlap(1);
         assertEq(slap.stickerId, exampleStickerId1);
         assertEq(slap.placeId, placeIdUnionSquare);
