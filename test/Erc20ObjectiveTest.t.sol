@@ -122,12 +122,18 @@ contract Erc20ObjectiveTest is Test {
             stickerId: exampleStickerId1,
             size: 1
         });
-        uint baseSlapFee = stickerChain.slapFeeForSize(1);
-        uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost, baseSlapFee);
         uint256[] memory objectives = new uint256[](1);
         objectives[0] = objectiveNYCId;
-        stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        uint baseSlapFee = stickerChain.slapFeeForSize(1);
+
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapBaseTokenCost = calculatedCosts[0].total;
+        uint expectSlapBaseTokenCost = baseSlapFee + exampleStickerPrice;
+        assertEq(calculatedSlapBaseTokenCost, expectSlapBaseTokenCost);
+
+        stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
         Slap memory slap = stickerChain.getSlap(1);
         assertEq(slap.stickerId, exampleStickerId1);
         assertEq(slap.placeId, placeIdUnionSquare);
@@ -140,9 +146,16 @@ contract Erc20ObjectiveTest is Test {
         // Move time forward an hour
         vm.warp(block.timestamp + 3600);
         vm.roll(block.number + 56);
-        uint calculatedSlapCost2 = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost2, baseSlapFee);
-        stickerChain.slap{value: calculatedSlapCost2}(newSlaps, objectives);
+
+        PaymentMethodTotal[] memory calculatedCosts2 = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        assertEq(calculatedCosts2.length, 1);
+        assertEq(calculatedCosts2[0].paymentMethodId, 0);
+        uint calculatedSlapBaseTokenCost2 = calculatedCosts2[0].total;
+        uint expectSlapBaseTokenCost2 = baseSlapFee + exampleStickerPrice;
+        assertEq(calculatedSlapBaseTokenCost2, expectSlapBaseTokenCost2);
+
+
+        stickerChain.slap{value: calculatedSlapBaseTokenCost2}(newSlaps, objectives);
         Slap memory slap2 = stickerChain.getSlap(2);
         assertEq(slap2.stickerId, exampleStickerId1);
         assertEq(slap2.placeId, placeIdUnionSquare);
@@ -155,9 +168,14 @@ contract Erc20ObjectiveTest is Test {
         // Move time forward one minute
         vm.warp(block.timestamp + 60);
         vm.roll(block.number + 4);
-        uint calculatedSlapCost3 = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost3, baseSlapFee);
-        stickerChain.slap{value: calculatedSlapCost3}(newSlaps, objectives);
+
+        PaymentMethodTotal[] memory calculatedCosts3 = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        assertEq(calculatedCosts3.length, 1);
+        assertEq(calculatedCosts3[0].paymentMethodId, 0);
+        uint calculatedSlapBaseTokenCost3 = calculatedCosts3[0].total;
+        uint expectSlapBaseTokenCost3 = baseSlapFee + exampleStickerPrice;
+        assertEq(calculatedSlapBaseTokenCost3, expectSlapBaseTokenCost3);
+        stickerChain.slap{value: expectSlapBaseTokenCost3}(newSlaps, objectives);
         Slap memory slap3 = stickerChain.getSlap(3);
         assertEq(slap3.stickerId, exampleStickerId1);
         assertEq(slap3.placeId, placeIdUnionSquare);

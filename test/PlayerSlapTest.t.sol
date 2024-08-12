@@ -187,7 +187,10 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         uint256[] memory objectives;
-        uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps2);
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps2, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapCost = calculatedCosts[0].total;
         (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps2, objectives);
         assertEq(slapIds.length, 2);
         Slap[] memory slaps = stickerChain.getSlaps(slapIds);
@@ -220,7 +223,10 @@ contract PlayerSlapTest is Test {
             size: 1
         });
         uint256[] memory objectives;
-        uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps2);
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps2, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapCost = calculatedCosts[0].total;
         (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps2, objectives);
 
         // admin bans sticker from second slap
@@ -252,9 +258,12 @@ contract PlayerSlapTest is Test {
             stickerId: exampleStickerId1,
             size: 1
         });
-        uint costOfSlaps = stickerChain.baseTokenCostOfSlaps(newSlaps1);
         uint256[] memory objectives;
-        (uint256[] memory slapIds,) = stickerChain.slap{value: costOfSlaps}(newSlaps1, objectives);
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps1, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapCost = calculatedCosts[0].total;
+        (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps1, objectives);
         assertEq(slapIds.length, 1);
 
         // load stickers from place
@@ -275,9 +284,12 @@ contract PlayerSlapTest is Test {
             stickerId: exampleStickerId1,
             size: 1
         });
-
-        uint costOfSlaps = stickerChain.baseTokenCostOfSlaps(newSlaps1);
         uint256[] memory objectives;
+
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps1, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint costOfSlaps = calculatedCosts[0].total;
 
         Place memory place;
 
@@ -317,8 +329,12 @@ contract PlayerSlapTest is Test {
             size: 1
         });
 
-        uint costOfSlaps = stickerChain.baseTokenCostOfSlaps(newSlaps1);
         uint256[] memory objectives;
+
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps1, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint costOfSlaps = calculatedCosts[0].total;
 
         // slap first sticker
         uint timestamp1 = 1717108737;
@@ -360,7 +376,10 @@ contract PlayerSlapTest is Test {
             size: 2
         });
         uint256[] memory objectives;
-        uint slapCost = stickerChain.baseTokenCostOfSlaps(newSlapsSize2);
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlapsSize2, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint slapCost = calculatedCosts[0].total;
         stickerChain.slap{value: slapCost}(newSlapsSize2, objectives);
         // load stickers from covered places
         uint total;
@@ -400,7 +419,10 @@ contract PlayerSlapTest is Test {
             size: 3
         });
         uint256[] memory objectives;
-        uint slapCost = stickerChain.baseTokenCostOfSlaps(newSlapsSize3);
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlapsSize3, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint slapCost = calculatedCosts[0].total;
         stickerChain.slap{value: slapCost}(newSlapsSize3, objectives);
         // load stickers from covered places
         uint total;
