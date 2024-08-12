@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-import {IStickerObjective, FreshSlap} from "../IStickerObjective.sol";
+import "../IStickerObjective.sol";
 
 
 //      _    _   ___     _______
@@ -15,11 +15,12 @@ import {IStickerObjective, FreshSlap} from "../IStickerObjective.sol";
 //     |_|  |_| \_|  |_|  \_____|
 //
 //
-//    Slap at places in NYC to play (see list below).
+//    Slap at places in NYC to play.
 //
 //    Earn $NYC based on how many seconds your slap is up.
-//    EMISSION RATE X SECONDS LIVE accrues to a slap
-//    at the time it is slapped over.
+//
+//    (emission rate) X (seconds slap was up) $NYC accrues to a slap
+//    at the time it is slapped over in the objective.
 //
 //    The emission rate decreases by 20% every week.
 //
@@ -34,9 +35,6 @@ struct PlaceSlapInfo {
 }
 
 contract NYC is ERC20, IStickerObjective, Ownable {
-
-    error InvalidCaller();
-
     address immutable public stickerChain;
     uint256 immutable public genesisTime;
     string public url;

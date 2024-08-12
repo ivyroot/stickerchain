@@ -7,17 +7,18 @@ import "../src/StickerChain.sol";
 import "../src/PaymentMethod.sol";
 import "../src/PayoutMethod.sol";
 import "../src/StickerObjectives.sol";
-import "../src/objectives/NYC.sol";
+import "../src/objectives/PaidObjective.sol";
 
-contract Erc20ObjectiveTest is Test {
+contract PaidObjectiveObjectiveTest is Test {
     StickerDesigns stickerDesigns;
     PaymentMethod paymentMethod;
     StickerChain stickerChain;
     PayoutMethod publisherPayoutMethod;
     PayoutMethod objectivePayoutMethod;
     StickerObjectives stickerObjectives;
-    NYC objectiveNYC;
-    uint256 objectiveNYCId;
+    PaidObjective examplePaidObjective;
+    uint256 examplePaidObjectiveId;
+    uint256 examplePaidObjectiveFee = 0.01 ether;
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
     uint256 public slapFee = 0.001 ether;
@@ -46,8 +47,8 @@ contract Erc20ObjectiveTest is Test {
         stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
 
         // Create an objective and register it
-        objectiveNYC = new NYC(address(stickerChain), adminAddress, "TESTNYC", "$TESTNYC", "https://example.com");
-        objectiveNYCId = stickerObjectives.addNewObjective{value: 0.002 ether}(objectiveNYC);
+        examplePaidObjective = new PaidObjective(address(stickerChain),  "EXAMPLEOBJ", "https://example.com", adminAddress, examplePaidObjectiveFee);
+        examplePaidObjectiveId = stickerObjectives.addNewObjective{value: 0.002 ether}(examplePaidObjective);
 
         bytes memory metadataCID = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
         address publisher = adminAddress;
@@ -81,7 +82,7 @@ contract Erc20ObjectiveTest is Test {
 
 
     // Test slapping a sticker and accessing via slap id
-    function testSlapOneStickerInObjective() public {
+    function testSlapOneStickerInPaidObjective() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         NewSlap[] memory newSlaps = new NewSlap[](1);
@@ -91,7 +92,7 @@ contract Erc20ObjectiveTest is Test {
             size: 1
         });
         uint256[] memory objectives = new uint256[](1);
-        objectives[0] = objectiveNYCId;
+        objectives[0] = examplePaidObjectiveId;
 
         PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
         assertEq(calculatedCosts.length, 1);
@@ -100,7 +101,8 @@ contract Erc20ObjectiveTest is Test {
 
         // check calculated values
         uint baseSlapFee = stickerChain.slapFeeForSize(1);
-        assertGt(calculatedSlapBaseTokenCost, baseSlapFee);
+        uint expectedFee = baseSlapFee + exampleStickerPrice + examplePaidObjectiveFee;
+        assertEq(calculatedSlapBaseTokenCost, expectedFee);
 
 
         stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
@@ -110,64 +112,4 @@ contract Erc20ObjectiveTest is Test {
         assertEq(slap.player, address1);
         assertEq(slap.slappedAt, block.timestamp);
     }
-
-    // Test slapping a sticker then slapping over it an hour later
-    // Ensure the emission rate is correct
-    function testSlapOneStickerInObjectiveThenSlapOver() public {
-        vm.deal(address1, 20 ether);
-        vm.startPrank(address1);
-        NewSlap[] memory newSlaps = new NewSlap[](1);
-        newSlaps[0] = NewSlap({
-            placeId: placeIdUnionSquare,
-            stickerId: exampleStickerId1,
-            size: 1
-        });
-        uint baseSlapFee = stickerChain.slapFeeForSize(1);
-        uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost, baseSlapFee);
-        uint256[] memory objectives = new uint256[](1);
-        objectives[0] = objectiveNYCId;
-        stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
-        Slap memory slap = stickerChain.getSlap(1);
-        assertEq(slap.stickerId, exampleStickerId1);
-        assertEq(slap.placeId, placeIdUnionSquare);
-        assertEq(slap.player, address1);
-        assertEq(slap.slappedAt, block.timestamp);
-
-        uint currBalance1 = objectiveNYC.balanceOf(address1);
-        assertEq(currBalance1, 0);
-
-        // Move time forward an hour
-        vm.warp(block.timestamp + 3600);
-        vm.roll(block.number + 56);
-        uint calculatedSlapCost2 = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost2, baseSlapFee);
-        stickerChain.slap{value: calculatedSlapCost2}(newSlaps, objectives);
-        Slap memory slap2 = stickerChain.getSlap(2);
-        assertEq(slap2.stickerId, exampleStickerId1);
-        assertEq(slap2.placeId, placeIdUnionSquare);
-        assertEq(slap2.player, address1);
-        assertEq(slap2.slappedAt, block.timestamp);
-
-        uint currBalance2 = objectiveNYC.balanceOf(address1);
-        assertEq(currBalance2, 3600000000000000000000);
-
-        // Move time forward one minute
-        vm.warp(block.timestamp + 60);
-        vm.roll(block.number + 4);
-        uint calculatedSlapCost3 = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost3, baseSlapFee);
-        stickerChain.slap{value: calculatedSlapCost3}(newSlaps, objectives);
-        Slap memory slap3 = stickerChain.getSlap(3);
-        assertEq(slap3.stickerId, exampleStickerId1);
-        assertEq(slap3.placeId, placeIdUnionSquare);
-        assertEq(slap3.player, address1);
-        assertEq(slap3.slappedAt, block.timestamp);
-
-        uint currBalance3 = objectiveNYC.balanceOf(address1);
-        assertEq(currBalance3, 3660000000000000000000);
-
-    }
-
-
 }

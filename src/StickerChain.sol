@@ -8,9 +8,20 @@ import {IPaymentMethod} from "./IPaymentMethod.sol";
 import {IPayoutMethod} from "./IPayoutMethod.sol";
 import {StickerDesign, StickerDesigns, ERC20_PAYMENT_FAILED} from "./StickerDesigns.sol";
 import {StickerObjectives} from "./StickerObjectives.sol";
-import {FreshSlap, IStickerObjective} from "./IStickerObjective.sol";
+import "./IStickerObjective.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
+
+struct Place {
+    uint256 placeId;
+    uint256 lng;
+    uint256 lngDecimal;
+    uint256 lat;
+    uint256 latDecimal;
+    uint256 stickerId;
+    uint256 slapId;
+    uint256 slapCount;
+}
 
 struct Slap {
     uint256 slapId;
@@ -28,28 +39,17 @@ struct NewSlap {
     uint64 size;
 }
 
+struct PaymentMethodTotal {
+    uint256 paymentMethodId;
+    uint256 total;
+}
+
 struct StoredSlap {
     uint256 placeId;
     uint256 height;
     uint256 stickerId;
     uint256 slappedAt;
     uint64 size;
-}
-
-struct Place {
-    uint256 placeId;
-    uint256 lng;
-    uint256 lngDecimal;
-    uint256 lat;
-    uint256 latDecimal;
-    uint256 stickerId;
-    uint256 slapId;
-    uint256 slapCount;
-}
-
-struct PaymentMethodTotal {
-    uint256 paymentMethodId;
-    uint256 total;
 }
 
 enum IssueType { InvalidPlace, PlayerNotAllowed, StickerNotAllowed, ObjectiveNotAllowed, InsufficientFunds, InsufficientAllowance}
@@ -226,7 +226,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         return totalCost;
     }
 
-    function costOfSlaps(address _player, NewSlap[] calldata _newSlaps)
+    function costOfSlaps(address _player, NewSlap[] calldata _newSlaps, uint256[] calldata _objectives)
     public view
     returns (PaymentMethodTotal[] memory)
     {
@@ -234,8 +234,10 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             revert PlayerIsBanned();
         }
         uint _newSlapCount = _newSlaps.length;
-        // multiple slaps can have up to as many payment methods as slaps
-        uint paymentMethodArraySize = _newSlapCount;
+        uint _objectiveCount = _objectives.length;
+        // each slap and objective could have a different payment method
+        uint paymentMethodArraySize = _newSlapCount + _objectiveCount;
+        // check costs of sticker designs for passed in slaps
         PaymentMethodTotal[] memory costs = new PaymentMethodTotal[](paymentMethodArraySize);
         uint paymentMethodCount = 1;
         for (uint i = 0; i < _newSlapCount; i++) {
@@ -259,6 +261,40 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 }
             }
         }
+        // check costs of objectives for passed in slaps
+        FreshSlap[] memory _priceCheckSlaps = new FreshSlap[](_newSlapCount);
+       for (uint i = 0; i < _newSlapCount; i++) {
+            _priceCheckSlaps[i] = FreshSlap({
+                slapId: 0,
+                placeId: _newSlaps[i].placeId,
+                stickerId: _newSlaps[i].stickerId,
+                size: _newSlaps[i].size
+            });
+        }
+        for (uint i = 0; i < _objectiveCount; i++) {
+            IStickerObjective obj = stickerObjectivesContract.getObjective(_objectives[i]);
+            if (address(obj) == address(0)) {
+                continue;
+            }
+            (address objPaymentCoin, uint objCost,) = obj.costOfSlaps(_player, _priceCheckSlaps);
+            if (objPaymentCoin == address(0)) {
+                costs[0].total += objCost;
+            } else {
+                bool found = false;
+                for (uint j = 1; j < paymentMethodCount; j++) {
+                    if (costs[j].paymentMethodId == paymentMethodContract.getIdOfPaymentMethod(objPaymentCoin)) {
+                        costs[j].total += objCost;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    costs[paymentMethodCount].paymentMethodId = paymentMethodContract.getIdOfPaymentMethod(objPaymentCoin);
+                    costs[paymentMethodCount].total = objCost;
+                    paymentMethodCount++;
+                }
+            }
+        }
         // make new array with only the payment methods that have a cost
         PaymentMethodTotal[] memory finalCosts = new PaymentMethodTotal[](paymentMethodCount);
         uint finalCostsIndex;
@@ -271,7 +307,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         return finalCosts;
     }
 
-    function checkSlaps(address _player, NewSlap[] calldata _newSlaps)
+    function checkSlaps(address _player, NewSlap[] calldata _newSlaps, uint256[] calldata _objectives)
     public view
     returns (SlapIssue[] memory issues)
     {
@@ -281,7 +317,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             issues[issueCount] = SlapIssue({issueCode: IssueType.PlayerNotAllowed, recordId: 0, value: 0});
             issueCount++;
         }
-        PaymentMethodTotal[] memory costs = costOfSlaps(_player, _newSlaps);
+        PaymentMethodTotal[] memory costs = costOfSlaps(_player, _newSlaps, _objectives);
         uint paymentMethodCount = costs.length;
         for (uint i = 0; i < paymentMethodCount; i++) {
             if (i == 0) {

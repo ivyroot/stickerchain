@@ -26,8 +26,12 @@ interface IStickerObjective {
     function placeList() external view returns (uint[] memory);
 
     // address(0) = base token of chain (ETH on Base mainnet)
+    // when checking price pass slapId = 0
     function costOfSlaps(address player, FreshSlap[] calldata slaps) external view
         returns (address paymentCoinAddress, uint cost, address recipient);
+
+    // Revert with this method if any address other than stickerChain tries to call slapInObjective
+    error InvalidCaller();
 
     function slapInObjective(address player, FreshSlap[] calldata slaps) external payable
         returns (uint[] memory includedSlapIds);
