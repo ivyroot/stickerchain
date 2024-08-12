@@ -228,15 +228,15 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     function costOfSlaps(address _player, NewSlap[] calldata _newSlaps)
     public view
-    returns (PaymentMethodTotal[] memory costs)
+    returns (PaymentMethodTotal[] memory)
     {
         if (_bannedPlayers[_player]) {
             revert PlayerIsBanned();
         }
         uint _newSlapCount = _newSlaps.length;
-        // multiple slaps, up to (slap count) payment methods
+        // multiple slaps can have up to as many payment methods as slaps
         uint paymentMethodArraySize = _newSlapCount;
-        costs = new PaymentMethodTotal[](paymentMethodArraySize);
+        PaymentMethodTotal[] memory costs = new PaymentMethodTotal[](paymentMethodArraySize);
         uint paymentMethodCount = 1;
         for (uint i = 0; i < _newSlapCount; i++) {
             costs[0].total += slapFeeForSize(_newSlaps[i].size);
@@ -259,6 +259,16 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 }
             }
         }
+        // make new array with only the payment methods that have a cost
+        PaymentMethodTotal[] memory finalCosts = new PaymentMethodTotal[](paymentMethodCount);
+        uint finalCostsIndex;
+        for (uint i = 0; i < paymentMethodCount; i++) {
+            if (costs[i].total > 0) {
+                finalCosts[finalCostsIndex] = costs[i];
+                finalCostsIndex++;
+            }
+        }
+        return finalCosts;
     }
 
     function checkSlaps(address _player, NewSlap[] calldata _newSlaps)

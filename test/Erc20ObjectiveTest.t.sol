@@ -90,12 +90,20 @@ contract Erc20ObjectiveTest is Test {
             stickerId: exampleStickerId1,
             size: 1
         });
-        uint baseSlapFee = stickerChain.slapFeeForSize(1);
-        uint calculatedSlapCost = stickerChain.baseTokenCostOfSlaps(newSlaps);
-        assertGt(calculatedSlapCost, baseSlapFee);
         uint256[] memory objectives = new uint256[](1);
         objectives[0] = objectiveNYCId;
-        stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapBaseTokenCost = calculatedCosts[0].total;
+
+        // check calculated values
+        uint baseSlapFee = stickerChain.slapFeeForSize(1);
+        assertGt(calculatedSlapBaseTokenCost, baseSlapFee);
+
+
+        stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
         Slap memory slap = stickerChain.getSlap(1);
         assertEq(slap.stickerId, exampleStickerId1);
         assertEq(slap.placeId, placeIdUnionSquare);
