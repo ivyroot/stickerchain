@@ -99,11 +99,15 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     mapping (address => bool) public initiatedPlayers;
     mapping (address => bool) public bannedPlayers;
 
+    address public banOperator;
+    bool public banOperatorIsLocked;
+
     constructor(address _initialAdmin, uint _initialSlapFee, address payable _stickerDesignsAddress, address payable _paymentMethodAddress)
         Ownable(_initialAdmin) ERC721A("StickerChain", "SLAP")  {
         slapFee = _initialSlapFee;
         stickerDesignsContract = StickerDesigns(_stickerDesignsAddress);
         paymentMethodContract = IPaymentMethod(_paymentMethodAddress);
+        banOperator = _initialAdmin;
     }
 
     function slapFeeForSize(uint _size) public view returns (uint) {
@@ -504,7 +508,17 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         playerReputationFee = _newPlayerReputationFee;
     }
 
-    function banPlayers(address[] calldata _players, bool undoBan) external onlyOwner {
+    fuction setBanOperator(address _newBanOperator) external onlyOwner {
+        require(!banOperatorIsLocked, 'StickerChain: Ban operator is locked');
+        banOperator = _newBanOperator;
+    }
+
+    function lockBanOperator() external onlyOwner {
+        banOperatorIsLocked = true;
+    }
+
+    function banPlayers(address[] calldata _players, bool undoBan) external {
+        require(msg.sender == banOperator, 'StickerChain: Only the ban operator can ban players');
         for (uint i = 0; i < _players.length; i++) {
             bannedPlayers[_players[i]] = !undoBan;
         }
