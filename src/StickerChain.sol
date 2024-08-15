@@ -140,10 +140,9 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     function _readSlap(uint256 _slapId) internal view returns (Slap memory result) {
         StoredSlap memory storedSlap = _slaps[_slapId];
-        if (stickerDesignsContract.isBannedStickerDesign(storedSlap.stickerId)) {
-            return result;
-        }
-        if (_bannedPlayers[storedSlap.slappedBy]) {
+        if (stickerDesignsContract.isBannedStickerDesign(storedSlap.stickerId) ||
+            _bannedPlayers[storedSlap.slappedBy] ||
+            (ownerOf(_slapId) == address(0))) {
             return result;
         }
         result = Slap({
