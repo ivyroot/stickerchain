@@ -152,6 +152,33 @@ contract PlayerSlapTest is Test {
         assertEq(slap.slappedAt, block.timestamp);
     }
 
+    // Test burnt slap is not visible
+    function testSlapOneStickerAndBurnIt() public {
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        uint256[] memory objectives;
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapCost = calculatedCosts[0].total;
+        (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        Slap memory slap = stickerChain.getSlap(1);
+        assertEq(slap.stickerId, exampleStickerId1);
+        assertEq(slap.placeId, placeIdUnionSquare);
+        assertEq(slap.player, address1);
+        stickerChain.transferFrom(address1, address(0), 1);
+        slap = stickerChain.getSlap(1);
+        assertEq(slap.stickerId, 0);
+        assertEq(slap.placeId, 0);
+        assertEq(slap.player, address(0));
+    }
+
     function testSlapTwoStickersAndGetThem() public {
         vm.deal(address1, 20 ether);
         vm.startPrank(address1);
