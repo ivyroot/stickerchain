@@ -90,12 +90,14 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     bool public objectivePayoutMethodIsLocked;
 
     uint256 public slapFee;
+    uint256 public playerReputationFee;
 
     mapping (uint256 => StoredSlap) private _slaps;
     mapping (uint256 => StoredPlace) private _board;
     mapping (uint256 => uint256) private _stickerDesignSlapCounts;
 
-    mapping (address => bool) private _bannedPlayers;
+    mapping (address => bool) public initiatedPlayers;
+    mapping (address => bool) public bannedPlayers;
 
     constructor(address _initialAdmin, uint _initialSlapFee, address payable _stickerDesignsAddress, address payable _paymentMethodAddress)
         Ownable(_initialAdmin) ERC721A("StickerChain", "SLAP")  {
@@ -141,7 +143,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     function _readSlap(uint256 _slapId) internal view returns (Slap memory result) {
         StoredSlap memory storedSlap = _slaps[_slapId];
         if (stickerDesignsContract.isBannedStickerDesign(storedSlap.stickerId) ||
-            _bannedPlayers[storedSlap.slappedBy] ||
+            bannedPlayers[storedSlap.slappedBy] ||
             (ownerOf(_slapId) == address(0))) {
             return result;
         }
@@ -221,16 +223,20 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     public view
     returns (PaymentMethodTotal[] memory)
     {
-        if (_bannedPlayers[_player]) {
+        if (bannedPlayers[_player]) {
             revert PlayerIsBanned();
         }
         uint _newSlapCount = _newSlaps.length;
         uint _objectiveCount = _objectives.length;
         // each slap and objective could have a different payment method
         uint paymentMethodArraySize = _newSlapCount + _objectiveCount;
-        // check costs of sticker designs for passed in slaps
         PaymentMethodTotal[] memory costs = new PaymentMethodTotal[](paymentMethodArraySize);
         uint paymentMethodCount = 1;
+        // check for player reputation fee
+        if (!initiatedPlayers[_player]) {
+            costs[0].total += playerReputationFee;
+        }
+        // check costs of sticker designs for passed in slaps
         for (uint i = 0; i < _newSlapCount; i++) {
             costs[0].total += slapFeeForSize(_newSlaps[i].size);
             (uint paymentMethodId, uint64 price,) = stickerDesignsContract.getStickerDesignPrice(_newSlaps[i].stickerId);
@@ -304,12 +310,15 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     {
         uint slapCount = _newSlaps.length;
         uint issueCount;
-        if (_bannedPlayers[_player]) {
+        if (bannedPlayers[_player]) {
             issues[issueCount] = SlapIssue({issueCode: IssueType.PlayerNotAllowed, recordId: 0, value: 0});
             issueCount++;
         }
         PaymentMethodTotal[] memory costs = costOfSlaps(_player, _newSlaps, _objectives);
         uint paymentMethodCount = costs.length;
+        if (!initiatedPlayers[_player]) {
+            costs[0].total += playerReputationFee;
+        }
         for (uint i = 0; i < paymentMethodCount; i++) {
             if (i == 0) {
                 uint playerEthBalance = address(_player).balance;
@@ -348,7 +357,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     external payable nonReentrant
     returns (uint256[] memory slapIds, uint256[] memory slapStatuses)
     {
-        if (_bannedPlayers[msg.sender]) {
+        if (bannedPlayers[msg.sender]) {
             revert PlayerIsBanned();
         }
         uint slapCount = _newSlaps.length;
@@ -432,6 +441,10 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 obj.slapInObjective(msg.sender, freshSlaps);
             }
         }
+        if (!initiatedPlayers[msg.sender]) {
+            totalBill += playerReputationFee;
+            initiatedPlayers[msg.sender] = true;
+        }
         if (msg.value < totalBill) {
             revert InsufficientFunds(totalBill);
         }
@@ -487,9 +500,13 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         slapFee = _newSlapFee;
     }
 
+    function setPlayerReputationFee(uint _newPlayerReputationFee) external onlyOwner {
+        playerReputationFee = _newPlayerReputationFee;
+    }
+
     function banPlayers(address[] calldata _players, bool undoBan) external onlyOwner {
         for (uint i = 0; i < _players.length; i++) {
-            _bannedPlayers[_players[i]] = !undoBan;
+            bannedPlayers[_players[i]] = !undoBan;
         }
     }
 
