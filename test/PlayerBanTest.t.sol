@@ -132,5 +132,37 @@ contract PlayerBanTest is Test {
         stickerChain.setBanOperator(address2);
     }
 
+    function testSlapsOfBannedPlayer() public {
+        vm.startPrank(address1);
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId2,
+            size: 1
+        });
+        uint256[] memory objectives;
+        stickerChain.slap{value: slapFee}(newSlaps, objectives);
+        Slap memory testSlap = stickerChain.getSlap(1);
+        assertEq(testSlap.stickerId, exampleStickerId2);
+        assertEq(testSlap.player, address1);
+
+        // ban player
+        vm.startPrank(adminAddress);
+        address[] memory banPlayers = new address[](1);
+        banPlayers[0] = address1;
+        stickerChain.banPlayers(banPlayers, false);
+        testSlap = stickerChain.getSlap(1);
+        assertEq(testSlap.stickerId, 0);
+        assertEq(testSlap.player, address(0));
+
+
+        // unban player
+        stickerChain.banPlayers(banPlayers, true);
+        testSlap = stickerChain.getSlap(1);
+        assertEq(testSlap.stickerId, exampleStickerId2);
+        assertEq(testSlap.player, address1);
+
+    }
+
 
 }
