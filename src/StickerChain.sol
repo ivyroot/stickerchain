@@ -49,6 +49,7 @@ struct StoredSlap {
     uint256 height;
     uint256 stickerId;
     uint256 slappedAt;
+    address slappedBy;
     uint64 size;
 }
 
@@ -142,6 +143,9 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         if (stickerDesignsContract.isBannedStickerDesign(storedSlap.stickerId)) {
             return result;
         }
+        if (_bannedPlayers[storedSlap.slappedBy]) {
+            return result;
+        }
         result = Slap({
             slapId: _slapId,
             stickerId: storedSlap.stickerId,
@@ -149,7 +153,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             height: storedSlap.height,
             slappedAt: storedSlap.slappedAt,
             size: storedSlap.size,
-            player: ownerOf(_slapId)
+            player: storedSlap.slappedBy
         });
     }
 
@@ -458,6 +462,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             height: _originSlapHeight,
             stickerId: _stickerId,
             slappedAt: block.timestamp,
+            slappedBy: msg.sender,
             size: size
         });
         if (size == 1) {
