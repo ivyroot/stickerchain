@@ -72,6 +72,9 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     error InsufficientFunds(uint256 paymentMethodId);
     error InvalidPlaceId(uint256 placeId);
     error PlayerIsBanned();
+    error FeatureIsLocked();
+    error InvalidAddress();
+    error PermissionDenied();
     error InvalidStart();
 
     IPaymentMethod public paymentMethodContract;
@@ -97,7 +100,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     mapping (uint256 => uint256) private _stickerDesignSlapCounts;
 
     mapping (address => bool) public initiatedPlayers;
-    mapping (address => bool) public bannedPlayers;
+    mapping (address => bool) public isBanned;
 
     address public banOperator;
     bool public banOperatorIsLocked;
@@ -147,7 +150,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     function _readSlap(uint256 _slapId) internal view returns (Slap memory result) {
         StoredSlap memory storedSlap = _slaps[_slapId];
         if (stickerDesignsContract.isBannedStickerDesign(storedSlap.stickerId) ||
-            bannedPlayers[storedSlap.slappedBy] ||
+            isBanned[storedSlap.slappedBy] ||
             (ownerOf(_slapId) == address(0))) {
             return result;
         }
@@ -227,7 +230,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     public view
     returns (PaymentMethodTotal[] memory)
     {
-        if (bannedPlayers[_player]) {
+        if (isBanned[_player]) {
             revert PlayerIsBanned();
         }
         uint _newSlapCount = _newSlaps.length;
@@ -314,7 +317,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     {
         uint slapCount = _newSlaps.length;
         uint issueCount;
-        if (bannedPlayers[_player]) {
+        if (isBanned[_player]) {
             issues[issueCount] = SlapIssue({issueCode: IssueType.PlayerNotAllowed, recordId: 0, value: 0});
             issueCount++;
         }
@@ -361,7 +364,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     external payable nonReentrant
     returns (uint256[] memory slapIds, uint256[] memory slapStatuses)
     {
-        if (bannedPlayers[msg.sender]) {
+        if (isBanned[msg.sender]) {
             revert PlayerIsBanned();
         }
         uint slapCount = _newSlaps.length;
@@ -509,7 +512,12 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     }
 
     function setBanOperator(address _newBanOperator) external onlyOwner {
-        require(!banOperatorIsLocked, 'StickerChain: Ban operator is locked');
+        if (banOperatorIsLocked) {
+            revert FeatureIsLocked();
+        }
+        if (_newBanOperator == address(0)) {
+            revert InvalidAddress();
+        }
         banOperator = _newBanOperator;
     }
 
@@ -518,16 +526,22 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     }
 
     function banPlayers(address[] calldata _players, bool undoBan) external {
-        require(msg.sender == banOperator, 'StickerChain: Only the ban operator can ban players');
+        if (msg.sender != banOperator) {
+            revert PermissionDenied();
+        }
         for (uint i = 0; i < _players.length; i++) {
-            bannedPlayers[_players[i]] = !undoBan;
+            isBanned[_players[i]] = !undoBan;
         }
     }
 
     // change the PaymentMethod contract address
     function setPaymentMethodContract(address payable _newPaymentMethodAddress) external onlyOwner {
-        require(!paymentMethodContractIsLocked, 'StickerChain: PaymentMethod contract is locked');
-        require(_newPaymentMethodAddress != address(0), 'StickerChain: PaymentMethod contract address cannot be 0');
+        if (paymentMethodContractIsLocked) {
+            revert FeatureIsLocked();
+        }
+        if (_newPaymentMethodAddress == address(0)) {
+            revert InvalidAddress();
+        }
         paymentMethodContract = IPaymentMethod(_newPaymentMethodAddress);
     }
 
@@ -537,8 +551,12 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     // change the StickerDesigns contract address
     function setStickerDesignsContract(address payable _newStickerDesignsAddress) external onlyOwner {
-        require(!stickerDesignsContractIsLocked, 'StickerChain: StickerDesigns contract is locked');
-        require(_newStickerDesignsAddress != address(0), 'StickerChain: StickerDesigns contract address cannot be 0');
+        if (stickerDesignsContractIsLocked) {
+            revert FeatureIsLocked();
+        }
+        if (_newStickerDesignsAddress == address(0)) {
+            revert InvalidAddress();
+        }
         stickerDesignsContract = StickerDesigns(_newStickerDesignsAddress);
     }
     function lockStickerDesignsContract() external onlyOwner {
@@ -547,8 +565,12 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     // change the StickerObjectives contract address
     function setStickerObjectivesContract(address payable _newStickerObjectivesAddress) external onlyOwner {
-        require(!stickerObjectivesContractIsLocked, 'StickerChain: StickerObjectives contract is locked');
-        require(_newStickerObjectivesAddress != address(0), 'StickerChain: StickerObjectives contract address cannot be 0');
+        if (stickerObjectivesContractIsLocked) {
+            revert FeatureIsLocked();
+        }
+        if (_newStickerObjectivesAddress == address(0)) {
+            revert InvalidAddress();
+        }
         stickerObjectivesContract = StickerObjectives(_newStickerObjectivesAddress);
     }
 
@@ -558,8 +580,12 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     // change the Publisher PayoutMethod contract address
     function setPublisherPayoutMethodContract(address payable _newPublisherPayoutMethodAddress) external onlyOwner {
-        require(!publisherPayoutMethodIsLocked, 'StickerChain: PublisherPayoutMethod contract is locked');
-        require(_newPublisherPayoutMethodAddress != address(0), 'StickerChain: PublisherPayoutMethod contract address cannot be 0');
+        if (publisherPayoutMethodIsLocked) {
+            revert FeatureIsLocked();
+        }
+        if (_newPublisherPayoutMethodAddress == address(0)) {
+            revert InvalidAddress();
+        }
         publisherPayoutMethod = IPayoutMethod(_newPublisherPayoutMethodAddress);
     }
 
@@ -569,8 +595,12 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     // change the Objective PayoutMethod contract address
     function setObjectivePayoutMethodContract(address payable _newObjectivePayoutMethodAddress) external onlyOwner {
-        require(!objectivePayoutMethodIsLocked, 'StickerChain: ObjectivePayoutMethod contract is locked');
-        require(_newObjectivePayoutMethodAddress != address(0), 'StickerChain: ObjectivePayoutMethod contract address cannot be 0');
+        if (objectivePayoutMethodIsLocked) {
+            revert FeatureIsLocked();
+        }
+        if (_newObjectivePayoutMethodAddress == address(0)) {
+            revert InvalidAddress();
+        }
         objectivePayoutMethod = IPayoutMethod(_newObjectivePayoutMethodAddress);
     }
 

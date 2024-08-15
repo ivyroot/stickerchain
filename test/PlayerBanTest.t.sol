@@ -30,6 +30,9 @@ contract PlayerBanTest is Test {
     fallback() external payable {}
 
     function setUp() public {
+        vm.deal(address1, 20 ether);
+        vm.deal(address2, 20 ether);
+        vm.deal(address3, 20 ether);
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
         stickerDesigns = new StickerDesigns(paymentMethod, adminAddress, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
@@ -69,17 +72,15 @@ contract PlayerBanTest is Test {
 
     }
 
-    // test banned player cannot slap
     function testBannedPlayerCannotSlap() public {
         address[] memory banPlayers = new address[](1);
         banPlayers[0] = address1;
         stickerChain.banPlayers(banPlayers, false);
-        vm.deal(address1, 20 ether);
         vm.startPrank(address1);
         NewSlap[] memory newSlaps = new NewSlap[](1);
         newSlaps[0] = NewSlap({
             placeId: placeIdUnionSquare,
-            stickerId: exampleStickerId1,
+            stickerId: exampleStickerId2,
             size: 1
         });
         vm.expectRevert(
@@ -87,6 +88,48 @@ contract PlayerBanTest is Test {
         );
         uint256[] memory objectives;
         stickerChain.slap{value: slapFee}(newSlaps, objectives);
+    }
+
+    function testRandomAccountCannotBanPlayers() public {
+        vm.startPrank(address3);
+        address[] memory banPlayers = new address[](1);
+        banPlayers[0] = address2;
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.PermissionDenied.selector)
+        );
+        stickerChain.banPlayers(banPlayers, false);
+    }
+
+    function testBanOperatorAccountCanBanPlayers() public {
+        stickerChain.setBanOperator(address3);
+        vm.startPrank(address3);
+        address[] memory banPlayers = new address[](1);
+        banPlayers[0] = address2;
+        stickerChain.banPlayers(banPlayers, false);
+        bool isBanned = stickerChain.isBanned(address2);
+        assertEq(isBanned, true);
+        vm.startPrank(address2);
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId2,
+            size: 1
+        });
+        uint256[] memory objectives;
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.PlayerIsBanned.selector)
+        );
+        stickerChain.slap{value: slapFee}(newSlaps, objectives);
+    }
+
+    function testAdminCannotChangeBanOperatorAfterItsLocked() public {
+        stickerChain.setBanOperator(address3);
+        assertEq(stickerChain.banOperator(), address3);
+        stickerChain.lockBanOperator();
+        vm.expectRevert(
+            abi.encodeWithSelector(StickerChain.FeatureIsLocked.selector)
+        );
+        stickerChain.setBanOperator(address2);
     }
 
 
