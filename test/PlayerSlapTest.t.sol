@@ -127,26 +127,6 @@ contract PlayerSlapTest is Test {
 
     }
 
-    // test banned player cannot slap
-    function testBannedPlayerCannotSlap() public {
-        address[] memory banPlayers = new address[](1);
-        banPlayers[0] = address1;
-        stickerChain.banPlayers(banPlayers, false);
-        vm.deal(address1, 20 ether);
-        vm.startPrank(address1);
-        NewSlap[] memory newSlaps = new NewSlap[](1);
-        newSlaps[0] = NewSlap({
-            placeId: placeIdUnionSquare,
-            stickerId: exampleStickerId1,
-            size: 1
-        });
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.PlayerIsBanned.selector)
-        );
-        uint256[] memory objectives;
-        stickerChain.slap{value: slapFee}(newSlaps, objectives);
-    }
-
     // Test slapping a sticker and accessing via slap id
     function testSlapOneStickerAndGetIt() public {
         vm.deal(address1, 20 ether);

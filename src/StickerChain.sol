@@ -508,7 +508,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         playerReputationFee = _newPlayerReputationFee;
     }
 
-    fuction setBanOperator(address _newBanOperator) external onlyOwner {
+    function setBanOperator(address _newBanOperator) external onlyOwner {
         require(!banOperatorIsLocked, 'StickerChain: Ban operator is locked');
         banOperator = _newBanOperator;
     }
