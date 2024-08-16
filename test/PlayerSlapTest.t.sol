@@ -38,6 +38,9 @@ contract PlayerSlapTest is Test {
         stickerChain.setPublisherPayoutMethodContract(payable(address(publisherPayoutMethod)));
         stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
 
+        vm.deal(address1, 20 ether);
+        vm.deal(address2, 20 ether);
+
         bytes memory metadataCID = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
         address publisher = adminAddress;
         vm.deal(publisher, 20 ether);
@@ -125,6 +128,53 @@ contract PlayerSlapTest is Test {
         assertEq(slapIssues.length, 1);
         assertEq(slapIssues[0], 404);
 
+    }
+
+    // test player reputation fee required on first slap only
+    function testPlayerReputationFeeRequiredOnFirstSlap() public {
+        // set player reputation fee
+        stickerChain.setPlayerReputationFee(0.3 ether);
+        vm.startPrank(address1);
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId2,
+            size: 1
+        });
+        uint256[] memory objectives;
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapCost = calculatedCosts[0].total;
+        assertEq(calculatedSlapCost, slapFee + 0.3 ether);
+        (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        assertEq(slapIds.length, 1);
+        calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        calculatedSlapCost = calculatedCosts[0].total;
+        assertEq(calculatedSlapCost, slapFee);
+        (slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        assertEq(slapIds.length, 1);
+        // change player reputation fee
+        vm.startPrank(adminAddress);
+        stickerChain.setPlayerReputationFee(0.07 ether);
+        // check new player gets new reputation fee
+        vm.startPrank(address2);
+        calculatedCosts = stickerChain.costOfSlaps(address2, newSlaps, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        calculatedSlapCost = calculatedCosts[0].total;
+        assertEq(calculatedSlapCost, slapFee + 0.07 ether);
+        (slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        assertEq(slapIds.length, 1);
+        calculatedCosts = stickerChain.costOfSlaps(address2, newSlaps, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        calculatedSlapCost = calculatedCosts[0].total;
+        assertEq(calculatedSlapCost, slapFee);
+        (slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        assertEq(slapIds.length, 1);
     }
 
     // Test slapping a sticker and accessing via slap id
