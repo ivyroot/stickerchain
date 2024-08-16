@@ -152,6 +152,32 @@ contract PlayerSlapTest is Test {
         assertEq(slap.slappedAt, block.timestamp);
     }
 
+    // test random account cannot burn a slap
+    function testRandomAccountCannotBurnSlaps() public {
+        vm.deal(address1, 20 ether);
+        vm.deal(address2, 20 ether);
+        vm.startPrank(address1);
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        uint256[] memory objectives;
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapCost = calculatedCosts[0].total;
+        (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
+        assertEq(slapIds.length, 1);
+        vm.startPrank(address2);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC721A.TransferCallerNotOwnerNorApproved.selector)
+        );
+        stickerChain.burn(slapIds);
+    }
+
+
     // Test burnt slap is not visible
     function testSlapOneStickerAndBurnIt() public {
         vm.deal(address1, 20 ether);
