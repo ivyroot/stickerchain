@@ -168,16 +168,85 @@ contract PlayerSlapTest is Test {
         assertEq(calculatedCosts[0].paymentMethodId, 0);
         uint calculatedSlapCost = calculatedCosts[0].total;
         (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps, objectives);
-        Slap memory slap = stickerChain.getSlap(1);
+        assertEq(slapIds.length, 1);
+        Slap memory slap = stickerChain.getSlap(slapIds[0]);
         assertEq(slap.stickerId, exampleStickerId1);
         assertEq(slap.placeId, placeIdUnionSquare);
         assertEq(slap.player, address1);
-        stickerChain.transferFrom(address1, address(0), 1);
-        slap = stickerChain.getSlap(1);
+        uint256[] memory burnSlapIds = new uint256[](1);
+        burnSlapIds[0] = 1;
+        stickerChain.burn(burnSlapIds);
+        slap = stickerChain.getSlap(slapIds[0]);
         assertEq(slap.stickerId, 0);
         assertEq(slap.placeId, 0);
         assertEq(slap.player, address(0));
+        Place memory place = stickerChain.getPlace(placeIdUnionSquare);
+        assertEq(place.slapId, 0);
     }
+
+    // Test slap four stickers then burn top two should show second one at place
+    function testSlapFourThenBurnTwo() public {
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+        NewSlap[] memory newSlaps4 = new NewSlap[](4);
+        newSlaps4[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        newSlaps4[1] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId2,
+            size: 1
+        });
+        newSlaps4[2] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        newSlaps4[3] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        uint256[] memory objectives;
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps4, objectives);
+        assertEq(calculatedCosts.length, 1);
+        assertEq(calculatedCosts[0].paymentMethodId, 0);
+        uint calculatedSlapCost = calculatedCosts[0].total;
+        (uint256[] memory slapIds,) = stickerChain.slap{value: calculatedSlapCost}(newSlaps4, objectives);
+        assertEq(slapIds.length, 4);
+        Slap[] memory slaps = stickerChain.getSlaps(slapIds);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[1].stickerId, exampleStickerId2);
+        assertEq(slaps[1].placeId, placeIdUnionSquare);
+        assertEq(slaps[2].stickerId, exampleStickerId1);
+        assertEq(slaps[2].placeId, placeIdUnionSquare);
+        assertEq(slaps[3].stickerId, exampleStickerId1);
+        assertEq(slaps[3].placeId, placeIdUnionSquare);
+        Place memory place = stickerChain.getPlace(placeIdUnionSquare);
+        assertEq(place.slapId, slapIds[3]);
+        // burn top two
+        uint256[] memory burnSlapIds = new uint256[](2);
+        burnSlapIds[0] = slapIds[3];
+        burnSlapIds[1] = slapIds[2];
+        stickerChain.burn(burnSlapIds);
+        // check place
+        place = stickerChain.getPlace(placeIdUnionSquare);
+        assertEq(place.slapId, slapIds[1]);
+        // check slaps
+        slaps = stickerChain.getSlaps(slapIds);
+        assertEq(slaps[0].stickerId, exampleStickerId1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[1].stickerId, exampleStickerId2);
+        assertEq(slaps[1].placeId, placeIdUnionSquare);
+        assertEq(slaps[2].stickerId, 0);
+        assertEq(slaps[2].placeId, 0);
+        assertEq(slaps[3].stickerId, 0);
+        assertEq(slaps[3].placeId, 0);
+    }
+
 
     function testSlapTwoStickersAndGetThem() public {
         vm.deal(address1, 20 ether);

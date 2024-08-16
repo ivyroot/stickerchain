@@ -122,9 +122,24 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         if (!isValid) {
             revert InvalidPlaceId(_placeId);
         }
+        uint slapId;
+        uint stickerId;
         uint slapCount = _board[_placeId].slapCount;
-        uint slapId = _board[_placeId].slaps[slapCount];
-        uint stickerId = getSlapStickerId(slapId);
+        if (slapCount > 0) {
+            slapId = _board[_placeId].slaps[slapCount];
+            // skip over any slaps that have been burned
+            while (slapId > 0 && _slaps[slapId].placeId == 0) {
+                slapCount--;
+                if (slapCount == 0) {
+                    slapId = 0;
+                } else {
+                    slapId = _board[_placeId].slaps[slapCount];
+                }
+            }
+            if (slapId > 0) {
+                stickerId = getSlapStickerId(slapId);
+            }
+        }
         Place memory place = Place({
             placeId: _placeId,
             lng: lng,
@@ -151,7 +166,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         StoredSlap memory storedSlap = _slaps[_slapId];
         if (stickerDesignsContract.isBannedStickerDesign(storedSlap.stickerId) ||
             isBanned[storedSlap.slappedBy] ||
-            (ownerOf(_slapId) == address(0))) {
+            !_exists(_slapId)) {
             return result;
         }
         result = Slap({
@@ -501,6 +516,23 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         return _slappedTokenId;
     }
 
+    function burn(uint[] calldata _slapIds) external {
+        for (uint i = 0; i < _slapIds.length; i++) {
+            _burn(_slapIds[i], true);
+        }
+    }
+
+    // set burned slaps to placeId 0
+    function _afterTokenTransfers(
+        address,
+        address to,
+        uint256 slapId,
+        uint256
+    ) internal override {
+        if (to == address(0)) {
+            _slaps[slapId].placeId = 0;
+        }
+    }
 
     // admin methods
     function setSlapFee(uint _newSlapFee) external onlyOwner {
