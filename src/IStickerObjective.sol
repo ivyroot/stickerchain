@@ -1,13 +1,18 @@
 pragma solidity ^0.8.24;
 
 struct FreshSlap {
-    uint256 slapId;
+    uint256 slapId; // before slap occurs pass slapId = 0
     uint256 placeId;
     uint256 stickerId;
     uint64 size;
 }
 
 interface IStickerObjective {
+
+    // Objectives must revert with this method
+    // if any address other than the one returned by
+    // stickerChain() tries to call slapInObjective
+    error InvalidCaller();
 
     function stickerChain() external view returns (address);
 
@@ -25,13 +30,11 @@ interface IStickerObjective {
     // [] == ¯\_(ツ)_/¯
     function placeList() external view returns (uint[] memory);
 
-    // address(0) = base token of chain (ETH on Base mainnet)
-    // when checking price pass slapId = 0
+    // indicate cost and method of payment for a potential group of slaps
+    // return paymentCoinAddress = address(0) to use base token of chain (ETH on Base mainnet)
     function costOfSlaps(address player, FreshSlap[] calldata slaps) external view
         returns (address paymentCoinAddress, uint cost, address recipient);
 
-    // Revert with this method if any address other than stickerChain tries to call slapInObjective
-    error InvalidCaller();
 
     function slapInObjective(address player, FreshSlap[] calldata slaps) external payable
         returns (uint[] memory includedSlapIds);
