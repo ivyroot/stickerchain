@@ -1,4 +1,4 @@
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 import {IStickerObjective} from "./IStickerObjective.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";

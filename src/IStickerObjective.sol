@@ -1,4 +1,4 @@
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.26;
 
 struct FreshSlap {
     uint256 slapId; // before slap occurs pass slapId = 0
