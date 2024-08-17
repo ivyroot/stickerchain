@@ -9,9 +9,6 @@ struct FreshSlap {
 
 interface IStickerObjective {
 
-    // Objectives must revert with this method
-    // if any address other than the one returned by
-    // stickerChain() tries to call slapInObjective
     error InvalidCaller();
 
     function stickerChain() external view returns (address);
@@ -36,6 +33,13 @@ interface IStickerObjective {
         returns (address paymentCoinAddress, uint cost, address recipient);
 
 
+    // slapInObjective:
+    // Called by StickerChain when players include the objective on slaps.
+    // Must revert with InvalidCaller() if any address other than StickerChain
+    // tries to call the function.
+    //
+    // NB: StickerChain will have already charged the player the amount specified in
+    //     costOfSlaps and transferred it to the payout contract before calling this function.
     function slapInObjective(address player, FreshSlap[] calldata slaps) external payable
         returns (uint[] memory includedSlapIds);
 
