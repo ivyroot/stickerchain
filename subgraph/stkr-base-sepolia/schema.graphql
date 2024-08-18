@@ -20,5 +20,6 @@ type Slap @entity(immutable: false) {
   placeId: BigInt! # uint256
   stickerId: BigInt! # uint256
   player: Bytes! # address
+  owner: Bytes! # address
   size: BigInt! # uint64
 }
