@@ -9,8 +9,8 @@
     "instances": [
       {
         "abi": "stickerdesigns",
-        "address": "0x6AE9ED354d4375E8eEDb20D0003b600bb6e887B4",
-        "startBlock": 12753613,
+        "address": "0x649bAB4d8aA1eFb64F526488Eed9133fb8BCF79B",
+        "startBlock": 14049490,
         "chain": "base-sepolia",
         "enrich": {
           "handlers": {
