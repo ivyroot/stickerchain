@@ -19,6 +19,7 @@ export function handleStickerSlapped(event: StickerSlappedEvent): void {
   entity.placeId = event.params.placeId
   entity.stickerId = event.params.stickerId
   entity.player = event.params.player
+  entity.owner = entity.player
   entity.size = event.params.size
 
   entity.save()
