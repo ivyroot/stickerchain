@@ -1,14 +1,16 @@
 {
   "base-sepolia": {
     "StickerDesigns": {
-      "address": "0x6AE9ED354d4375E8eEDb20D0003b600bb6e887B4",
-      "startBlock": 12753613
+      "address": "0x756d04287b41c25D87a0Ce1b24969DEe76da67A5",
+      "startBlock": 14049435
     },
     "StickerChain": {
-      "address": "0xae2d46B09740a28e869199AEF38251585DD8afe6"
+      "address": "0x649bAB4d8aA1eFb64F526488Eed9133fb8BCF79B",
+      "startBlock": 14049435
     },
     "StickerObjectives": {
-      "address": "0x31be2662511d06DD4D7f44F3AA4904C7e50A0728"
+      "address": "0x21225dA073B5F7738A6D99A613f24dA2bA9b6564",
+      "startBlock": 14049435
     }
   }
 }
