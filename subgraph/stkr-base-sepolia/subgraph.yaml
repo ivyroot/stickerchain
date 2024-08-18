@@ -8,9 +8,9 @@ dataSources:
     name: StickerDesigns
     network: base-sepolia
     source:
-      address: "0x6AE9ED354d4375E8eEDb20D0003b600bb6e887B4"
+      address: "0x756d04287b41c25D87a0Ce1b24969DEe76da67A5"
       abi: StickerDesigns
-      startBlock: 12753613
+      startBlock: 14049435
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -30,9 +30,9 @@ dataSources:
     name: StickerChain
     network: base-sepolia
     source:
-      address: "0xae2d46B09740a28e869199AEF38251585DD8afe6"
+      address: "0x649bAB4d8aA1eFb64F526488Eed9133fb8BCF79B"
       abi: StickerChain
-      startBlock: 12753848
+      startBlock: 14049435
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
