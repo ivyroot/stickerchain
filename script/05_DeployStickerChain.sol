@@ -13,7 +13,7 @@ contract DeployStickerChain is Script {
         address payable stickerDesignsContractAddress = payable(vm.envAddress('STICKER_DESIGNS_CONTRACT'));
         require(stickerDesignsContractAddress != address(0), 'DeployStickers: STICKER_DESIGNS_CONTRACT not set');
         vm.startBroadcast();
-        new StickerChain(address(tx.origin), 50000000000000, stickerDesignsContractAddress, paymentMethodContractAddress);
+        new StickerChain(address(tx.origin), 500000000000000, stickerDesignsContractAddress, paymentMethodContractAddress);
         vm.stopBroadcast();
     }
 }

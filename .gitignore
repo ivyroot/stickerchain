@@ -8,7 +8,7 @@ out/
 /broadcast/**/dry-run/
 broadcast/0*.sol/*/run-*.json
 !broadcast/0*.sol/*/run-latest.json
-
+broadcast/21_UpdateSlapFee.sol
 
 # Docs
 docs/
