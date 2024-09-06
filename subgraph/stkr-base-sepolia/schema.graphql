@@ -22,4 +22,6 @@ type Slap @entity(immutable: false) {
   player: Bytes! # address
   owner: Bytes! # address
   size: BigInt! # uint64
+  blockNumber: BigInt! # uint256
+  timestamp: BigInt! # uint256
 }
