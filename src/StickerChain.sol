@@ -8,6 +8,7 @@ import {IPaymentMethod} from "./IPaymentMethod.sol";
 import {IPayoutMethod} from "./IPayoutMethod.sol";
 import {StickerDesign, StickerDesigns, ERC20_PAYMENT_FAILED} from "./StickerDesigns.sol";
 import {StickerObjectives} from "./StickerObjectives.sol";
+import {IMetadataRenderer} from "./renderers/IMetadataRenderer.sol";
 import "./IStickerObjective.sol";
 import "block-places/BlockPlaces.sol";
 import "forge-std/console.sol";
@@ -91,6 +92,9 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     IPayoutMethod public objectivePayoutMethod;
     bool public objectivePayoutMethodIsLocked;
+
+    IMetadataRenderer public metadataRenderer;
+    bool public metadataRendererIsLocked;
 
     uint256 public slapFee;
     uint256 public playerReputationFee;
@@ -516,6 +520,17 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         return _slappedTokenId;
     }
 
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+        return metadataRenderer.tokenURI(tokenId);
+    }
+
+
     function burn(uint[] calldata _slapIds) external {
         for (uint i = 0; i < _slapIds.length; i++) {
             _burn(_slapIds[i], true);
@@ -638,6 +653,21 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     function lockObjectivePayoutMethodContract() external onlyOwner {
         objectivePayoutMethodIsLocked = true;
+    }
+
+    // change the MetadataRenderer contract address
+    function setMetadataRendererContract(address _newMetadataRendererAddress) external onlyOwner {
+        if (metadataRendererIsLocked) {
+            revert FeatureIsLocked();
+        }
+        if (_newMetadataRendererAddress == address(0)) {
+            revert InvalidAddress();
+        }
+        metadataRenderer = IMetadataRenderer(_newMetadataRendererAddress);
+    }
+
+    function lockMetadataRendererContract() external onlyOwner {
+        metadataRendererIsLocked = true;
     }
 
 }
