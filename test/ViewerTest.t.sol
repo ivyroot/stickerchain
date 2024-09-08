@@ -27,7 +27,7 @@ contract ViewerTest is Test {
         stickerDesigns = new StickerDesigns(paymentMethod, msg.sender, 0.002 ether, 0.0005 ether);
         vm.deal(publisher, 20 ether);
         vm.startPrank(publisher);
-        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+        NewStickerDesign memory newStickerDesign1 = NewStickerDesign({
             payoutAddress: address(0),
             price: uint64(0.1 ether),
             paymentMethodId: 0,
@@ -47,7 +47,7 @@ contract ViewerTest is Test {
         });
         bool inGoodStanding = stickerDesigns.isPublisherInGoodStanding(publisher);
         uint256 feeAmount = inGoodStanding ? newStickerFee : publisherFee + newStickerFee;
-        newStickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+        newStickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign1);
         newStickerId2 = stickerDesigns.publishStickerDesign{value: newStickerFee}(newStickerDesign2);
     }
 
