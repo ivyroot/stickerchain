@@ -13,6 +13,8 @@ contract ViewerTest is Test {
     uint256 public newStickerFee = 0.0005 ether;
     address adminAddress = address(this);
     address publisher = 0x541EdA6C1171B1253b01f90678475A3Da5B05745;
+    address address2 = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address address3 = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     uint256 public newStickerId1;
     uint256 public newStickerId2;
     bytes metadataCID1 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
@@ -25,6 +27,8 @@ contract ViewerTest is Test {
     function setUp() public {
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
         stickerDesigns = new StickerDesigns(paymentMethod, msg.sender, 0.002 ether, 0.0005 ether);
+        vm.deal(address2, 20 ether);
+        vm.deal(address3, 20 ether);
         vm.deal(publisher, 20 ether);
         vm.startPrank(publisher);
         NewStickerDesign memory newStickerDesign1 = NewStickerDesign({
