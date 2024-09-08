@@ -136,6 +136,18 @@ contract StickerDesigns is Ownable {
         return designs;
     }
 
+    function getStickerDesigns(uint256 _start, uint256 _count) external view returns (StickerDesign[] memory) {
+        uint256 end = _start + _count;
+        if (end > nextStickerDesignId) {
+            end = nextStickerDesignId;
+        }
+        StickerDesign[] memory designs = new StickerDesign[](end - _start);
+        for (uint256 i = _start; i < end; i++) {
+            designs[i - _start] = _readStickerDesign(i);
+        }
+        return designs;
+    }
+
     function _isValidStickerId(uint256 _stickerId) internal view returns (bool) {
         return _stickerId > 0 && _stickerId < nextStickerDesignId && !bannedStickerDesigns[_stickerId];
     }
