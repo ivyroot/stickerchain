@@ -19,10 +19,13 @@ contract ViewerTest is Test {
     address adminAddress = address(this);
     address publisher = 0x541EdA6C1171B1253b01f90678475A3Da5B05745;
     address addressPlayerOne = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-    address address3 = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    uint256[] private playerOneSlaps;
+    address addressPlayerTwo = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+    uint256[] private playerTwoSlaps;
     uint256 public newStickerId1;
     uint256 public newSticker1Price = 0.1 ether;
     uint256 public newStickerId2;
+    uint256 private specialTimestamp = 1766620801;
     bytes metadataCID1 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
     bytes metadataCID2 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54422196e3d342611';
     uint256 public slapFee = 0.001 ether;
@@ -45,7 +48,7 @@ contract ViewerTest is Test {
         stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
         // deal to actors
         vm.deal(addressPlayerOne, 20 ether);
-        vm.deal(address3, 20 ether);
+        vm.deal(addressPlayerTwo, 20 ether);
         vm.deal(publisher, 20 ether);
         vm.startPrank(publisher);
         NewStickerDesign memory newStickerDesign1 = NewStickerDesign({
@@ -71,12 +74,12 @@ contract ViewerTest is Test {
         newStickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign1);
         newStickerId2 = stickerDesigns.publishStickerDesign{value: newStickerFee}(newStickerDesign2);
 
+        vm.warp(specialTimestamp);
         playerOneDoesSomeSlaps();
-
+        playerTwoDoesSomeSlaps();
     }
 
     function playerOneDoesSomeSlaps() public  {
-        // Slap as player 1
         vm.startPrank(addressPlayerOne);
         NewSlap[] memory newSlapsAddress2 = new NewSlap[](2);
         newSlapsAddress2[0] = NewSlap({
@@ -95,12 +98,44 @@ contract ViewerTest is Test {
         assertEq(calculatedCostsAddress2.length, 1);
         assertEq(calculatedCostsAddress2[0].paymentMethodId, 0);
         uint calculatedSlapCostAddress2 = calculatedCostsAddress2[0].total;
-        uint expectedPrice = (slapFee * 2) + newSticker1Price;
-        assertEq(calculatedSlapCostAddress2, expectedPrice  );
-        stickerChain.slap{value: calculatedSlapCostAddress2}(newSlapsAddress2, objectivesAddress2);
+        uint[] memory playerOneSlapStatuses;
+        (playerOneSlaps, playerOneSlapStatuses) = stickerChain.slap{value: calculatedSlapCostAddress2}(newSlapsAddress2, objectivesAddress2);
+        assertEq(playerOneSlaps.length, 2);
+        assertEq(playerOneSlaps[0], 1);
+        assertEq(playerOneSlaps[1], 2);
+        assertEq(playerOneSlapStatuses.length, 2);
+        assertEq(playerOneSlapStatuses[0], 0);
+        assertEq(playerOneSlapStatuses[1], 0);
     }
 
-    // Test publishing a sticker design with the fee for a first-time publisher
+    function playerTwoDoesSomeSlaps() public  {
+        vm.startPrank(addressPlayerTwo);
+        NewSlap[] memory newSlapsAddress2 = new NewSlap[](2);
+        newSlapsAddress2[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: newStickerId1,
+            size: 1
+        });
+        newSlapsAddress2[1] = NewSlap({
+            placeId: placeIdHollywoodSign,
+            stickerId: newStickerId2,
+            size: 1
+        });
+        uint256[] memory objectivesAddress2;
+        PaymentMethodTotal[] memory calculatedCostsAddress2 = stickerChain.costOfSlaps(addressPlayerTwo, newSlapsAddress2, objectivesAddress2);
+        assertEq(calculatedCostsAddress2.length, 1);
+        assertEq(calculatedCostsAddress2[0].paymentMethodId, 0);
+        uint calculatedSlapCostAddress2 = calculatedCostsAddress2[0].total;
+        uint[] memory playerTwoSlapStatuses;
+        (playerTwoSlaps, playerTwoSlapStatuses) = stickerChain.slap{value: calculatedSlapCostAddress2}(newSlapsAddress2, objectivesAddress2);
+        assertEq(playerTwoSlaps.length, 2);
+        assertEq(playerTwoSlaps[0], 3);
+        assertEq(playerTwoSlaps[1], 4);
+        assertEq(playerTwoSlapStatuses.length, 2);
+        assertEq(playerTwoSlapStatuses[0], 0);
+        assertEq(playerTwoSlapStatuses[1], 0);
+    }
+
     function testViewSingleStickerDesign() public view {
         StickerDesign memory sticker = stickerDesigns.getStickerDesign(newStickerId1);
         assertEq(sticker.metadataCID, metadataCID1);
@@ -110,7 +145,6 @@ contract ViewerTest is Test {
         assertEq(sticker.payoutAddress, address(0));
     }
 
-    //
     function testViewTwoStickerDesigns() public view {
         uint256[] memory stickerIds = new uint256[](2);
         stickerIds[0] = newStickerId1;
@@ -129,7 +163,6 @@ contract ViewerTest is Test {
         assertEq(stickers[1].metadataCID, metadataCID2);
     }
 
-    // Test getStickerDesigns function
     function testGetStickerDesigns() public view {
         uint256 start = 1;
         uint256 count = 2;
@@ -155,6 +188,14 @@ contract ViewerTest is Test {
         stickerDesigns.getStickerDesigns(start, count);
     }
 
+    // call getStickerDesigns with start of 0 and length of 0
+    function testGetStickerDesignsZeroLength() public view {
+        uint256 start = 0;
+        uint256 count = 0;
+        StickerDesign[] memory stickers = stickerDesigns.getStickerDesigns(start, count);
+        assertEq(stickers.length, 0);
+    }
+
     // Test getStickerDesigns function with array of ids
     function testGetStickerDesignsArray() public view {
         uint256[] memory stickerIds = new uint256[](2);
@@ -174,7 +215,53 @@ contract ViewerTest is Test {
         assertEq(stickers[1].metadataCID, metadataCID2);
     }
 
+    // Test getSlaps function
+    function testGetSlaps() public view {
+        uint256 start = 1;
+        uint256 count = 3;
+        Slap[] memory slaps = stickerChain.getSlaps(start, count);
+        assertEq(slaps.length, 3);
+        // Assuming the first 3 slaps have been set up in the test environment
+        // with known properties for assertion
+        assertEq(slaps[0].slapId, 1);
+        assertEq(slaps[0].stickerId, 1);
+        assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[0].height, 1);
+        assertEq(slaps[0].slappedAt, specialTimestamp);
+        assertEq(slaps[0].size, 1);
+        assertEq(slaps[0].player, addressPlayerOne);
 
+        assertEq(slaps[1].slapId, 2);
+        assertEq(slaps[1].stickerId, 2);
+        assertEq(slaps[1].placeId, placeIdHollywoodSign);
+        assertEq(slaps[1].height, 1);
+        assertEq(slaps[1].slappedAt, specialTimestamp);
+        assertEq(slaps[1].size, 1);
+        assertEq(slaps[1].player, addressPlayerOne);
 
+        assertEq(slaps[2].slapId, 3);
+        assertEq(slaps[2].stickerId, 1);
+        assertEq(slaps[2].placeId, placeIdUnionSquare);
+        assertEq(slaps[2].height, 2);
+        assertEq(slaps[2].slappedAt, specialTimestamp);
+        assertEq(slaps[2].size, 1);
+        assertEq(slaps[2].player, addressPlayerTwo);
+    }
+
+    // Test getSlaps function with invalid parameters
+    function testGetSlapsInvalidParameters() public {
+        uint256 start = 100;
+        uint256 count = 3;
+        vm.expectRevert(abi.encodeWithSignature("InvalidStart()"));
+        stickerChain.getSlaps(start, count);
+    }
+
+    // call getSlaps witih start of 0 and length of 0
+    function testGetSlapsZeroLength() public view {
+        uint256 start = 0;
+        uint256 count = 0;
+        Slap[] memory slaps = stickerChain.getSlaps(start, count);
+        assertEq(slaps.length, 0);
+    }
 
 }

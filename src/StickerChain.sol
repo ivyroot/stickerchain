@@ -205,14 +205,15 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     }
 
     function getSlaps(uint _start, uint _count) external view returns (Slap[] memory) {
+        uint256 nextTokenId = _nextTokenId();
+        if (_start >= nextTokenId) {
+            revert InvalidStart();
+        }
         uint256 end = _start + _count;
-        if (end > _nextTokenId()) {
-            end = _nextTokenId();
+        if (end > nextTokenId) {
+            end = nextTokenId;
         }
         uint256 length = end - _start;
-        if (length == 0) {
-            return new Slap[](0);
-        }
         Slap[] memory slaps = new Slap[](length);
         uint resultIndex = 0;
         for (uint i = _start; i < end; i++) {

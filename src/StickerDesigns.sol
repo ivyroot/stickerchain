@@ -137,7 +137,7 @@ contract StickerDesigns is Ownable {
     }
 
     function getStickerDesigns(uint256 _start, uint256 _count) external view returns (StickerDesign[] memory) {
-        if (!_isValidStickerId(_start)) {
+        if (_start >= nextStickerDesignId) {
             revert InvalidStickerDesignId(_start);
         }
         uint256 end = _start + _count;
