@@ -18,10 +18,11 @@ type Slap @entity(immutable: false) {
   id: Bytes!
   slapId: BigInt! # uint256
   placeId: BigInt! # uint256
+  size: BigInt! # uint64
+  height: BigInt! # uint256
   stickerId: BigInt! # uint256
   player: Bytes! # address
   owner: Bytes! # address
-  size: BigInt! # uint64
+  slappedAt: BigInt! # uint256
   blockNumber: BigInt! # uint256
-  timestamp: BigInt! # uint256
 }
