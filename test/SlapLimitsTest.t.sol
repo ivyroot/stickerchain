@@ -289,8 +289,15 @@ contract SlapLimitsTest is Test {
         skip(1);
         vm.roll(block.number + 1);
 
-        // try to slap sticker again
+        // Check issues before slapping
         vm.startPrank(address1);
+        SlapIssue[] memory issues = stickerChain.checkSlaps(address1, newSlap, objectives);
+        assertEq(issues.length, 1, "Expected one issue");
+        assertEq(uint(issues[0].issueCode), uint(IssueType.StickerNotAllowed), "Expected StickerNotAllowed issue");
+        assertEq(issues[0].recordId, stickerId1, "Expected issue for the correct sticker ID");
+        assertEq(issues[0].value, 101, "Expected issue value to be 101 (Capped)");
+
+        // Try to slap sticker again
         (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap, objectives);
         assertEq(slapIds.length, 1);
         assertEq(slapIds[0], 0);
@@ -333,6 +340,13 @@ contract SlapLimitsTest is Test {
         // advance by 2 minutes and 8 blocks
         skip(120);
         vm.roll(block.number + 8);
+
+        // Check if checkSlaps reports the issue before attempting to slap
+        SlapIssue[] memory issues = stickerChain.checkSlaps(address1, newSlap, objectives);
+        assertEq(issues.length, 1, "Expected one issue");
+        assertEq(uint(issues[0].issueCode), uint(IssueType.StickerNotAllowed), "Expected StickerNotAllowed issue");
+        assertEq(issues[0].recordId, stickerId1, "Expected issue for the correct sticker ID");
+        assertEq(issues[0].value, 101, "Expected issue value to be 101 (Capped)");
 
         // try to slap sticker again
         vm.startPrank(address1);
