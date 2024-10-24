@@ -8,8 +8,9 @@ import "../src/PaymentMethod.sol";
 
 contract DeployPaymentMethods is Script {
     function run() external {
+        address initialAdminAddress = vm.envAddress('INITIAL_ADMIN');
         vm.startBroadcast();
-        new PaymentMethod(address(tx.origin), 50000000000000);
+        new PaymentMethod(initialAdminAddress, 50000000000000);
         vm.stopBroadcast();
     }
 }
