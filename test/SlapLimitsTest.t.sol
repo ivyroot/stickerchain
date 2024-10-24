@@ -131,6 +131,7 @@ contract SlapLimitsTest is Test {
         uint stickerId1;
         stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
 
+
         // slap sticker with balance check that always returns 1
         vm.startPrank(address1);
         NewSlap[] memory newSlaps = new NewSlap[](1);
@@ -140,6 +141,11 @@ contract SlapLimitsTest is Test {
             size: 1
         });
         uint256[] memory objectives;
+
+        // Check that checkSlaps returns an empty array for a valid slap
+        SlapIssue[] memory issues = stickerChain.checkSlaps(address1, newSlaps, objectives);
+        assertEq(issues.length, 0, "Expected no issues for a valid slap");
+
         (uint256[] memory slapIds, ) = stickerChain.slap{value: slapFee}(newSlaps, objectives);
         assertEq(slapIds.length, 1);
 
@@ -214,10 +220,30 @@ contract SlapLimitsTest is Test {
             size: 1
         });
         uint256[] memory objectives;
+
+        // Check before first slap
+        SlapIssue[] memory issues = stickerChain.checkSlaps(address1, newSlap, objectives);
+        assertEq(issues.length, 0, "Expected no issues for first slap");
         stickerChain.slap{value: slapFee}(newSlap, objectives);
+
+        // Check before second slap
+        issues = stickerChain.checkSlaps(address1, newSlap, objectives);
+        assertEq(issues.length, 0, "Expected no issues for second slap");
         stickerChain.slap{value: slapFee}(newSlap, objectives);
+
         vm.startPrank(address2);
+        // Check before third slap
+        issues = stickerChain.checkSlaps(address2, newSlap, objectives);
+        assertEq(issues.length, 0, "Expected no issues for third slap");
         stickerChain.slap{value: slapFee}(newSlap, objectives);
+
+        // Check before fourth slap (should fail)
+        issues = stickerChain.checkSlaps(address2, newSlap, objectives);
+        assertEq(issues.length, 1, "Expected one issue for fourth slap");
+        assertEq(uint(issues[0].issueCode), uint(IssueType.StickerNotAllowed), "Expected StickerLimitReached issue");
+        assertEq(issues[0].recordId, stickerId1, "Expected issue for the correct sticker ID");
+        assertEq(issues[0].value, 102, "Expected issue value to be 102 Sold Out");
+
         // try to slap sticker a 4th time
         (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlap, objectives);
         assertEq(slapIds.length, 1);
@@ -319,4 +345,5 @@ contract SlapLimitsTest is Test {
 
 
 }
+
 
