@@ -87,7 +87,7 @@ contract SlapLimitsTest is Test {
         uint stickerId1;
         stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesignA);
 
-        // try to slap sticker with balance check that always returns 0
+        // Check if checkSlaps correctly reports the issue
         vm.startPrank(address1);
         NewSlap[] memory newSlaps = new NewSlap[](1);
         newSlaps[0] = NewSlap({
@@ -95,7 +95,15 @@ contract SlapLimitsTest is Test {
             stickerId: stickerId1,
             size: 1
         });
-        uint256[] memory objectives;
+        uint256[] memory objectives = new uint256[](0);
+        SlapIssue[] memory issues = stickerChain.checkSlaps(address1, newSlaps, objectives);
+
+        assertEq(issues.length, 1, "Expected one issue");
+        assertEq(uint(issues[0].issueCode), uint(IssueType.StickerNotAllowed), "Expected StickerNotAllowed issue");
+        assertEq(issues[0].recordId, stickerId1, "Expected issue for the correct sticker ID");
+        assertEq(issues[0].value, 103, "Expected issue value to be 103 (holder check failed)");
+
+        // try to slap sticker with balance check that always returns 0
         (uint256[] memory slapIds, uint256[] memory slapIssues) = stickerChain.slap{value: slapFee}(newSlaps, objectives);
         assertEq(slapIds.length, 1);
         assertEq(slapIds[0], 0);
@@ -311,3 +319,4 @@ contract SlapLimitsTest is Test {
 
 
 }
+

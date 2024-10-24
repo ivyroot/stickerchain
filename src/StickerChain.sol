@@ -351,51 +351,62 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     function checkSlaps(address _player, NewSlap[] calldata _newSlaps, uint256[] calldata _objectives)
     public view
-    returns (SlapIssue[] memory issues)
+    returns (SlapIssue[] memory)
     {
-        uint slapCount = _newSlaps.length;
-        uint issueCount;
         if (isBanned[_player]) {
-            issues[issueCount] = SlapIssue({issueCode: IssueType.PlayerNotAllowed, recordId: 0, value: 0});
-            issueCount++;
+            SlapIssue[] memory banIssue = new SlapIssue[](1);
+            banIssue[0] = SlapIssue({issueCode: IssueType.PlayerNotAllowed, recordId: 0, value: 0});
+            return banIssue;
         }
+
+        uint slapCount = _newSlaps.length;
+        uint maxIssueCount = slapCount * 2 + 3; // Maximum possible issues: 2 per slap + 3 for player status and funds
+        SlapIssue[] memory issues = new SlapIssue[](maxIssueCount);
+        uint issueCount;
+
         PaymentMethodTotal[] memory costs = costOfSlaps(_player, _newSlaps, _objectives);
         uint paymentMethodCount = costs.length;
+
         if (!initiatedPlayers[_player]) {
             costs[0].total += playerReputationFee;
         }
+
         for (uint i = 0; i < paymentMethodCount; i++) {
             if (i == 0) {
                 uint playerEthBalance = address(_player).balance;
                 if (costs[0].total > playerEthBalance) {
                     uint neededEth = costs[0].total - playerEthBalance;
-                    issues[issueCount] = SlapIssue({issueCode: IssueType.InsufficientFunds, recordId: 0, value: neededEth});
-                    issueCount++;
+                    issues[issueCount++] = SlapIssue({issueCode: IssueType.InsufficientFunds, recordId: 0, value: neededEth});
                 }
                 continue;
             }
             (uint balanceNeeded, uint allowanceNeeded) = paymentMethodContract.addressCanPay(costs[i].paymentMethodId, _player, address(this), costs[i].total);
             if (balanceNeeded > 0) {
-                issues[issueCount] = SlapIssue({issueCode: IssueType.InsufficientFunds, recordId: costs[i].paymentMethodId, value: balanceNeeded});
-                issueCount++;
+                issues[issueCount++] = SlapIssue({issueCode: IssueType.InsufficientFunds, recordId: costs[i].paymentMethodId, value: balanceNeeded});
             }
             if (allowanceNeeded > 0) {
-                issues[issueCount] = SlapIssue({issueCode: IssueType.InsufficientAllowance, recordId: costs[i].paymentMethodId, value: allowanceNeeded});
-                issueCount++;
+                issues[issueCount++] = SlapIssue({issueCode: IssueType.InsufficientAllowance, recordId: costs[i].paymentMethodId, value: allowanceNeeded});
             }
         }
+
         for (uint i = 0; i < slapCount; i++) {
             uint playerSlapCheckCode = stickerDesignsContract.accountCanSlapSticker(_player, _newSlaps[i].stickerId, _stickerDesignSlapCounts[_newSlaps[i].stickerId]);
             if (playerSlapCheckCode != 0) {
-                issues[issueCount] = SlapIssue({issueCode: IssueType.StickerNotAllowed, recordId:  _newSlaps[i].stickerId, value: playerSlapCheckCode});
-                issueCount++;
+                issues[issueCount++] = SlapIssue({issueCode: IssueType.StickerNotAllowed, recordId:  _newSlaps[i].stickerId, value: playerSlapCheckCode});
             }
             (bool placeIsValid, , , ,) = BlockPlaces.blockPlaceFromPlaceId(_newSlaps[i].placeId);
             if (!placeIsValid) {
-                issues[issueCount] = SlapIssue({issueCode: IssueType.InvalidPlace, recordId: _newSlaps[i].placeId, value: 0});
-                issueCount++;
+                issues[issueCount++] = SlapIssue({issueCode: IssueType.InvalidPlace, recordId: _newSlaps[i].placeId, value: 0});
             }
         }
+
+        // Create a new array with the exact number of issues found
+        SlapIssue[] memory finalIssues = new SlapIssue[](issueCount);
+        for (uint i = 0; i < issueCount; i++) {
+            finalIssues[i] = issues[i];
+        }
+
+        return finalIssues;
     }
 
     function slap(NewSlap[] calldata _newSlaps, uint256[] calldata _objectives)
@@ -690,3 +701,4 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     }
 
 }
+
