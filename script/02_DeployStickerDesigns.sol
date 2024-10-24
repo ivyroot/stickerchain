@@ -12,7 +12,7 @@ contract DeployStickerDesigns is Script {
         IPaymentMethod paymentMethodContractAddress = IPaymentMethod(payable(vm.envAddress('PAYMENT_METHOD_CONTRACT')));
         require(paymentMethodContractAddress != IPaymentMethod(address(0)), 'DeployStickerDesigns: PAYMENT_METHOD_CONTRACT not set');
         vm.startBroadcast();
-        new StickerDesigns(paymentMethodContractAddress, initialAdminAddress, 2000000000000000, 50000000000000);
+        new StickerDesigns(paymentMethodContractAddress, initialAdminAddress, 0.01 ether, 0.001 ether);
         vm.stopBroadcast();
     }
 }

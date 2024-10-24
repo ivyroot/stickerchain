@@ -10,7 +10,7 @@ contract DeployPaymentMethods is Script {
     function run() external {
         address initialAdminAddress = vm.envAddress('INITIAL_ADMIN');
         vm.startBroadcast();
-        new PaymentMethod(initialAdminAddress, 50000000000000);
+        new PaymentMethod(initialAdminAddress, 0.05 ether);
         vm.stopBroadcast();
     }
 }
