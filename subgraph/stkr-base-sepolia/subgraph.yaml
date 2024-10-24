@@ -8,7 +8,7 @@ dataSources:
     name: StickerDesigns
     network: base-sepolia
     source:
-      address: "0x113d825f59fD3DFaA7939b7A791A371DeCB51ED8"
+      address: "0xe58e62943831d54aed236578b7e7eab4c78fe0b4"
       abi: StickerDesigns
       startBlock: 14049435
     mapping:
@@ -30,7 +30,7 @@ dataSources:
     name: StickerChain
     network: base-sepolia
     source:
-      address: "0x0C602488eB7566480c42c2E11a505Cf518ACeF92"
+      address: "0x3C2d2aFEbc0Ba3e79a0e8a6d78cF11bb5BCBE68A"
       abi: StickerChain
       startBlock: 14049435
     mapping:
