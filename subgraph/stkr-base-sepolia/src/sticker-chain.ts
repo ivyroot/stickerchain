@@ -28,6 +28,7 @@ export function handleStickerSlapped(event: StickerSlappedEvent): void {
   entity.size = event.params.size
   entity.slappedAt = event.block.timestamp
   entity.blockNumber = event.block.number
+  entity.objectiveIds = slap.objectiveIds
 
   entity.save()
 }
