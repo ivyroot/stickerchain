@@ -32,6 +32,16 @@ struct Slap {
     uint256 slappedAt;
     uint64 size;
     address player;
+    uint256[] objectiveIds;
+}
+
+struct StoredSlap {
+    uint256 placeId;
+    uint256 height;
+    uint256 stickerId;
+    uint256 slappedAt;
+    address slappedBy;
+    uint64 size;
 }
 
 struct NewSlap {
@@ -45,14 +55,7 @@ struct PaymentMethodTotal {
     uint256 total;
 }
 
-struct StoredSlap {
-    uint256 placeId;
-    uint256 height;
-    uint256 stickerId;
-    uint256 slappedAt;
-    address slappedBy;
-    uint64 size;
-}
+
 
 enum IssueType { InvalidPlace, PlayerNotAllowed, StickerNotAllowed, ObjectiveNotAllowed, InsufficientFunds, InsufficientAllowance}
 
@@ -69,6 +72,7 @@ struct StoredPlace {
 
 contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint64 size);
+    event SlapInObjective(uint256 indexed objectiveId, uint256 indexed slapId);
 
     error InsufficientFunds(uint256 paymentMethodId);
     error InvalidPlaceId(uint256 placeId);
@@ -100,6 +104,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     uint256 public playerReputationFee;
 
     mapping (uint256 => StoredSlap) private _slaps;
+    mapping (uint256 => uint256[]) private _slapObjectives;
     mapping (uint256 => StoredPlace) private _board;
     mapping (uint256 => uint256) private _stickerDesignSlapCounts;
 
@@ -180,7 +185,8 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             height: storedSlap.height,
             slappedAt: storedSlap.slappedAt,
             size: storedSlap.size,
-            player: storedSlap.slappedBy
+            player: storedSlap.slappedBy,
+            objectiveIds: _slapObjectives[_slapId]
         });
     }
 
@@ -494,7 +500,8 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                     }
                 }
                 objectivePayoutMethod.deposit{value: objectiveBaseTokenPrice}(objPaymentCoin, objCost, objRecipient, false);
-                obj.slapInObjective(msg.sender, freshSlaps);
+                uint[] memory includedSlapIds = obj.slapInObjective(msg.sender, freshSlaps);
+                _writeObjectiveToSlaps(includedSlapIds, _objectives[i]);
             }
         }
         if (!initiatedPlayers[msg.sender]) {
@@ -548,6 +555,13 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
         emit StickerSlapped(_placeId, _stickerId, msg.sender, _slappedTokenId, size);
         return _slappedTokenId;
+    }
+
+    function _writeObjectiveToSlaps(uint256[] memory _slapIds, uint256 _objectiveId) internal {
+        for (uint i = 0; i < _slapIds.length; i++) {
+            _slapObjectives[_slapIds[i]].push(_objectiveId);
+            emit SlapInObjective(_objectiveId, _slapIds[i]);
+        }
     }
 
     function tokenURI(uint256 tokenId)
