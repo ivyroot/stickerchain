@@ -67,14 +67,17 @@ contract StickerObjectives is Ownable {
 
     function getObjectiveMeta(uint _objectiveId) public view returns (ObjectiveMeta memory) {
         IStickerObjective objective = getObjective(_objectiveId);
-        return ObjectiveMeta({
-            owner: objective.owner(),
-            feeRecipient: objective.feeRecipient(),
-            name: objective.name(),
-            url: objective.url(),
-            placeCount: objective.placeCount(),
-            placeList: objective.placeList()
-        });
+        ObjectiveMeta memory ret;
+        if (address(objective) == address(0)) {
+            return ret;
+        }
+        ret.owner = objective.owner();
+        ret.feeRecipient = objective.feeRecipient();
+        ret.name = objective.name();
+        ret.url = objective.url();
+        ret.placeCount = objective.placeCount();
+        ret.placeList = objective.placeList();
+        return ret;
     }
 
     function getIdOfObjective(address _objectiveAddress) public view returns (uint) {
