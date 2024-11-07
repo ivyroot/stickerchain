@@ -55,9 +55,9 @@ struct PaymentMethodTotal {
     uint256 total;
 }
 
+uint8 constant MAX_OBJECTIVES_PER_SLAP = 10;
 
-
-enum IssueType { InvalidPlace, PlayerNotAllowed, StickerNotAllowed, ObjectiveNotAllowed, InsufficientFunds, InsufficientAllowance}
+enum IssueType { InvalidPlace, PlayerNotAllowed, StickerNotAllowed, ObjectiveNotAllowed, InsufficientFunds, InsufficientAllowance, TooManyObjectives}
 
 struct SlapIssue {
     IssueType issueCode;
@@ -76,6 +76,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
 
     error InsufficientFunds(uint256 paymentMethodId);
     error InvalidPlaceId(uint256 placeId);
+    error TooManyObjectives();
     error PlayerIsBanned();
     error FeatureIsLocked();
     error InvalidAddress();
@@ -366,7 +367,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
 
         uint slapCount = _newSlaps.length;
-        uint maxIssueCount = slapCount * 2 + 3; // Maximum possible issues: 2 per slap + 3 for player status and funds
+        uint maxIssueCount = slapCount * 2 + 4; // Maximum possible issues: 2 per slap + 3 for player status and funds + 1 for too many objectives
         SlapIssue[] memory issues = new SlapIssue[](maxIssueCount);
         uint issueCount;
 
@@ -404,6 +405,9 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             if (!placeIsValid) {
                 issues[issueCount++] = SlapIssue({issueCode: IssueType.InvalidPlace, recordId: _newSlaps[i].placeId, value: 0});
             }
+        }
+        if (_objectives.length > MAX_OBJECTIVES_PER_SLAP) {
+            issues[issueCount++] = SlapIssue({issueCode: IssueType.TooManyObjectives, recordId: 0, value: 0});
         }
 
         // Create a new array with the exact number of issues found
@@ -464,6 +468,9 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
         // call any provided objectives
         if (_objectives.length > 0 && slapSuccessCount > 0) {
+            if (_objectives.length > MAX_OBJECTIVES_PER_SLAP) {
+                revert TooManyObjectives();
+            }
             // make a list of only slaps that succeeded
             FreshSlap[] memory freshSlaps = new FreshSlap[](slapSuccessCount);
             uint currSlapIndex;
