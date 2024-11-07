@@ -527,16 +527,19 @@ contract PlayerSlapTest is Test {
         assertEq(slaps[0].stickerId, exampleStickerId1);
         assertEq(slaps[0].player, address1);
         assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[0].objectiveIds.length, 0);
         (total, slaps) = stickerChain.getPlaceSlaps(7147619619, 0, 0);
         assertEq(total, 1);
         assertEq(slaps[0].stickerId, exampleStickerId1);
         assertEq(slaps[0].player, address1);
         assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[0].objectiveIds.length, 0);
         (total, slaps) = stickerChain.getPlaceSlaps(7147618595, 0, 0);
         assertEq(total, 1);
         assertEq(slaps[0].stickerId, exampleStickerId1);
         assertEq(slaps[0].player, address1);
         assertEq(slaps[0].placeId, placeIdUnionSquare);
+        assertEq(slaps[0].objectiveIds.length, 0);
         // sanity check adjacent place is empty
         (total, slaps) = stickerChain.getPlaceSlaps(7147620647, 0, 0);
         assertEq(total, 0);

@@ -109,6 +109,8 @@ contract Erc20ObjectiveTest is Test {
         assertEq(slap.placeId, placeIdUnionSquare);
         assertEq(slap.player, address1);
         assertEq(slap.slappedAt, block.timestamp);
+        assertEq(slap.objectiveIds.length, 1);
+        assertEq(slap.objectiveIds[0], objectiveNYCId);
     }
 
     // Test slapping a sticker then slapping over it an hour later
@@ -139,6 +141,8 @@ contract Erc20ObjectiveTest is Test {
         assertEq(slap.placeId, placeIdUnionSquare);
         assertEq(slap.player, address1);
         assertEq(slap.slappedAt, block.timestamp);
+        assertEq(slap.objectiveIds.length, 1);
+        assertEq(slap.objectiveIds[0], objectiveNYCId);
 
         uint currBalance1 = objectiveNYC.balanceOf(address1);
         assertEq(currBalance1, 0);
@@ -161,6 +165,8 @@ contract Erc20ObjectiveTest is Test {
         assertEq(slap2.placeId, placeIdUnionSquare);
         assertEq(slap2.player, address1);
         assertEq(slap2.slappedAt, block.timestamp);
+        assertEq(slap2.objectiveIds.length, 1);
+        assertEq(slap2.objectiveIds[0], objectiveNYCId);
 
         uint currBalance2 = objectiveNYC.balanceOf(address1);
         assertEq(currBalance2, 3600000000000000000000);
@@ -181,6 +187,8 @@ contract Erc20ObjectiveTest is Test {
         assertEq(slap3.placeId, placeIdUnionSquare);
         assertEq(slap3.player, address1);
         assertEq(slap3.slappedAt, block.timestamp);
+        assertEq(slap3.objectiveIds.length, 1);
+        assertEq(slap3.objectiveIds[0], objectiveNYCId);
 
         uint currBalance3 = objectiveNYC.balanceOf(address1);
         assertEq(currBalance3, 3660000000000000000000);
