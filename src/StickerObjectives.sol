@@ -3,6 +3,14 @@ pragma solidity ^0.8.26;
 import {IStickerObjective} from "./IStickerObjective.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
+struct ObjectiveMeta {
+    address owner;
+    address feeRecipient;
+    string name;
+    string url;
+    uint placeCount;
+    uint[] placeList;
+}
 
 contract StickerObjectives is Ownable {
     address public immutable stickerChain;
@@ -55,6 +63,18 @@ contract StickerObjectives is Ownable {
             _objectives[i - _offset] = getObjective(i);
         }
         return _objectives;
+    }
+
+    function getObjectiveMeta(uint _objectiveId) public view returns (ObjectiveMeta memory) {
+        IStickerObjective objective = getObjective(_objectiveId);
+        return ObjectiveMeta({
+            owner: objective.owner(),
+            feeRecipient: objective.feeRecipient(),
+            name: objective.name(),
+            url: objective.url(),
+            placeCount: objective.placeCount(),
+            placeList: objective.placeList()
+        });
     }
 
     function getIdOfObjective(address _objectiveAddress) public view returns (uint) {
