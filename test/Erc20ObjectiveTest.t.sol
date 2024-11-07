@@ -79,6 +79,15 @@ contract Erc20ObjectiveTest is Test {
         exampleStickerId2 = stickerDesigns.publishStickerDesign{value: newStickerFee}(newStickerDesign2);
     }
 
+    function testObjectiveMeta() public {
+        ObjectiveMeta memory meta = stickerObjectives.getObjectiveMeta(objectiveNYCId);
+        assertEq(meta.owner, adminAddress);
+        assertEq(meta.feeRecipient, adminAddress);
+        assertEq(meta.name, "TESTNYC");
+        assertEq(meta.url, "https://example.com");
+        assertEq(meta.placeCount, 65);
+        assertEq(meta.placeList.length, 65);
+    }
 
     // Test slapping a sticker and accessing via slap id
     function testSlapOneStickerInObjective() public {
