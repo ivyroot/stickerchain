@@ -26,3 +26,12 @@ type Slap @entity(immutable: false) {
   blockNumber: BigInt! # uint256
   objectiveIds: [BigInt!]! # uint256[]
 }
+
+type Coin @entity(immutable: false) {
+  id: Bytes!
+  address: Bytes! # address
+  paymentMethodId: BigInt! # uint256
+  name: String! # string
+  symbol: String! # string
+  decimals: Int! # uint8
+}

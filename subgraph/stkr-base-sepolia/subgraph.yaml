@@ -46,4 +46,26 @@ dataSources:
         - event: StickerSlapped(indexed uint256,indexed uint256,indexed address,uint256,uint64)
           handler: handleStickerSlapped
       file: ./src/sticker-chain.ts
+  - kind: ethereum
+    name: PaymentMethod
+    network: base-sepolia
+    source:
+      address: "0xc8E1C24cb559d9aAbbF38CE840c587da7809d177"
+      abi: PaymentMethod
+      startBlock: 17594498
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Coin
+      abis:
+        - name: PaymentMethod
+          file: ./abis/PaymentMethod.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: CoinAdded(indexed address,indexed uint256)
+          handler: handleCoinAdded
+      file: ./src/payment-method.ts
 
