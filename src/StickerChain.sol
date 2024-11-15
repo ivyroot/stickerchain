@@ -329,9 +329,13 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
             if (objPaymentCoin == address(0)) {
                 costs[0].total += objCost;
             } else {
+                uint objPaymentMethodId = paymentMethodContract.getIdOfPaymentMethod(objPaymentCoin);
+                if (objPaymentMethodId == 0) {
+                    continue; // invalid payment method
+                }
                 bool found = false;
                 for (uint j = 1; j < paymentMethodCount; j++) {
-                    if (costs[j].paymentMethodId == paymentMethodContract.getIdOfPaymentMethod(objPaymentCoin)) {
+                    if (costs[j].paymentMethodId == objPaymentMethodId) {
                         costs[j].total += objCost;
                         found = true;
                         break;
@@ -349,7 +353,8 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         uint finalCostsIndex;
         for (uint i = 0; i < paymentMethodCount; i++) {
             if (costs[i].total > 0) {
-                finalCosts[finalCostsIndex] = costs[i];
+                finalCosts[finalCostsIndex].total = costs[i].total;
+                finalCosts[finalCostsIndex].paymentMethodId = costs[i].paymentMethodId;
                 finalCostsIndex++;
             }
         }

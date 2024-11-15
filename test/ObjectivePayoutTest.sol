@@ -111,7 +111,7 @@ contract ObjectivePayoutTest is Test {
         testCoin.mint(player1, 1 ether);
         testCoin.mint(player2, 1 ether);
         paymentMethod = new PaymentMethod(adminAddress, 0.001 ether);
-        testCoinPaymentMethodId = paymentMethod.addNewCoin(address(testCoin));
+        testCoinPaymentMethodId = paymentMethod.importCoin(address(testCoin));
         stickerDesigns = new StickerDesigns(paymentMethod, adminAddress, 0.002 ether, 0.0005 ether);
         stickerChain = new StickerChain(adminAddress, slapFee, payable(address(stickerDesigns)), payable(address(paymentMethod)));
         stickerObjectives = new StickerObjectives(address(stickerChain), adminAddress, 0.002 ether);
@@ -213,6 +213,38 @@ contract ObjectivePayoutTest is Test {
         assertEq(payoutBalance, 0);
     }
 
+    function testSlapInObjectiveWithUnregisteredERC20() public {
+        // dev setup
+        vm.startPrank(dev1);
+        // make a new test coin not in payment methods contract
+        TestCoin testCoin2 = new TestCoin("TestCoin2", "$TEST2");
+        testObjective = new TestObjective(address(stickerChain), address(testCoin2), 0.011 ether);
+        testObjectiveId = stickerObjectives.addNewObjective{value: 0.002 ether}(testObjective);
+        assertGt(testObjectiveId, 0);
+
+        // player tests
+        vm.startPrank(player1);
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: stickerId1,
+            size: 1
+        });
+        uint256[] memory objectives = new uint256[](1);
+        objectives[0] = testObjectiveId;
+
+        // Check costs before slapping
+        PaymentMethodTotal[] memory costs = stickerChain.costOfSlaps(player1, newSlaps, objectives);
+        assertEq(costs.length, 1); // Should have base token only since ERC20 is not registered
+        assertEq(costs[0].paymentMethodId, 0); // Base token
+        assertEq(costs[0].total, slapFee); // Only slap fee in base token
+
+        // Execute the slap
+        (uint256[] memory slapIds, ) = stickerChain.slap{value: slapFee + 0.011 ether}(newSlaps, objectives);
+        assertEq(slapIds.length, 1);
+
+    }
+
     function testSlapInObjectiveWithERC20PriceAndDevReceivesPayout() public {
         // create and register a new objective
         vm.startPrank(dev1);
@@ -226,7 +258,7 @@ contract ObjectivePayoutTest is Test {
         assertEq(devStartingTestCoinBalance, 0);
         assertEq(testObjective.feeRecipient(), dev1);
 
-        // slap the objective
+        // Prepare slap data
         vm.startPrank(player1);
         testCoin.approve(address(paymentMethod), 100 ether);
         NewSlap[] memory newSlaps = new NewSlap[](1);
@@ -237,6 +269,16 @@ contract ObjectivePayoutTest is Test {
         });
         uint256[] memory objectives = new uint256[](1);
         objectives[0] = testObjectiveId;
+
+        // Check costs before slapping
+        PaymentMethodTotal[] memory costs = stickerChain.costOfSlaps(player1, newSlaps, objectives);
+        assertEq(costs.length, 2); // Should have base token (for slap fee) and ERC20 (for objective fee)
+        assertEq(costs[0].paymentMethodId, 0); // Base token
+        assertEq(costs[0].total, slapFee); // Only slap fee in base token
+        assertEq(costs[1].paymentMethodId, 1); // Test coin
+        assertEq(costs[1].total, 0.011 ether); // Objective fee in test coin
+
+        // Execute the slap
         (uint256[] memory slapIds, ) = stickerChain.slap{value: slapFee + 0.011 ether}(newSlaps, objectives);
         assertEq(slapIds.length, 1);
 
