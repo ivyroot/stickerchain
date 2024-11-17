@@ -45,8 +45,8 @@ contract PaymentMethod is Ownable, IPaymentMethod {
             max = coinCount;
         }
         IERC20[] memory _coins = new IERC20[](max - _offset);
-        for (uint i = _offset; i < max; i++) {
-            _coins[i - _offset] = getPaymentMethod(i);
+        for (uint i = _offset + 1; i <= max; i++) {
+            _coins[i - (_offset + 1)] = getPaymentMethod(i);
         }
         return _coins;
     }
