@@ -17,6 +17,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
 
     event AdminTransferFailure(address indexed recipient, uint amount);
 
+    error InvalidPaymentMethodId();
     error PaymentMethodNotAllowed();
     error AddressNotAllowed();
     error IncorrectFeePayment();
@@ -29,6 +30,9 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     }
 
     function getPaymentMethod(uint _paymentMethodId) public view returns (IERC20 coin) {
+        if (_paymentMethodId == 0) {
+            revert InvalidPaymentMethodId();
+        }
         address _coinAddress = coins[_paymentMethodId];
         if (bannedCoins[_coinAddress]) {
             return coin;
@@ -36,17 +40,16 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         coin = IERC20(_coinAddress);
     }
 
-    function getPaymentMethods(uint _offset, uint _count) external view returns (IERC20[] memory) {
-        if (_offset >= coinCount) {
+    function getPaymentMethods(uint _paymentMethodId, uint _count) external view returns (IERC20[] memory) {
+        if (_paymentMethodId > coinCount) {
             return new IERC20[](0);
         }
-        uint max = _offset + _count;
-        if (max > coinCount) {
-            max = coinCount;
+        if (_count == 0 || _paymentMethodId + _count - 1 > coinCount) {
+            _count = coinCount - _paymentMethodId + 1;
         }
-        IERC20[] memory _coins = new IERC20[](max - _offset);
-        for (uint i = _offset + 1; i <= max; i++) {
-            _coins[i - (_offset + 1)] = getPaymentMethod(i);
+        IERC20[] memory _coins = new IERC20[](_count);
+        for (uint i = 0; i < _count; i++) {
+            _coins[i] = getPaymentMethod(_paymentMethodId + i);
         }
         return _coins;
     }

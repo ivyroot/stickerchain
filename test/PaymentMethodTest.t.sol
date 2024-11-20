@@ -92,7 +92,7 @@ contract PaymentMethodTest is Test {
         assertEq(coinId2, 2);
 
         // Get all payment methods
-        IERC20[] memory coins = paymentMethod.getPaymentMethods(0,100);
+        IERC20[] memory coins = paymentMethod.getPaymentMethods(1,100);
 
         // Verify array length
         assertEq(coins.length, 2);
