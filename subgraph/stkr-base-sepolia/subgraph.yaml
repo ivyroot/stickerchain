@@ -50,7 +50,7 @@ dataSources:
     name: PaymentMethod
     network: base-sepolia
     source:
-      address: "0x161405c682310AD0F001c0DA3B21ad04644Ab894"
+      address: "0x07C1E37e53C71c501004F101D4E4D1831C0F69af"
       abi: PaymentMethod
       startBlock: 17594498
     mapping:
