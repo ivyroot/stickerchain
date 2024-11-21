@@ -46,8 +46,7 @@ contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
         emit FundsAdded(_recipient, _coin, _amount);
     }
 
-    // withdraw funds, can only withdraw balances of msg.sender
-    // funds will be sent to the recipient or msg.sender if recipient is address(0)
+    // withdraw funds - any address can trigger transfer of funds due to any recipient
     function withdraw(address[] calldata _coins, address _recipient) external nonReentrant override {
         if (_recipient == address(0)) {
             _recipient = msg.sender;
@@ -55,9 +54,9 @@ contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
         uint _paymentTypeCount = _coins.length;
         for (uint i = 0; i < _paymentTypeCount; i++) {
             address _coin = _coins[i];
-            uint _amount = balanceOf[msg.sender][_coin];
+            uint _amount = balanceOf[_recipient][_coin];
             if (_amount > 0) {
-                balanceOf[msg.sender][_coin] = 0;
+                balanceOf[_recipient][_coin] = 0;
                 if (_coin == address(0)) {
                     (bool sent, ) = payable(_recipient).call{value: _amount}("");
                     if (!sent) {
@@ -69,7 +68,7 @@ contract PayoutMethod is IPayoutMethod, Ownable, ReentrancyGuardTransient {
                         revert ERC20TransferFailed(_coin, _amount);
                     }
                 }
-                emit FundsWithdrawn(msg.sender, _coin, _amount);
+                emit FundsWithdrawn(_recipient, _coin, _amount);
             }
         }
     }
