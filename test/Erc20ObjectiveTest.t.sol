@@ -79,7 +79,7 @@ contract Erc20ObjectiveTest is Test {
         exampleStickerId2 = stickerDesigns.publishStickerDesign{value: newStickerFee}(newStickerDesign2);
     }
 
-    function testObjectiveMeta() public {
+    function testObjectiveMeta() public view {
         ObjectiveMeta memory meta = stickerObjectives.getObjectiveMeta(objectiveNYCId);
         assertEq(meta.owner, adminAddress);
         assertEq(meta.feeRecipient, adminAddress);
