@@ -81,13 +81,13 @@ contract FlagObjective is IStickerObjective, Ownable {
         for (uint i = 0; i < slaps.length; i++) {
             if (flaggedPlaces[slaps[i].placeId] == 0) {
 
-                // Plant flag
-                flaggedPlaces[slaps[i].placeId] = slaps[i].slapId;
-                flaggedPlaceId = slaps[i].placeId;
-
                 // Calculate points
                 uint256 points = calculatePoints(flaggedPlaceId, slaps[i].placeId);
                 playerScores[player] += points;
+
+                // Plant flag
+                flaggedPlaces[slaps[i].placeId] = slaps[i].slapId;
+                flaggedPlaceId = slaps[i].placeId;
 
                 // Store the single valid slap ID
                 includedSlapIds[0] = slaps[i].slapId;
@@ -105,14 +105,14 @@ contract FlagObjective is IStickerObjective, Ownable {
     {
         (, uint lng1, uint lngDecimal1, uint lat1, uint latDecimal1) = BlockPlaces.blockPlaceFromPlaceId(lastPlaceId);
         (, uint lng2, uint lngDecimal2, uint lat2, uint latDecimal2) = BlockPlaces.blockPlaceFromPlaceId(newPlaceId);
-        uint256 squaredDistance = (lng1 - lng2) * (lng1 - lng2) + (lat1 - lat2) * (lat1 - lat2);
-        if (squaredDistance == 0) {
-            uint256 decimalSum = (lngDecimal1 > lngDecimal2 ? lngDecimal1 - lngDecimal2 : lngDecimal2 - lngDecimal1) +
+        uint256 degreeDistance = (lng1 > lng2 ? lng1 - lng2 : lng2 - lng1) + (lat1 > lat2 ? lat1 - lat2 : lat2 - lat1);
+        if (degreeDistance == 0) {
+            uint256 decimalDistance = (lngDecimal1 > lngDecimal2 ? lngDecimal1 - lngDecimal2 : lngDecimal2 - lngDecimal1) +
                                 (latDecimal1 > latDecimal2 ? latDecimal1 - latDecimal2 : latDecimal2 - latDecimal1);
-            return decimalSum % 2 == 0 ? 20 : 15;
+            return decimalDistance % 2 == 0 ? 20 : 15;
         }
-        uint256 basePoints = squaredDistance > 25 ? 100 : 10;
-        uint256 ringPosition = squaredDistance % 4;
+        uint256 basePoints = degreeDistance > 25 ? 100 : 10;
+        uint256 ringPosition = degreeDistance % 4;
         return basePoints + (ringPosition * 25);
     }
 

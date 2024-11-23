@@ -92,7 +92,7 @@ contract FlagObjectiveTest is Test {
 
         // Verify flag was planted
         assertEq(objectiveFlag.flaggedPlaceId(), 7147618599);
-        assertEq(objectiveFlag.pointsForPlayer(address1), 20); // Base points for first flag
+        assertEq(objectiveFlag.pointsForPlayer(address1), 100); // Base points for first flag
     }
 
     function testCannotPlantFlagInPreviousSpot() public {
@@ -102,7 +102,7 @@ contract FlagObjectiveTest is Test {
         // First flag placement
         NewSlap[] memory newSlaps = new NewSlap[](1);
         newSlaps[0] = NewSlap({
-            placeId: 7147618599, // First location (e.g., Union Square)
+            placeId: 6003970435, // First location
             stickerId: exampleStickerId1,
             size: 1
         });
@@ -115,22 +115,25 @@ contract FlagObjectiveTest is Test {
         // Plant first flag
         stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
         uint256 initialPoints = objectiveFlag.pointsForPlayer(address1);
-        assertEq(objectiveFlag.flaggedPlaceId(), 7147618599);
-        assertEq(initialPoints, 20); // Base points for first flag
+        assertEq(objectiveFlag.flaggedPlaceId(), 6003970435);
+        assertEq(initialPoints, 100); // Base points for first flag
 
         // Second flag placement at different location
-        newSlaps[0].placeId = 4126216247; // Second location (e.g., Hollywood Sign)
+        newSlaps[0].placeId = 6608169091; // Second location (e.g., Hollywood Sign)
         calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
         calculatedSlapBaseTokenCost = calculatedCosts[0].total;
 
         // Plant second flag
         stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
         uint256 secondPoints = objectiveFlag.pointsForPlayer(address1);
-        assertEq(objectiveFlag.flaggedPlaceId(), 4126216247);
+        assertEq(objectiveFlag.flaggedPlaceId(), 6608169091);
         assertGt(secondPoints, initialPoints); // Should have earned more points
 
+        // Check that the points are calculated correctly
+        assertEq(objectiveFlag.pointsForPlayer(address1), 160);
+
         // Try to plant flag back in first location
-        newSlaps[0].placeId = 7147618599; // Back to first location
+        newSlaps[0].placeId = 6003970435; // Back to first location
         calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
         calculatedSlapBaseTokenCost = calculatedCosts[0].total;
 
@@ -139,12 +142,12 @@ contract FlagObjectiveTest is Test {
 
         // Verify:
         // 1. Flag location hasn't changed
-        assertEq(objectiveFlag.flaggedPlaceId(), 4126216247);
+        assertEq(objectiveFlag.flaggedPlaceId(), 6608169091);
         // 2. Points haven't increased
         assertEq(objectiveFlag.pointsForPlayer(address1), secondPoints);
         // 3. The slap itself was successful (can verify by checking if it exists in StickerChain)
         Slap memory slap = stickerChain.getSlap(3);
-        assertEq(slap.placeId, 7147618599);
+        assertEq(slap.placeId, 6003970435);
         assertEq(slap.player, address1);
     }
 }
