@@ -92,7 +92,7 @@ contract FlagObjectiveTest is Test {
 
         // Verify flag was planted
         assertEq(objectiveFlag.flaggedPlaceId(), 7147618599);
-        assertEq(objectiveFlag.pointsForPlayer(address1), 100); // Base points for first flag
+        assertEq(objectiveFlag.pointsForPlayer(address1), 100000); // Base points for first flag
     }
 
     function testCannotPlantFlagInPreviousSpot() public {
@@ -116,7 +116,7 @@ contract FlagObjectiveTest is Test {
         stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
         uint256 initialPoints = objectiveFlag.pointsForPlayer(address1);
         assertEq(objectiveFlag.flaggedPlaceId(), 6003970435);
-        assertEq(initialPoints, 100); // Base points for first flag
+        assertEq(initialPoints, 100000); // Base points for first flag
 
         // Second flag placement at different location
         newSlaps[0].placeId = 6608169091; // Second location (e.g., Hollywood Sign)
@@ -130,7 +130,7 @@ contract FlagObjectiveTest is Test {
         assertGt(secondPoints, initialPoints); // Should have earned more points
 
         // Check that the points are calculated correctly
-        assertEq(objectiveFlag.pointsForPlayer(address1), 160);
+        assertEq(objectiveFlag.pointsForPlayer(address1), 160000);
 
         // Try to plant flag back in first location
         newSlaps[0].placeId = 6003970435; // Back to first location

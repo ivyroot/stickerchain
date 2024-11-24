@@ -109,11 +109,11 @@ contract FlagObjective is IStickerObjective, Ownable {
         if (degreeDistance == 0) {
             uint256 decimalDistance = (lngDecimal1 > lngDecimal2 ? lngDecimal1 - lngDecimal2 : lngDecimal2 - lngDecimal1) +
                                 (latDecimal1 > latDecimal2 ? latDecimal1 - latDecimal2 : latDecimal2 - latDecimal1);
-            return decimalDistance % 2 == 0 ? 20 : 15;
+            return decimalDistance % 2 == 0 ? 20_000 : 15_000;
         }
-        uint256 basePoints = degreeDistance > 25 ? 100 : 10;
+        uint256 basePoints = degreeDistance > 25 ? 100_000 : 10_000;
         uint256 ringPosition = degreeDistance % 4;
-        return basePoints + (ringPosition * 25);
+        return basePoints + (ringPosition * 25_000);
     }
 
     function pointsForPlayer(address player) external view returns (uint256) {
