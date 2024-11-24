@@ -11,8 +11,10 @@ contract DeployObjectiveNYC is Script {
         address initialAdminAddress = vm.envAddress('INITIAL_ADMIN');
         address payable stickerChainContractAddress = payable(vm.envAddress('STICKER_CHAIN_CONTRACT'));
         address objectivesContractAddress = vm.envAddress('OBJECTIVES_CONTRACT');
+        address paymentCoinAddress = vm.envAddress('NYC_PAYMENT_COIN_ADDRESS');
         require(stickerChainContractAddress != address(0), 'DeployObjNYC: STICKER_CHAIN_CONTRACT not set');
         require(objectivesContractAddress != address(0), 'DeployObjNYC: OBJECTIVES_CONTRACT not set');
+        require(paymentCoinAddress != address(0), 'DeployObjNYC: NYC_PAYMENT_COIN_ADDRESS not set');
 
         vm.startBroadcast();
         // Deploy NYC and capture its address
@@ -23,7 +25,7 @@ contract DeployObjectiveNYC is Script {
             "NYC",
             "https://stickerchain.xyz/objectives/NYC"
         );
-        nyc.setSlapFee(address(0), 0.0006 ether);
+        nyc.setSlapFee(paymentCoinAddress, 0.0006 ether);
 
 
         // Get the StickerObjectives contract and add the new NYC objective
