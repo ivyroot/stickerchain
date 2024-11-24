@@ -23,6 +23,8 @@ contract DeployObjectiveNYC is Script {
             "NYC",
             "https://stickerchain.xyz/objectives/NYC"
         );
+        nyc.setSlapFee(address(0), 0.0006 ether);
+
 
         // Get the StickerObjectives contract and add the new NYC objective
         StickerObjectives objectives = StickerObjectives(objectivesContractAddress);

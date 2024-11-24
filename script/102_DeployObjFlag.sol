@@ -22,7 +22,7 @@ contract DeployObjectiveFlag is Script {
             initialAdminAddress,
             "https://stickerchain.xyz/objectives/flag"
         );
-        flag.setSlapFee(address(0), 0.003 ether);
+        flag.setSlapFee(address(0), 0.0003 ether);
 
         // Get the StickerObjectives contract and add the new FlagObjective
         StickerObjectives objectives = StickerObjectives(objectivesContractAddress);
