@@ -392,7 +392,7 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 }
                 continue;
             }
-            (uint balanceNeeded, uint allowanceNeeded) = paymentMethodContract.addressCanPay(costs[i].paymentMethodId, _player, address(this), costs[i].total);
+            (uint balanceNeeded, uint allowanceNeeded) = paymentMethodContract.addressCanPay(costs[i].paymentMethodId, _player, costs[i].total);
             if (balanceNeeded > 0) {
                 issues[issueCount++] = SlapIssue({issueCode: IssueType.InsufficientFunds, recordId: costs[i].paymentMethodId, value: balanceNeeded});
             }
