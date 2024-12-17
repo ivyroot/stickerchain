@@ -25,6 +25,7 @@ contract FlagObjectiveTest is Test {
     uint64 private exampleStickerPrice = uint64(0.1 ether);
     address adminAddress = address(this);
     address address1 = address(0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97);
+    string imageCID = "QmQD5Pqwi4a55jEZmQoJWnwS2zFhYsZeM1KmbCi6YDpHLV";
 
     receive() external payable {}
     fallback() external payable {}
@@ -53,7 +54,8 @@ contract FlagObjectiveTest is Test {
             limitCount: 8,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID
+            metadataCID: metadataCID,
+            imageCID: imageCID
         });
 
         uint256 feeAmount = publisherFee + newStickerFee;

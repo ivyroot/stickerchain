@@ -11,6 +11,7 @@ contract StickerDesignsTest is Test {
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
     address adminAddress = address(this);
+    string imageCID = "QmQD5Pqwi4a55jEZmQoJWnwS2zFhYsZeM1KmbCi6YDpHLV";
 
 
     receive() external payable {}
@@ -37,7 +38,8 @@ contract StickerDesignsTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID
+            metadataCID: metadataCID,
+            imageCID: imageCID
         });
 
         uint256 feeAmount = publisherFee + newStickerFee;
@@ -67,7 +69,8 @@ contract StickerDesignsTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID
+            metadataCID: metadataCID,
+            imageCID: imageCID
         });
 
         uint256 incorrectFeeAmount = newStickerFee;
@@ -94,7 +97,8 @@ contract StickerDesignsTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadata1CID
+            metadataCID: metadata1CID,
+            imageCID: imageCID
         });
         NewStickerDesign memory newStickerDesign2 = NewStickerDesign({
             payoutAddress: payoutAddress,
@@ -103,7 +107,8 @@ contract StickerDesignsTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadata2CID
+            metadataCID: metadata2CID,
+            imageCID: imageCID
         });
 
         uint256 newStickerId1 =  stickerDesigns.publishStickerDesign{value: publisherFee + newStickerFee}(newStickerDesign1);

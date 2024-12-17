@@ -19,6 +19,7 @@ struct NewStickerDesign {
     uint64 limitTime;
     address limitToHolders;
     bytes metadataCID;
+    string imageCID;
 }
 
 struct StickerDesign {
@@ -32,6 +33,7 @@ struct StickerDesign {
     uint64 endTime;
     address limitToHolders;
     bytes metadataCID;
+    string imageCID;
 }
 
 contract StickerDesigns is Ownable {
@@ -128,6 +130,13 @@ contract StickerDesigns is Ownable {
         }
     }
 
+    function getStickerDesignImageCID(uint256 _stickerId) external view returns (string memory) {
+        if (!_isValidStickerId(_stickerId)) {
+            return "";
+        }
+        return _stickerDesigns[_stickerId].imageCID;
+    }
+
     function getStickerDesigns(uint256[] calldata _stickerIds) external view returns (StickerDesign[] memory) {
         StickerDesign[] memory designs = new StickerDesign[](_stickerIds.length);
         for (uint256 i = 0; i < _stickerIds.length; i++) {
@@ -204,7 +213,8 @@ contract StickerDesigns is Ownable {
             limit: newDesign.limitCount,
             limitToHolders: newDesign.limitToHolders,
             endTime: endTime,
-            metadataCID: newDesign.metadataCID
+            metadataCID: newDesign.metadataCID,
+            imageCID: newDesign.imageCID
         });
         if (firstSticker) {
             goodStandingPublishers[msg.sender] = true;

@@ -38,6 +38,7 @@ contract PublisherPayoutTest is Test {
     address player2 = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address dev1 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
     bytes public metadataCID1 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
+    string imageCID = "QmQD5Pqwi4a55jEZmQoJWnwS2zFhYsZeM1KmbCi6YDpHLV";
 
     receive() external payable {}
     fallback() external payable {}
@@ -76,7 +77,8 @@ contract PublisherPayoutTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         uint256 feeAmount = publisherFee + newStickerFee;
@@ -124,7 +126,8 @@ contract PublisherPayoutTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         uint256 feeAmount = publisherFee + newStickerFee;
@@ -183,7 +186,8 @@ contract PublisherPayoutTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         uint256 feeAmount = publisherFee + newStickerFee;

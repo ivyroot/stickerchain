@@ -48,6 +48,7 @@ contract SlapLimitsTest is Test {
     address address2 = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
     bytes metadataCID1 = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
+    string imageCID = "QmQD5Pqwi4a55jEZmQoJWnwS2zFhYsZeM1KmbCi6YDpHLV";
 
     receive() external payable {}
     fallback() external payable {}
@@ -78,7 +79,8 @@ contract SlapLimitsTest is Test {
             limitCount: 8,
             limitTime: 0,
             limitToHolders: address(balanceCheckerDeny),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         // publish sticker gated by balance check which always returns 0
@@ -122,7 +124,8 @@ contract SlapLimitsTest is Test {
             limitCount: 8,
             limitTime: 0,
             limitToHolders: address(balanceCheckerAllow),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         // publish sticker gated by balance check which always returns 1
@@ -168,7 +171,8 @@ contract SlapLimitsTest is Test {
             limitCount: 8,
             limitTime: 0,
             limitToHolders: address(balanceCheckerWriteOnCheck),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         // publish sticker gated by balance check which writes on check
@@ -202,7 +206,8 @@ contract SlapLimitsTest is Test {
             limitCount: 3,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         // publish sticker with limit of 3
@@ -261,7 +266,8 @@ contract SlapLimitsTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         // publish sticker with no limit
@@ -317,7 +323,8 @@ contract SlapLimitsTest is Test {
             limitCount: 0,
             limitTime: expirationTime,
             limitToHolders: address(0),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
 
         // publish sticker with no limit

@@ -31,7 +31,7 @@ contract ViewerTest is Test {
     uint256 public slapFee = 0.001 ether;
     uint256 private placeIdUnionSquare = 7147618599;
     uint256 private placeIdHollywoodSign = 4126216247;
-
+    string imageCID = "QmQD5Pqwi4a55jEZmQoJWnwS2zFhYsZeM1KmbCi6YDpHLV";
 
     receive() external payable {}
     fallback() external payable {}
@@ -58,7 +58,8 @@ contract ViewerTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID1
+            metadataCID: metadataCID1,
+            imageCID: imageCID
         });
         NewStickerDesign memory newStickerDesign2 = NewStickerDesign({
             payoutAddress: address(0),
@@ -67,7 +68,8 @@ contract ViewerTest is Test {
             limitCount: 0,
             limitTime: 0,
             limitToHolders: address(0),
-            metadataCID: metadataCID2
+            metadataCID: metadataCID2,
+            imageCID: imageCID
         });
         bool inGoodStanding = stickerDesigns.isPublisherInGoodStanding(publisher);
         uint256 feeAmount = inGoodStanding ? newStickerFee : publisherFee + newStickerFee;
