@@ -22,6 +22,9 @@ contract FlagObjective is IStickerObjective, Ownable {
     // player scores
     mapping(address => uint256) private playerScores;
 
+    // Define the event with the chosen name
+    event PlayerFlagScore(address indexed player, uint256 totalScore);
+
     constructor(address _stickerChain, address _initialAdmin, string memory _url)
         Ownable(_initialAdmin)
     {
@@ -84,6 +87,9 @@ contract FlagObjective is IStickerObjective, Ownable {
                 // Calculate points
                 uint256 points = calculatePoints(flaggedPlaceId, slaps[i].placeId);
                 playerScores[player] += points;
+
+                // Emit the event with the player's total score
+                emit PlayerFlagScore(player, playerScores[player]);
 
                 // Plant flag
                 flaggedPlaces[slaps[i].placeId] = slaps[i].slapId;
