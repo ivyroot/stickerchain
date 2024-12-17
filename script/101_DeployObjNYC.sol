@@ -23,7 +23,8 @@ contract DeployObjectiveNYC is Script {
             initialAdminAddress,
             "NYC",
             "NYC",
-            "https://stickerchain.xyz/objectives/NYC"
+            "https://stickerchain.xyz/objectives/NYC",
+            0
         );
         nyc.setSlapFee(paymentCoinAddress, 0.0006 ether);
 

@@ -41,6 +41,7 @@ contract NYC is ERC20, IStickerObjective, Ownable {
     address public feeRecipient;
     address public paymentCoin;
     uint256 public slapFee;
+    uint256 public reputationFee;
     uint256 public constant placeCount = 65;
     mapping (uint => bool) public placeIncluded;
     mapping (uint => PlaceSlapInfo) public currentSlaps;
@@ -48,7 +49,9 @@ contract NYC is ERC20, IStickerObjective, Ownable {
     uint private emissionRate;
     uint private lastUpdateOfEmissionRate;
 
-    constructor(address _stickerChain, address _initialAdmin, string memory _name, string memory _ticker, string memory _url)
+    mapping(address => bool) private hasPaidReputationFee;
+
+    constructor(address _stickerChain, address _initialAdmin, string memory _name, string memory _ticker, string memory _url, uint256 _reputationFee)
         Ownable(_initialAdmin)
         ERC20(_name, _ticker)
     {
@@ -64,6 +67,7 @@ contract NYC is ERC20, IStickerObjective, Ownable {
         for (uint i = 0; i < placeCount; i++) {
             placeIncluded[places[i]] = true;
         }
+        reputationFee = _reputationFee;
     }
 
 
@@ -95,10 +99,13 @@ contract NYC is ERC20, IStickerObjective, Ownable {
         feeRecipient = _feeRecipient;
     }
 
-    // owner only method to set slap fee
     function setSlapFee(address _paymentCoinAddress, uint256 _slapFee) external onlyOwner {
         paymentCoin = _paymentCoinAddress;
         slapFee = _slapFee;
+    }
+
+    function setReputationFee(uint256 _reputationFee) external onlyOwner {
+        reputationFee = _reputationFee;
     }
 
 
@@ -171,7 +178,7 @@ contract NYC is ERC20, IStickerObjective, Ownable {
         _places[64] = 7147625823; // Inwood Hill Park
     }
 
-    function costOfSlaps(address, FreshSlap[] calldata slaps)
+    function costOfSlaps(address slapper, FreshSlap[] calldata slaps)
     public view override
     returns (address, uint, address)
     {
@@ -181,12 +188,18 @@ contract NYC is ERC20, IStickerObjective, Ownable {
                 totalCost += slapFee;
             }
         }
+        if (!hasPaidReputationFee[slapper]) {
+            totalCost += reputationFee;
+        }
         return (paymentCoin, totalCost, feeRecipient);
     }
 
-    function slapInObjective(address, FreshSlap[] calldata slaps) public payable override returns (uint[] memory includedSlapIds) {
+    function slapInObjective(address slapper, FreshSlap[] calldata slaps) public payable override returns (uint[] memory includedSlapIds) {
         if (msg.sender != stickerChain) {
             revert InvalidCaller();
+        }
+        if (!hasPaidReputationFee[slapper]) {
+            hasPaidReputationFee[slapper] = true;
         }
         includedSlapIds = new uint[](slaps.length);
         uint _emissionRate = getOrUpdateEmissionRate();

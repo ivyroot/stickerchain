@@ -21,6 +21,7 @@ contract Erc20ObjectiveTest is Test {
     uint256 public publisherFee = 0.002 ether;
     uint256 public newStickerFee = 0.0005 ether;
     uint256 public slapFee = 0.001 ether;
+    uint256 public reputationFee = 0.0005 ether;
     uint256 private exampleStickerId1;
     uint64 private exampleStickerPrice = uint64(0.1 ether);
     uint256 private exampleStickerId2;
@@ -47,7 +48,7 @@ contract Erc20ObjectiveTest is Test {
         stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
 
         // Create an objective and register it
-        objectiveNYC = new NYC(address(stickerChain), adminAddress, "TESTNYC", "$TESTNYC", "https://example.com");
+        objectiveNYC = new NYC(address(stickerChain), adminAddress, "TESTNYC", "$TESTNYC", "https://example.com", reputationFee);
         objectiveNYCId = stickerObjectives.addNewObjective{value: 0.002 ether}(objectiveNYC);
 
         bytes memory metadataCID = hex'122080b67c703b2894ce2b368adf632cc1f169cb41c25e4334c54474196e3d342627';
@@ -144,7 +145,7 @@ contract Erc20ObjectiveTest is Test {
         assertEq(calculatedCosts.length, 1);
         assertEq(calculatedCosts[0].paymentMethodId, 0);
         uint calculatedSlapBaseTokenCost = calculatedCosts[0].total;
-        uint expectSlapBaseTokenCost = baseSlapFee + exampleStickerPrice;
+        uint expectSlapBaseTokenCost = baseSlapFee + exampleStickerPrice + reputationFee;
         assertEq(calculatedSlapBaseTokenCost, expectSlapBaseTokenCost);
 
         stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
