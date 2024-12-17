@@ -40,7 +40,7 @@ contract PlayerSlapTest is Test {
         objectivePayoutMethod = new PayoutMethod(address(stickerChain), adminAddress);
         stickerChain.setPublisherPayoutMethodContract(payable(address(publisherPayoutMethod)));
         stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
-        slapMetaRenderer = new SlapMetaRendererV1(stickerChain);
+        slapMetaRenderer = new SlapMetaRendererV1(stickerChain, stickerDesigns);
         stickerChain.setMetadataRendererContract(address(slapMetaRenderer));
 
         vm.deal(address1, 20 ether);
@@ -102,7 +102,7 @@ contract PlayerSlapTest is Test {
         Slap memory slap = stickerChain.getSlap(1);
         assertEq(slap.stickerId, exampleStickerId1);
         string memory tokenURI = stickerChain.tokenURI(1);
-        assertEq(tokenURI, "data:application/json;base64,eyJuYW1lIjogIlNsYXAgIzogMSIsICJzdGlja2VySWQiOiAxLCAicGxhY2VJZCI6IDcxNDc2MTg1OTksICJoZWlnaHQiOiAxLCAic2xhcHBlZEF0IjogMTc2NjYyMDgwMSwgInNpemUiOiAiMSIsICJwbGF5ZXIiOiAiMHg0ODM4YjEwNmZjZTk2NDdiZGYxZTc4NzdiZjczY2U4YjBiYWQ1Zjk3In0=");
+        assertEq(tokenURI, "data:application/json;base64,eyJuYW1lIjogIlNsYXAgIzogMSIsICJzdGlja2VySWQiOiAxLCAicGxhY2VJZCI6IDcxNDc2MTg1OTksICJoZWlnaHQiOiAxLCAic2xhcHBlZEF0IjogMTc2NjYyMDgwMSwgInNpemUiOiAiMSIsICJwbGF5ZXIiOiAiMHg0ODM4YjEwNmZjZTk2NDdiZGYxZTc4NzdiZjczY2U4YjBiYWQ1Zjk3IiwgImltYWdlIjogImlwZnM6Ly9RbVFENVBxd2k0YTU1akVabVFvSldud1MyekZoWXNaZU0xS21iQ2k2WURwSExWIn0=");
     }
 
 }

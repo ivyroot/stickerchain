@@ -9,13 +9,16 @@ import {IERC721A} from  "erc721a/contracts/IERC721A.sol";
 
 import {IMetadataRenderer} from "./IMetadataRenderer.sol";
 import {StickerChain, Slap} from "../StickerChain.sol";
+import {StickerDesigns} from "../StickerDesigns.sol";
 
 
 contract SlapMetaRendererV1 is IMetadataRenderer {
     StickerChain public immutable stickerChain;
+    StickerDesigns public immutable stickerDesigns;
 
-    constructor(StickerChain _stickerChain) {
+    constructor(StickerChain _stickerChain, StickerDesigns _stickerDesigns) {
         stickerChain = _stickerChain;
+        stickerDesigns = _stickerDesigns;
     }
 
     function tokenURI(uint256 tokenId) public view returns (string memory) {
@@ -23,6 +26,9 @@ contract SlapMetaRendererV1 is IMetadataRenderer {
         if (slap.slapId == 0) {
             revert IERC721A.URIQueryForNonexistentToken();
         }
+
+        string memory imageCID = stickerDesigns.getStickerDesignImageCID(slap.stickerId);
+
         string memory json = Base64.encode(
             bytes(
                 string(
@@ -41,6 +47,8 @@ contract SlapMetaRendererV1 is IMetadataRenderer {
                     Strings.toString(slap.size),
                     '", "player": "',
                     Strings.toHexString(slap.player),
+                    '", "image": "ipfs://',
+                    imageCID,
                     '"}'
                     )
                 )
