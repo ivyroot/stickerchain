@@ -8,7 +8,7 @@ dataSources:
     name: StickerDesigns
     network: base-sepolia
     source:
-      address: "0x8c3d27637D522D9F48ac3B55E2BE9Ef083fdf0ad"
+      address: "0x743d089D1Ea67eD2aa6FCEa1A5Db160e39D47e94"
       abi: StickerDesigns
       startBlock: 17594533
     mapping:
@@ -30,7 +30,7 @@ dataSources:
     name: StickerChain
     network: base-sepolia
     source:
-      address: "0x7Eaac2a070194716AD8cF77d8cdeE2a213114d7e"
+      address: "0x58D27667409cE1D9998102c1e55FD4b17D910796"
       abi: StickerChain
       startBlock: 17594575
     mapping:
@@ -50,7 +50,7 @@ dataSources:
     name: PaymentMethod
     network: base-sepolia
     source:
-      address: "0xa1B6dCB83d666316a6A90EBff91610293905dD42"
+      address: "0x1f856731671a1bAE5F341B2572c85B2030fdED89"
       abi: PaymentMethod
       startBlock: 17594498
     mapping:
