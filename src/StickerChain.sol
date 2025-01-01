@@ -504,11 +504,11 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 }else{
                     uint objPaymentMethodId = paymentMethodContract.getIdOfPaymentMethod(objPaymentCoin);
                     if (objPaymentMethodId == 0) {
-                        continue;
+                        continue; // skip to next objective
                     }
                     (chargeSuccess, _chargedCoin) = paymentMethodContract.chargeAddressForPayment(objPaymentMethodId, msg.sender, address(objectivePayoutMethod), objCost);
                     if (!chargeSuccess) {
-                        continue;
+                        continue; // skip to next objective
                     }
                 }
                 objectivePayoutMethod.deposit{value: objectiveBaseTokenPrice}(objPaymentCoin, objCost, objRecipient, false);
