@@ -5,6 +5,7 @@ import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 import "../IStickerObjective.sol";
+import "block-places/BlockPlaces.sol";
 
 
 //      _    _   ___     _______
@@ -23,6 +24,10 @@ import "../IStickerObjective.sol";
 //    at the time it is slapped over in the objective.
 //
 //    The emission rate decreases by 20% every week.
+//
+//    Play on referenced StickerChain contract or via website https://www.stickerchain.xyz
+//
+//    By: ivyroot
 //
 
 

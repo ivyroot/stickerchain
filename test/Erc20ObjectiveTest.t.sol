@@ -208,5 +208,228 @@ contract Erc20ObjectiveTest is Test {
 
     }
 
+    function testOneSlapInObjectiveThenFourNearby() public {
+        // Setup address1's initial slap
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: 7147621691,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        uint256[] memory objectives = new uint256[](1);
+        objectives[0] = objectiveNYCId;
+
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        uint calculatedSlapBaseTokenCost = calculatedCosts[0].total;
+        stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
+
+        Slap memory slap = stickerChain.getSlap(1);
+        assertEq(slap.stickerId, exampleStickerId1);
+        assertEq(slap.placeId, 7147621691);
+        assertEq(slap.player, address1);
+        assertEq(slap.slappedAt, block.timestamp);
+        assertEq(slap.objectiveIds.length, 1);
+        assertEq(slap.objectiveIds[0], objectiveNYCId);
+
+        // Move time forward an hour
+        vm.warp(block.timestamp + 3600);
+        vm.roll(block.number + 56);
+
+        // Check address1's balance before address2's slaps - should be 0 since no claim has been made
+        uint balanceBeforeAddress2 = objectiveNYC.balanceOf(address1);
+        assertEq(balanceBeforeAddress2, 0);
+
+        // Setup address2's four slaps
+        vm.deal(address2, 20 ether);
+        vm.startPrank(address2);
+
+        NewSlap[] memory nearbySlaps = new NewSlap[](4);
+        nearbySlaps[0] = NewSlap({
+            placeId: 7147621691,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        nearbySlaps[1] = NewSlap({
+            placeId: 7147622715,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        nearbySlaps[2] = NewSlap({
+            placeId: 7147621687,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        nearbySlaps[3] = NewSlap({
+            placeId: 7147622711,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+
+        PaymentMethodTotal[] memory calculatedCosts2 = stickerChain.costOfSlaps(address2, nearbySlaps, objectives);
+        uint calculatedSlapBaseTokenCost2 = calculatedCosts2[0].total;
+        stickerChain.slap{value: calculatedSlapBaseTokenCost2}(nearbySlaps, objectives);
+
+        // Verify all four of address2's slaps
+        for (uint i = 0; i < 4; i++) {
+            Slap memory slap2 = stickerChain.getSlap(i + 2);
+            assertEq(slap2.stickerId, exampleStickerId1);
+            assertEq(slap2.placeId, nearbySlaps[i].placeId);
+            assertEq(slap2.player, address2);
+            assertEq(slap2.slappedAt, block.timestamp);
+            assertEq(slap2.objectiveIds.length, 1);
+            assertEq(slap2.objectiveIds[0], objectiveNYCId);
+        }
+
+        // Check address1's balance after address2's slaps - should be equivalent to 1 hour of emission
+        uint balance = objectiveNYC.balanceOf(address1);
+        assertEq(balance, 3600000000000000000000); // 3600 * 10^18 (1 hour worth of tokens)
+    }
+
+    function testSize2SlapInObjectiveAllSlappedOver() public {
+        // Setup address1's initial size 2 slap
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: 7147621691,
+            stickerId: exampleStickerId1,
+            size: 2
+        });
+        uint256[] memory objectives = new uint256[](1);
+        objectives[0] = objectiveNYCId;
+
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        uint calculatedSlapBaseTokenCost = calculatedCosts[0].total;
+        stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
+
+        Slap memory slap = stickerChain.getSlap(1);
+        assertEq(slap.stickerId, exampleStickerId1);
+        assertEq(slap.placeId, 7147621691);
+        assertEq(slap.player, address1);
+        assertEq(slap.slappedAt, block.timestamp);
+        assertEq(slap.objectiveIds.length, 1);
+        assertEq(slap.objectiveIds[0], objectiveNYCId);
+
+        // Move time forward an hour
+        vm.warp(block.timestamp + 3600);
+        vm.roll(block.number + 56);
+
+        // Check address1's balance before address2's slaps - should be 0 since no claim has been made
+        uint balanceBeforeAddress2 = objectiveNYC.balanceOf(address1);
+        assertEq(balanceBeforeAddress2, 0);
+
+        // Setup address2's four size 1 slaps
+        vm.deal(address2, 20 ether);
+        vm.startPrank(address2);
+
+        NewSlap[] memory nearbySlaps = new NewSlap[](4);
+        nearbySlaps[0] = NewSlap({
+            placeId: 7147621691,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        nearbySlaps[1] = NewSlap({
+            placeId: 7147622715,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        nearbySlaps[2] = NewSlap({
+            placeId: 7147621687,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+        nearbySlaps[3] = NewSlap({
+            placeId: 7147622711,
+            stickerId: exampleStickerId1,
+            size: 1
+        });
+
+        PaymentMethodTotal[] memory calculatedCosts2 = stickerChain.costOfSlaps(address2, nearbySlaps, objectives);
+        uint calculatedSlapBaseTokenCost2 = calculatedCosts2[0].total;
+        stickerChain.slap{value: calculatedSlapBaseTokenCost2}(nearbySlaps, objectives);
+
+        // Verify all four of address2's slaps
+        for (uint i = 0; i < 4; i++) {
+            Slap memory slap2 = stickerChain.getSlap(i + 2);
+            assertEq(slap2.stickerId, exampleStickerId1);
+            assertEq(slap2.placeId, nearbySlaps[i].placeId);
+            assertEq(slap2.player, address2);
+            assertEq(slap2.slappedAt, block.timestamp);
+            assertEq(slap2.objectiveIds.length, 1);
+            assertEq(slap2.objectiveIds[0], objectiveNYCId);
+        }
+
+        // Check address1's balance after address2's slaps
+        // Should be 4x the one hour emission rate since the size 2 slap covered all 4 places
+        uint balance = objectiveNYC.balanceOf(address1);
+        assertEq(balance, 14400000000000000000000); // (3600 * 4) * 10^18 (1 hour worth of tokens for 4 places)
+    }
+
+    function testPartiallyOverlappingSize2Slaps() public {
+        // Setup address1's initial size 2 slap
+        vm.deal(address1, 20 ether);
+        vm.startPrank(address1);
+
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: 7147621691,
+            stickerId: exampleStickerId1,
+            size: 2
+        });
+        uint256[] memory objectives = new uint256[](1);
+        objectives[0] = objectiveNYCId;
+
+        PaymentMethodTotal[] memory calculatedCosts = stickerChain.costOfSlaps(address1, newSlaps, objectives);
+        uint calculatedSlapBaseTokenCost = calculatedCosts[0].total;
+        stickerChain.slap{value: calculatedSlapBaseTokenCost}(newSlaps, objectives);
+
+        Slap memory slap = stickerChain.getSlap(1);
+        assertEq(slap.stickerId, exampleStickerId1);
+        assertEq(slap.placeId, 7147621691);
+        assertEq(slap.player, address1);
+        assertEq(slap.slappedAt, block.timestamp);
+        assertEq(slap.objectiveIds.length, 1);
+        assertEq(slap.objectiveIds[0], objectiveNYCId);
+
+        // Move time forward an hour
+        vm.warp(block.timestamp + 3600);
+        vm.roll(block.number + 56);
+
+        // Check address1's balance before address2's slap - should be 0 since no claim has been made
+        uint balanceBeforeAddress2 = objectiveNYC.balanceOf(address1);
+        assertEq(balanceBeforeAddress2, 0);
+
+        // Setup address2's single size 2 slap that partially overlaps
+        vm.deal(address2, 20 ether);
+        vm.startPrank(address2);
+
+        NewSlap[] memory nearbySlaps = new NewSlap[](1);
+        nearbySlaps[0] = NewSlap({
+            placeId: 7147621687,
+            stickerId: exampleStickerId1,
+            size: 2
+        });
+
+        PaymentMethodTotal[] memory calculatedCosts2 = stickerChain.costOfSlaps(address2, nearbySlaps, objectives);
+        uint calculatedSlapBaseTokenCost2 = calculatedCosts2[0].total;
+        stickerChain.slap{value: calculatedSlapBaseTokenCost2}(nearbySlaps, objectives);
+
+        Slap memory slap2 = stickerChain.getSlap(2);
+        assertEq(slap2.stickerId, exampleStickerId1);
+        assertEq(slap2.placeId, 7147621687);
+        assertEq(slap2.player, address2);
+        assertEq(slap2.slappedAt, block.timestamp);
+        assertEq(slap2.objectiveIds.length, 1);
+        assertEq(slap2.objectiveIds[0], objectiveNYCId);
+
+        // Check address1's balance after address2's slap
+        // Should be 2x the one hour emission rate since only 2 places overlap between the size 2 slaps
+        uint balance = objectiveNYC.balanceOf(address1);
+        assertEq(balance, 7200000000000000000000); // (3600 * 2) * 10^18 (1 hour worth of tokens for 2 overlapping places)
+    }
 
 }
