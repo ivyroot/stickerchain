@@ -209,22 +209,44 @@ contract NYC is ERC20, IStickerObjective, Ownable {
         includedSlapIds = new uint[](slaps.length);
         uint _emissionRate = getOrUpdateEmissionRate();
         for (uint i = 0; i < slaps.length; i++) {
-            if (placeIncluded[slaps[i].placeId]) {
-                // emit tokens to slapped over player
-                PlaceSlapInfo memory currentSlap = currentSlaps[slaps[i].placeId];
-                if (currentSlap.slapId != 0) {
-                    address slapOwner = IERC721(stickerChain).ownerOf(currentSlap.slapId);
-                    uint accruedTotal = (block.timestamp - currentSlap.slapTime) * _emissionRate;
-                    _mint(slapOwner, accruedTotal);
+            bool slapIncluded = false;
+
+            if (slaps[i].size == 1) {
+                // Optimize for the common case of size 1 slaps
+                if (placeIncluded[slaps[i].placeId]) {
+                    slapIncluded = true;
+                    PlaceSlapInfo memory currentSlap = currentSlaps[slaps[i].placeId];
+                    if (currentSlap.slapId != 0) {
+                        address slapOwner = IERC721(stickerChain).ownerOf(currentSlap.slapId);
+                        uint accruedTotal = (block.timestamp - currentSlap.slapTime) * _emissionRate;
+                        _mint(slapOwner, accruedTotal);
+                    }
+                    currentSlaps[slaps[i].placeId] = PlaceSlapInfo({
+                        slapId: slaps[i].slapId,
+                        slapTime: uint64(block.timestamp)
+                    });
                 }
+            } else {
+                // Handle larger slaps by checking all covered places
+                uint[] memory coveredPlaces = BlockPlaces.placeIdsInSquare(slaps[i].placeId, slaps[i].size);
+                for (uint j = 0; j < coveredPlaces.length; j++) {
+                    if (placeIncluded[coveredPlaces[j]]) {
+                        slapIncluded = true;
+                        PlaceSlapInfo memory currentSlap = currentSlaps[coveredPlaces[j]];
+                        if (currentSlap.slapId != 0) {
+                            address slapOwner = IERC721(stickerChain).ownerOf(currentSlap.slapId);
+                            uint accruedTotal = (block.timestamp - currentSlap.slapTime) * _emissionRate;
+                            _mint(slapOwner, accruedTotal);
+                        }
+                        currentSlaps[coveredPlaces[j]] = PlaceSlapInfo({
+                            slapId: slaps[i].slapId,
+                            slapTime: uint64(block.timestamp)
+                        });
+                    }
+                }
+            }
 
-                // put new slap at place
-                 currentSlaps[slaps[i].placeId] = PlaceSlapInfo({
-                    slapId: slaps[i].slapId,
-                    slapTime: uint64(block.timestamp)
-                 });
-
-                // include slap in success list
+            if (slapIncluded) {
                 includedSlapIds[i] = slaps[i].slapId;
             }
         }
