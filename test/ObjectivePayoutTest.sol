@@ -262,7 +262,7 @@ contract ObjectivePayoutTest is Test {
 
         // Prepare slap data
         vm.startPrank(player1);
-        testCoin.approve(address(paymentMethod), 100 ether);
+        testCoin.approve(address(stickerChain), 100 ether);
         NewSlap[] memory newSlaps = new NewSlap[](1);
         newSlaps[0] = NewSlap({
             placeId: placeIdUnionSquare,

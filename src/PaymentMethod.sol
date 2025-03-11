@@ -68,7 +68,7 @@ contract PaymentMethod is Ownable, IPaymentMethod {
             return (0, 0);
         }
         uint accountBalance = _coin.balanceOf(_address);
-        uint accountAllowance = _coin.allowance(_address, address(this));
+        uint accountAllowance = _coin.allowance(_address, msg.sender);
         balanceNeeded = _amount > accountBalance ? _amount - accountBalance : 0;
         allowanceNeeded = _amount > accountAllowance ? _amount - accountAllowance : 0;
     }

@@ -212,7 +212,7 @@ contract PublisherPayoutTest is Test {
         // player slaps the sticker
         vm.startPrank(player1);
         // NB: need to approve the payment method contract, not stickerchain
-        testCoin.approve(address(paymentMethod), stickerPrice);
+        testCoin.approve(address(stickerChain), stickerPrice);
         NewSlap[] memory newSlaps = new NewSlap[](1);
         newSlaps[0] = NewSlap({
             placeId: placeIdUnionSquare,
