@@ -73,15 +73,6 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         allowanceNeeded = _amount > accountAllowance ? _amount - accountAllowance : 0;
     }
 
-    function chargeAddressForPayment(uint _paymentMethodId, address _address, address _recipient, uint _amount) public
-        returns (bool success, IERC20 coin) {
-        coin = getPaymentMethod(_paymentMethodId);
-        if (_paymentMethodId == 0 || address(coin) == address(0)) {
-            return (false, IERC20(address(0)));
-        }
-        success = coin.transferFrom(_address, _recipient, _amount);
-    }
-
     // public function to add coin
     function addNewCoin(address _coinAddress) public payable returns (uint) {
         if (bannedAddresses[msg.sender]) {

@@ -15,9 +15,8 @@ interface IPaymentMethod {
     function getPaymentMethods(uint _offset, uint _count) external view returns (IERC20[] memory);
     function getIdOfPaymentMethod(address _coinAddress) external view returns (uint);
 
-    // charge an address using a payment method
+    // check if an address can pay for something
     function addressCanPay(uint _paymentMethodId, address _address, uint _amount) external view returns (uint balanceNeeded, uint allowanceNeeded);
-    function chargeAddressForPayment(uint _paymentMethodId, address _address, address _recipient, uint _amount) external returns (bool success, IERC20 coin);
 
     // add a payment method, self-serve
     function addNewCoinFee() external view returns (uint);

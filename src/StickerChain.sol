@@ -456,9 +456,14 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 if (stickerPaymentMethodId == 0) {
                     totalBill += stickerPrice;
                     stickerBaseTokenPrice = stickerPrice;
-                }else{
-                    (chargeSuccess, _chargedCoin) = paymentMethodContract.chargeAddressForPayment(stickerPaymentMethodId, msg.sender, address(publisherPayoutMethod), stickerPrice);
-                    if (!chargeSuccess) {
+                }else {
+                    _chargedCoin = paymentMethodContract.getPaymentMethod(stickerPaymentMethodId);
+                    if (address(_chargedCoin) == address(0)) {
+                        slapStatuses[i] = ERC20_PAYMENT_FAILED;
+                        continue;
+                    }
+                    bool _coinChargeSuccess = _chargedCoin.transferFrom(msg.sender, address(publisherPayoutMethod), stickerPrice);
+                    if (!_coinChargeSuccess) {
                         slapStatuses[i] = ERC20_PAYMENT_FAILED;
                         continue;
                     }
@@ -501,13 +506,14 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                 if (objPaymentCoin == address(0)) {
                     totalBill += objCost;
                     objectiveBaseTokenPrice = objCost;
-                }else{
+                } else {
                     uint objPaymentMethodId = paymentMethodContract.getIdOfPaymentMethod(objPaymentCoin);
                     if (objPaymentMethodId == 0) {
                         continue; // skip to next objective
                     }
-                    (chargeSuccess, _chargedCoin) = paymentMethodContract.chargeAddressForPayment(objPaymentMethodId, msg.sender, address(objectivePayoutMethod), objCost);
-                    if (!chargeSuccess) {
+                    IERC20 _objCoin = IERC20(objPaymentCoin);
+                    bool _coinChargeSuccess = _objCoin.transferFrom(msg.sender, address(objectivePayoutMethod), objCost);
+                    if (!_coinChargeSuccess) {
                         continue; // skip to next objective
                     }
                 }
