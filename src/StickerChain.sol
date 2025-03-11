@@ -462,8 +462,8 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                         slapStatuses[i] = ERC20_PAYMENT_FAILED;
                         continue;
                     }
-                    bool _coinChargeSuccess = _chargedCoin.transferFrom(msg.sender, address(publisherPayoutMethod), stickerPrice);
-                    if (!_coinChargeSuccess) {
+                    chargeSuccess = _chargedCoin.transferFrom(msg.sender, address(publisherPayoutMethod), stickerPrice);
+                    if (!chargeSuccess) {
                         slapStatuses[i] = ERC20_PAYMENT_FAILED;
                         continue;
                     }
@@ -512,8 +512,8 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
                         continue; // skip to next objective
                     }
                     IERC20 _objCoin = IERC20(objPaymentCoin);
-                    bool _coinChargeSuccess = _objCoin.transferFrom(msg.sender, address(objectivePayoutMethod), objCost);
-                    if (!_coinChargeSuccess) {
+                    chargeSuccess = _objCoin.transferFrom(msg.sender, address(objectivePayoutMethod), objCost);
+                    if (!chargeSuccess) {
                         continue; // skip to next objective
                     }
                 }
