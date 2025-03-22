@@ -19,8 +19,8 @@ interface IPayoutMethod {
     // deposit funds, can only be called by the source contract
     function deposit(address _coin, uint _amount, address _recipient, bool _protocolPayment) external payable;
 
-    // withdraw funds, can only withdraw balances of msg.sender
-    // funds will be sent to the recipient or msg.sender if recipient is address(0)
+    // withdraw funds, any address can trigger transfer of funds due to any recipient
+    // pass address(0) as coin address for chain native ETH
     function withdraw(address[] calldata _coins, address _recipient) external;
 
     // public view balance function
