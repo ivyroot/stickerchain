@@ -5,6 +5,7 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 
 interface IPayoutMethod {
+    // Note: address(0) is used as the coin address for chain native ETH
 
     event FundsAdded(address indexed recipient, address indexed coin, uint amount);
     event FundsWithdrawn(address indexed account, address indexed coin, uint amount);
@@ -20,7 +21,6 @@ interface IPayoutMethod {
     function deposit(address _coin, uint _amount, address _recipient, bool _protocolPayment) external payable;
 
     // withdraw funds, any address can trigger transfer of funds due to any recipient
-    // pass address(0) as coin address for chain native ETH
     function withdraw(address[] calldata _coins, address _recipient) external;
 
     // public view balance function
