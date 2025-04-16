@@ -28,6 +28,7 @@ contract StickerObjectives is Ownable {
     event NewObjective(address indexed objective, uint indexed objectiveId, address indexed dev);
     event ObjectiveBanned(address indexed objective, uint indexed objectiveId);
     event ObjectiveUnbanned(address indexed objective, uint indexed objectiveId);
+    event AddNewObjectiveFeeChanged(uint newFee);
 
     error ObjectiveNotAllowed();
     error AddressNotAllowed();
@@ -120,12 +121,6 @@ contract StickerObjectives is Ownable {
         return _objectiveId;
     }
 
-    // admin function to change fee
-    function setAddNewObjectiveFee(uint _fee) public onlyOwner() {
-        addNewObjectiveFee = _fee;
-    }
-
-    // admin function to set admin fee recipient. cannot be zero address
     function setAdminFeeRecipient(address _recipient) public onlyOwner() {
         if (_recipient == address(0)) {
             revert AddressNotAllowed();
@@ -133,7 +128,6 @@ contract StickerObjectives is Ownable {
         adminFeeRecipient = _recipient;
     }
 
-    // admin function to set operator
     function setOperator(address _operator) public onlyOwner() {
         operator = _operator;
     }
@@ -146,8 +140,19 @@ contract StickerObjectives is Ownable {
         publicCreationEnabled = false;
     }
 
-    // admin function to set banned objectives
-    function banObjectives(address[] memory _objectives, bool _undoBan) public onlyOwner() {
+    modifier onlyOperator() {
+        if (msg.sender != operator) {
+            revert AddressNotAllowed();
+        }
+        _;
+    }
+
+    function setAddNewObjectiveFee(uint _fee) public onlyOperator {
+        addNewObjectiveFee = _fee;
+        emit AddNewObjectiveFeeChanged(_fee);
+    }
+
+    function banObjectives(address[] memory _objectives, bool _undoBan) public onlyOperator {
         for (uint i = 0; i < _objectives.length; i++) {
             bannedObjectives[_objectives[i]] = !_undoBan;
             if (_undoBan) {
@@ -158,8 +163,7 @@ contract StickerObjectives is Ownable {
         }
     }
 
-    // admin function set and unset banned addresses
-    function banAddresses(address[] memory _addresses, bool _undoBan) public onlyOwner() {
+    function banAddresses(address[] memory _addresses, bool _undoBan) public onlyOperator {
         for (uint i = 0; i < _addresses.length; i++) {
             bannedAddresses[_addresses[i]] = !_undoBan;
         }

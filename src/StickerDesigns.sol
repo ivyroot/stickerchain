@@ -47,6 +47,10 @@ contract StickerDesigns is Ownable {
     event AdminFeeRecipientChanged(address newRecipient);
     event PublisherReputationFeeChanged(uint256 newFee);
     event StickerRegistrationFeeChanged(uint256 newFee);
+    event PublisherBanned(address indexed publisher);
+    event PublisherUnbanned(address indexed publisher);
+    event StickerDesignBanned(uint256 indexed stickerId);
+    event StickerDesignUnbanned(uint256 indexed stickerId);
 
     error PublisherPermissionsIssue();
     error InvalidPublishingFee(uint256 requiredFee);
@@ -349,6 +353,9 @@ contract StickerDesigns is Ownable {
             bannedPublishers[_publishers[i]] = !undoBan;
             if (!undoBan) {
                 goodStandingPublishers[_publishers[i]] = false;
+                emit PublisherBanned(_publishers[i]);
+            } else {
+                emit PublisherUnbanned(_publishers[i]);
             }
         }
     }
@@ -356,6 +363,11 @@ contract StickerDesigns is Ownable {
     function banStickerDesigns(uint256[] calldata _stickerIds, bool undoBan) external onlyOperator {
         for (uint256 i = 0; i < _stickerIds.length; i++) {
             bannedStickerDesigns[_stickerIds[i]] = !undoBan;
+            if (!undoBan) {
+                emit StickerDesignBanned(_stickerIds[i]);
+            } else {
+                emit StickerDesignUnbanned(_stickerIds[i]);
+            }
         }
     }
 
