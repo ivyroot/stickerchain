@@ -84,6 +84,12 @@ contract StickerDesigns is Ownable {
         return goodStandingPublishers[_publisher] ? stickerRegistrationFee : publisherReputationFee + stickerRegistrationFee;
     }
 
+    modifier onlyOperator() {
+        if (msg.sender != operator) {
+            revert PublisherPermissionsIssue();
+        }
+        _;
+    }
 
     // View methods
 
@@ -328,17 +334,17 @@ contract StickerDesigns is Ownable {
         operator = _operator;
     }
 
-    function setpublisherReputationFee(uint256 _fee) external onlyOwner {
+    function setPublisherReputationFee(uint256 _fee) external onlyOperator {
         publisherReputationFee = _fee;
         emit PublisherReputationFeeChanged(_fee);
     }
 
-    function setstickerRegistrationFee(uint256 _fee) external onlyOwner {
+    function setStickerRegistrationFee(uint256 _fee) external onlyOperator {
         stickerRegistrationFee = _fee;
         emit StickerRegistrationFeeChanged(_fee);
     }
 
-    function banPublishers(address[] calldata _publishers, bool undoBan) external onlyOwner {
+    function banPublishers(address[] calldata _publishers, bool undoBan) external onlyOperator {
         for (uint256 i = 0; i < _publishers.length; i++) {
             bannedPublishers[_publishers[i]] = !undoBan;
             if (!undoBan) {
@@ -347,7 +353,7 @@ contract StickerDesigns is Ownable {
         }
     }
 
-    function banStickerDesigns(uint256[] calldata _stickerIds, bool undoBan) external onlyOwner {
+    function banStickerDesigns(uint256[] calldata _stickerIds, bool undoBan) external onlyOperator {
         for (uint256 i = 0; i < _stickerIds.length; i++) {
             bannedStickerDesigns[_stickerIds[i]] = !undoBan;
         }
