@@ -24,7 +24,6 @@ contract StickerObjectives is Ownable {
     uint public addNewObjectiveFee;
     address public adminFeeRecipient;
 
-    event AdminTransferFailure(address indexed recipient, uint amount);
     event NewObjective(address indexed objective, uint indexed objectiveId, address indexed dev);
     event ObjectiveBanned(address indexed objective, uint indexed objectiveId);
     event ObjectiveUnbanned(address indexed objective, uint indexed objectiveId);

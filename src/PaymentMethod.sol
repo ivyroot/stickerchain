@@ -15,13 +15,18 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     address public operator;
     address public adminFeeRecipient;
 
-    event AdminTransferFailure(address indexed recipient, uint amount);
-
     error InvalidPaymentMethodId();
     error PaymentMethodNotAllowed();
     error AddressNotAllowed();
     error IncorrectFeePayment();
     error CoinAlreadyExists();
+
+    modifier onlyOperator() {
+        if (msg.sender != operator) {
+            revert AddressNotAllowed();
+        }
+        _;
+    }
 
     constructor(address _initialAdmin, uint _addNewCoinFee) Ownable(_initialAdmin) {
         adminFeeRecipient = _initialAdmin;
@@ -81,17 +86,9 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         if (msg.value != addNewCoinFee && msg.sender != operator) {
             revert IncorrectFeePayment();
         }
-        (bool success,) = adminFeeRecipient.call{value: msg.value}("");
-        if (!success) {
-            emit AdminTransferFailure(adminFeeRecipient, msg.value);
-        }
         return _addNewCoin(_coinAddress);
     }
 
-    // admin function to add coin
-    function importCoin(address _coinAddress) public onlyOwner returns (uint) {
-        return _addNewCoin(_coinAddress);
-    }
 
     function _addNewCoin(address _coinAddress) private returns (uint) {
         if (coinsLookup[_coinAddress] != 0) {
@@ -105,12 +102,6 @@ contract PaymentMethod is Ownable, IPaymentMethod {
     }
 
 
-    // admin function to change fee
-    function setAddNewCoinFee(uint _fee) public onlyOwner {
-        addNewCoinFee = _fee;
-    }
-
-    // admin function to set admin fee recipient. cannot be zero address
     function setAdminFeeRecipient(address _recipient) public onlyOwner {
         if (_recipient == address(0)) {
             revert AddressNotAllowed();
@@ -118,13 +109,20 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         adminFeeRecipient = _recipient;
     }
 
-    // admin function to set operator
     function setOperator(address _operator) public onlyOwner {
         operator = _operator;
     }
 
-    // admin function to set banned coins
-    function banCoins(address[] memory _coins, bool _undoBan) public onlyOwner {
+    function importCoin(address _coinAddress) public onlyOperator returns (uint) {
+        return _addNewCoin(_coinAddress);
+    }
+
+    function setAddNewCoinFee(uint _fee) public onlyOperator {
+        addNewCoinFee = _fee;
+        emit AddNewCoinFeeChanged(_fee);
+    }
+
+    function banCoins(address[] memory _coins, bool _undoBan) public onlyOperator {
         for (uint i = 0; i < _coins.length; i++) {
             bannedCoins[_coins[i]] = !_undoBan;
             if (_undoBan) {
@@ -135,10 +133,14 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         }
     }
 
-    // admin function set and unset banned addresses
-    function banAddresses(address[] memory _addresses, bool _undoBan) public onlyOwner {
+    function banAddresses(address[] memory _addresses, bool _undoBan) public onlyOperator {
         for (uint i = 0; i < _addresses.length; i++) {
             bannedAddresses[_addresses[i]] = !_undoBan;
+            if (!_undoBan) {
+                emit AddressBanned(_addresses[i]);
+            } else {
+                emit AddressUnbanned(_addresses[i]);
+            }
         }
     }
 
