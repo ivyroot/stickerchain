@@ -73,6 +73,10 @@ struct StoredPlace {
 contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     event StickerSlapped(uint256 indexed placeId, uint256 indexed stickerId, address indexed player, uint256 slapId, uint64 size);
     event SlapInObjective(uint256 indexed objectiveId, uint256 indexed slapId);
+    event SlapFeeChanged(uint256 newFee);
+    event PlayerReputationFeeChanged(uint256 newFee);
+    event PlayerBanned(address indexed player);
+    event PlayerUnbanned(address indexed player);
 
     error InsufficientFunds(uint256 paymentMethodId);
     error InvalidPlaceId(uint256 placeId);
@@ -112,15 +116,14 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
     mapping (address => bool) public initiatedPlayers;
     mapping (address => bool) public isBanned;
 
-    address public banOperator;
-    bool public banOperatorIsLocked;
+    address public operator;
 
     constructor(address _initialAdmin, uint _initialSlapFee, address payable _stickerDesignsAddress, address payable _paymentMethodAddress)
         Ownable(_initialAdmin) ERC721A("StickerChain", "SLAP")  {
         slapFee = _initialSlapFee;
         stickerDesignsContract = StickerDesigns(_stickerDesignsAddress);
         paymentMethodContract = IPaymentMethod(_paymentMethodAddress);
-        banOperator = _initialAdmin;
+        operator = _initialAdmin;
     }
 
     function slapFeeForSize(uint _size) public view returns (uint) {
@@ -611,36 +614,43 @@ contract StickerChain is Ownable, ERC721A, ReentrancyGuardTransient {
         }
     }
 
-    // admin methods
-    function setSlapFee(uint _newSlapFee) external onlyOwner {
-        slapFee = _newSlapFee;
-    }
 
-    function setPlayerReputationFee(uint _newPlayerReputationFee) external onlyOwner {
-        playerReputationFee = _newPlayerReputationFee;
-    }
+    // operator methods
 
-    function setBanOperator(address _newBanOperator) external onlyOwner {
-        if (banOperatorIsLocked) {
-            revert FeatureIsLocked();
-        }
-        if (_newBanOperator == address(0)) {
-            revert InvalidAddress();
-        }
-        banOperator = _newBanOperator;
-    }
-
-    function lockBanOperator() external onlyOwner {
-        banOperatorIsLocked = true;
-    }
-
-    function banPlayers(address[] calldata _players, bool undoBan) external {
-        if (msg.sender != banOperator) {
+    modifier onlyOperator() {
+        if (msg.sender != operator) {
             revert PermissionDenied();
         }
+        _;
+    }
+
+    function setSlapFee(uint _newSlapFee) external onlyOperator {
+        slapFee = _newSlapFee;
+        emit SlapFeeChanged(_newSlapFee);
+    }
+
+    function setPlayerReputationFee(uint _newPlayerReputationFee) external onlyOperator {
+        playerReputationFee = _newPlayerReputationFee;
+        emit PlayerReputationFeeChanged(_newPlayerReputationFee);
+    }
+
+    function banPlayers(address[] calldata _players, bool undoBan) external onlyOperator {
         for (uint i = 0; i < _players.length; i++) {
             isBanned[_players[i]] = !undoBan;
+            if (!undoBan) {
+                emit PlayerBanned(_players[i]);
+            } else {
+                emit PlayerUnbanned(_players[i]);
+            }
         }
+    }
+
+    // admin methods
+    function setOperator(address _newOperator) external onlyOwner {
+        if (_newOperator == address(0)) {
+            revert InvalidAddress();
+        }
+        operator = _newOperator;
     }
 
     // change the PaymentMethod contract address
