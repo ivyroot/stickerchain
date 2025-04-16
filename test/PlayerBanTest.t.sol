@@ -104,7 +104,7 @@ contract PlayerBanTest is Test {
     }
 
     function testBanOperatorAccountCanBanPlayers() public {
-        stickerChain.setBanOperator(address3);
+        stickerChain.setOperator(address3);
         vm.startPrank(address3);
         address[] memory banPlayers = new address[](1);
         banPlayers[0] = address2;
@@ -123,16 +123,6 @@ contract PlayerBanTest is Test {
             abi.encodeWithSelector(StickerChain.PlayerIsBanned.selector)
         );
         stickerChain.slap{value: slapFee}(newSlaps, objectives);
-    }
-
-    function testAdminCannotChangeBanOperatorAfterItsLocked() public {
-        stickerChain.setBanOperator(address3);
-        assertEq(stickerChain.banOperator(), address3);
-        stickerChain.lockBanOperator();
-        vm.expectRevert(
-            abi.encodeWithSelector(StickerChain.FeatureIsLocked.selector)
-        );
-        stickerChain.setBanOperator(address2);
     }
 
     function testSlapsOfBannedPlayer() public {
