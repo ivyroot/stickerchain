@@ -142,4 +142,8 @@ contract PaymentMethod is Ownable, IPaymentMethod {
         }
     }
 
+    function transferAdminFees() external {
+        payable(adminFeeRecipient).transfer(address(this).balance);
+    }
+
 }

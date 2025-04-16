@@ -353,7 +353,7 @@ contract StickerDesigns is Ownable {
         }
     }
 
-    function forwardFunds() external {
+    function transferAdminFees() external {
         adminFeeRecipient.transfer(address(this).balance);
     }
 

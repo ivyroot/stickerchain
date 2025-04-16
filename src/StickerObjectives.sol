@@ -142,6 +142,10 @@ contract StickerObjectives is Ownable {
         publicCreationEnabled = true;
     }
 
+    function enableOperatorCreation() public onlyOwner() {
+        publicCreationEnabled = false;
+    }
+
     // admin function to set banned objectives
     function banObjectives(address[] memory _objectives, bool _undoBan) public onlyOwner() {
         for (uint i = 0; i < _objectives.length; i++) {
@@ -161,4 +165,7 @@ contract StickerObjectives is Ownable {
         }
     }
 
+    function transferAdminFees() external {
+        payable(adminFeeRecipient).transfer(address(this).balance);
+    }
 }
