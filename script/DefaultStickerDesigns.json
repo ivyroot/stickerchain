@@ -1,0 +1,14 @@
+{
+  "stickers": [
+    {
+      "payoutAddress": "0x0000000000000000000000000000000000000000",
+      "price": "10000000000000000",
+      "paymentMethodId": "0",
+      "limitCount": "1000",
+      "limitTime": "0",
+      "limitToHolders": "0x0000000000000000000000000000000000000000",
+      "metadataCID": "QmExampleMetadataCID",
+      "imageCID": "QmExampleImageCID"
+    }
+  ]
+}
