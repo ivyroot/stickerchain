@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import "forge-std/Script.sol";
 import "forge-std/console.sol";
+import {stdJson} from "forge-std/StdJson.sol";
 import "../src/StickerDesigns.sol";
 
 contract PublishDefaultStickers is Script {
@@ -18,48 +19,47 @@ contract PublishDefaultStickers is Script {
     }
 
     function run() external {
-        // Get deployer from environment
-        address deployer = vm.envAddress("DEPLOYER");
-        address stickerDesigns = vm.envAddress("STICKER_DESIGNS");
+        address payable stickerDesignsContractAddress = payable(vm.envAddress('STICKER_DESIGNS_CONTRACT'));
+        require(stickerDesignsContractAddress != address(0), 'DeployStickers: STICKER_DESIGNS_CONTRACT not set');
 
         // Read and parse JSON config
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/script/DefaultStickerDesigns.json");
         string memory json = vm.readFile(path);
 
-        // Parse JSON into array of StickerConfig
-        bytes memory jsonBytes = vm.parseJson(json);
-        StickerConfig[] memory configs = abi.decode(jsonBytes, (StickerConfig[]));
+        // Parse JSON using StdJson
+        bytes[] memory metadatas = stdJson.readBytesArray(json, "metadatas");
+        string[] memory images = stdJson.readStringArray(json, "images");
+        uint256 count = metadatas.length;
+        console.log("Found %d stickers to publish", count);
 
-        console.log("Found %d stickers to publish", configs.length);
-
-        vm.startBroadcast(deployer);
+        vm.startBroadcast();
 
         // Publish each sticker
-        for(uint i = 0; i < configs.length; i++) {
-            StickerConfig memory config = configs[i];
+        for(uint i = 0; i < count; i++) {
+            bytes memory metadataCID = metadatas[i];
 
             // Convert string CIDs to bytes
-            bytes memory metadataCID = bytes(config.metadataCID);
+            string memory imageCID = images[i];
 
             // Create NewStickerDesign struct
             NewStickerDesign memory sticker = NewStickerDesign({
-                payoutAddress: config.payoutAddress,
-                price: config.price,
-                paymentMethodId: config.paymentMethodId,
-                limitCount: config.limitCount,
-                limitTime: config.limitTime,
-                limitToHolders: config.limitToHolders,
+                payoutAddress: address(this),
+                price: 0,
+                paymentMethodId: 0,
+                limitCount: 0,
+                limitTime: 0,
+                limitToHolders: address(0),
                 metadataCID: metadataCID,
-                imageCID: config.imageCID
+                imageCID: imageCID
             });
 
             // Calculate required fee
-            uint256 requiredFee = StickerDesigns(stickerDesigns).costToPublish(deployer);
+            uint256 requiredFee = StickerDesigns(stickerDesignsContractAddress).costToPublish(address(this));
 
             // Publish sticker
-            console.log("Publishing sticker %d with metadata CID: %s", i + 1, config.metadataCID);
-            StickerDesigns(stickerDesigns).publishStickerDesign{value: requiredFee}(sticker);
+            console.log("Publishing sticker %d with image CID: %s", i + 1, imageCID);
+            StickerDesigns(stickerDesignsContractAddress).publishStickerDesign{value: requiredFee}(sticker);
         }
 
         vm.stopBroadcast();

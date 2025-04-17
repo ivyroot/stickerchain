@@ -1,14 +1,50 @@
 {
-  "stickers": [
-    {
-      "payoutAddress": "0x0000000000000000000000000000000000000000",
-      "price": "10000000000000000",
-      "paymentMethodId": "0",
-      "limitCount": "1000",
-      "limitTime": "0",
-      "limitToHolders": "0x0000000000000000000000000000000000000000",
-      "metadataCID": "QmExampleMetadataCID",
-      "imageCID": "QmExampleImageCID"
-    }
+  "metadatas": [
+    "QmWu5CjwjQT3C3Bcg2fLntKTpJueG1VB2kDF5Sc8gTQgbF",
+    "Qmbx1QSrFnNe3PBFJe8yKE82GXJxmwu3jFioYhUuNK5tJ9",
+    "QmfHBHAuBfshNnAp9JX3pC9eqH5VDRL68vN2PvEExkLe8d",
+    "QmSRK2rhsiitBvjfvf2H5MmdrDuG7ag2XuAWxcihU71jo4",
+    "QmeGPWntvvPDuVqHgd5UaWazCRAmqPdJSa9L3mtZj3VMfW",
+    "QmPtSt8ATjn4CHbAiDiGD1MsxL3U2HXbsxi1zG2AeW39hi",
+    "QmevjE8nRdGzus33pBuzMRLiBegzYYoMEPbov4AVu3CyQM",
+    "QmWt8N4mosnRa8wim3k1HNpEy1ANM2tguBDNHyqSbZsL8j",
+    "QmcHzKgNeRnVsdNPfvPnAnsH6Ndog7cKdmD48vuh3rek9B",
+    "QmSd5QqF1afCaHgmya2xmyXcBgZBvhrwfugvnruz3JnWSf",
+    "QmQfVurhfLrymEbpqvuHSTnqaCnMfgPhukbn4aAfu41mwz",
+    "QmQr1hGY6kN3uAmmh6eZ4vNgQf3Cxr9b3yxsQ4Mw3FGhxP",
+    "QmadxXb5LwH4F3UpQhXhQuCCebZXLQLHaPEhQj56LTumAn",
+    "QmPG1MvcegcoiU9gT72j2ZcCaAVSwpJStXT73tjbWjHd6o",
+    "QmWPxFKqAmAbUdVmDbNAh7YiNe6KPYWqW4SpgpxPS94A3C",
+    "QmUygqtJE6LB1JNCCCoFT3TxQPzoAmwab1GBeKGPEyA85T",
+    "QmS1omLvxFojxeNyuNXE6MXbVLZ77kn6ofjZnRmx7GWpuq",
+    "Qmf6FRRwrQV2BywuvpVP2g6j5LmpRX2AERvkcjuG7QYTPd",
+    "QmNP6AzqdpbVvsZbQQQXCzzayANdELFVjR8msCK2F7f2MW",
+    "QmcpaNpWW2qoqpMc44G4YP24VMzgGTH1vhwURUGPsDP4b5",
+    "QmVzu83VfD86EfPJgHpfxrHHriJaCSiBWzaadHdTwqoCBM",
+    "QmdGLLoff5Dd62E8yhzBjAxvQDM7yhfTjeDsptU3AMtRJc"
+  ],
+  "images": [
+    "QmdCJhYWXrvXXE2pyAwPbz15XWtAQ92JoUas4iB65S2eSq",
+    "Qmak6mg1VfKQCgKoU3WYPJ2aJEB5u1PK5KJ4FmBBs7SYvp",
+    "QmTCuUA4N365nwjS8yevbGaNXPj47vkhDbHArFfuggy91U",
+    "QmT33PQnkWH92t79ukJ4SS16i6PnCn1rrBJEiRTQXZWgDk",
+    "QmXCNCuAioZvnD6e9x48eAyuqaegm8kgQ4hci6Ppxf9XGe",
+    "QmXCNCuAioZvnD6e9x48eAyuqaegm8kgQ4hci6Ppxf9XGe",
+    "QmRG9ujFPVc2v2ySkHLBfNK257ENGfvNmkaAu8ftAoyTYS",
+    "Qmak6mg1VfKQCgKoU3WYPJ2aJEB5u1PK5KJ4FmBBs7SYvp",
+    "QmRZ9w5JvfeAWgufx3LZySxJsw4fzsVF2YTqdEwu4CrJ7A",
+    "QmPxez8HwUE4GwZDDidFTCB49QfEQRvDwiVqDMQLYNa1Nv",
+    "QmXUf5M8R7fUXzj22tHE3h89uUSu5cmL5h4ddddZaLS23e",
+    "Qmc99xsQm8C52aeT234XJ9Lt6AWqXUSSJyT8Gf2xXrnYtA",
+    "QmcxDcVTy96X47j16nhkufYLDbVgV63rASEnDAvcLEa9wR",
+    "QmP9TcAhkFyg7ZiQSST55fsytE6hdv1H8Cr3nWu2vkTpxP",
+    "QmeB5FmWnJ6Rmv5UxAnKqqwFp5jvTSWgpUJ2pm3bP6NuVx",
+    "QmX996vvs2ksCEpXMNaaDTz7WkF2HiRhAR7nrFQsdtr58D",
+    "Qmc4g1xp7G6nvrBvYxEzT6yu9RDz9XdWT6mGz81mhKx7wX",
+    "QmZHqPrcN9vj4nktdXeMB5X9w8hojuTH44jNWVRvh1Z9GF",
+    "QmP4nqrBYa3dbZUVzwRCMwL7mF2W1AGbboSfivY9AzkWNk",
+    "QmP9P3uoEpMSJ8SX7joF8e9vm5GRsXqNxAfzejDgkcqQdT",
+    "QmfZuqYKqYzLArYQY3eF6o55CzGUzenJ4rTVhuAbjJPGpv",
+    "QmSEgUPuCZKsATihYYRBzLYSJ9Fqn1AAdsUyP8Y3aMLYWg"
   ]
 }
