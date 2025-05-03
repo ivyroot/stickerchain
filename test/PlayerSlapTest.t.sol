@@ -25,6 +25,7 @@ contract PlayerSlapTest is Test {
     address address1 = address(0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97);
     address address2 = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address address3 = address(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    address operatorAddress = address(0x5050F69a9786F081509234F1a7F4684b5E5b76C9);
     string imageCID = "QmQD5Pqwi4a55jEZmQoJWnwS2zFhYsZeM1KmbCi6YDpHLV";
 
     receive() external payable {}
@@ -614,5 +615,34 @@ contract PlayerSlapTest is Test {
         // sanity check adjacent place is empty
         (total, slaps) = stickerChain.getPlaceSlaps(7147621671, 0, 0);
         assertEq(total, 0);
+    }
+
+    // Test that only operator can set fees
+    function testOnlyOperatorCanSetFees() public {
+        // Try to set fees as operatorAddress (should revert since they're not the operator yet)
+        vm.prank(operatorAddress);
+        vm.expectRevert(StickerChain.PermissionDenied.selector);
+        stickerChain.setSlapFee(0.002 ether);
+
+        vm.prank(operatorAddress);
+        vm.expectRevert(StickerChain.PermissionDenied.selector);
+        stickerChain.setPlayerReputationFee(0.1 ether);
+
+        // Verify fees are still the initial values
+        assertEq(stickerChain.slapFee(), slapFee);
+        assertEq(stickerChain.playerReputationFee(), 0);
+
+        // Set operatorAddress as the operator
+        vm.prank(adminAddress);
+        stickerChain.setOperator(operatorAddress);
+
+        // Now operatorAddress can set fees
+        vm.prank(operatorAddress);
+        stickerChain.setSlapFee(0.002 ether);
+        assertEq(stickerChain.slapFee(), 0.002 ether);
+
+        vm.prank(operatorAddress);
+        stickerChain.setPlayerReputationFee(0.1 ether);
+        assertEq(stickerChain.playerReputationFee(), 0.1 ether);
     }
 }
