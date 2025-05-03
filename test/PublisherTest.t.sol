@@ -146,4 +146,33 @@ contract StickerDesignsTest is Test {
         assertEq(stickerDesigns.operator(), operator1);
     }
 
+    // Test that only operator can set fees
+    function testOnlyOperatorCanSetFees() public {
+        // Try to set fees as operator1 (should revert since they're not the operator yet)
+        vm.prank(operator1);
+        vm.expectRevert(StickerDesigns.PublisherPermissionsIssue.selector);
+        stickerDesigns.setPublisherReputationFee(0.003 ether);
+
+        vm.prank(operator1);
+        vm.expectRevert(StickerDesigns.PublisherPermissionsIssue.selector);
+        stickerDesigns.setStickerRegistrationFee(0.001 ether);
+
+        // Verify fees are still the initial values
+        assertEq(stickerDesigns.publisherReputationFee(), publisherFee);
+        assertEq(stickerDesigns.stickerRegistrationFee(), newStickerFee);
+
+        // Set operator1 as the operator
+        vm.prank(adminAddress);
+        stickerDesigns.setOperator(operator1);
+
+        // Now operator1 can set fees
+        vm.prank(operator1);
+        stickerDesigns.setPublisherReputationFee(0.003 ether);
+        assertEq(stickerDesigns.publisherReputationFee(), 0.003 ether);
+
+        vm.prank(operator1);
+        stickerDesigns.setStickerRegistrationFee(0.001 ether);
+        assertEq(stickerDesigns.stickerRegistrationFee(), 0.001 ether);
+    }
+
 }
