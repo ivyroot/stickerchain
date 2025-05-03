@@ -41,6 +41,7 @@ contract StickerDesigns is Ownable {
     event StickerDesignPublished(uint256 indexed stickerId, address indexed publisher, address indexed payoutAddress, bytes metadataCID);
     event StickerPublisherChanged(uint256 indexed stickerId, address indexed from, address indexed to);
     event StickerPriceSet(uint256 indexed stickerId, uint256 indexed paymentMethodId, uint256 price);
+    event StickerLimitToHoldersSet(uint256 indexed stickerId, address indexed limitToHolders);
     event StickerEndTimeChanged(uint256 indexed stickerId, uint256 endTime);
     event StickerCapped(uint256 indexed stickerId);
     // admin events
@@ -310,6 +311,7 @@ contract StickerDesigns is Ownable {
             revert PublisherPermissionsIssue();
         }
         _stickerDesigns[_stickerId].limitToHolders = _holders;
+        emit StickerLimitToHoldersSet(_stickerId, _holders);
     }
 
     // Admin methods

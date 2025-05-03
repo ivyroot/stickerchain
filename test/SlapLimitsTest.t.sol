@@ -245,7 +245,7 @@ contract SlapLimitsTest is Test {
         // Check before fourth slap (should fail)
         issues = stickerChain.checkSlaps(address2, newSlap, objectives);
         assertEq(issues.length, 1, "Expected one issue for fourth slap");
-        assertEq(uint(issues[0].issueCode), uint(IssueType.StickerNotAllowed), "Expected StickerLimitReached issue");
+        assertEq(uint(issues[0].issueCode), uint(IssueType.StickerNotAllowed), "Expected StickerNotAllowed issue");
         assertEq(issues[0].recordId, stickerId1, "Expected issue for the correct sticker ID");
         assertEq(issues[0].value, 102, "Expected issue value to be 102 Sold Out");
 
@@ -364,6 +364,66 @@ contract SlapLimitsTest is Test {
         assertEq(slapIssues[0], 101);
     }
 
+    // validate publisher can change limit to holders address
+    function testPublisherCanChangeLimitToHolders() public {
+        // First publish a sticker with no limit to holders
+        NewStickerDesign memory newStickerDesign = NewStickerDesign({
+            payoutAddress: address(0),
+            price: uint64(0),
+            paymentMethodId: 0,
+            limitCount: 0,
+            limitTime: 0,
+            limitToHolders: address(0),
+            metadataCID: metadataCID1,
+            imageCID: imageCID
+        });
+
+        // publish sticker
+        vm.prank(publisher);
+        uint256 feeAmount = publisherFee + newStickerFee;
+        uint stickerId1 = stickerDesigns.publishStickerDesign{value: feeAmount}(newStickerDesign);
+
+        // Verify address2 can slap the sticker initially
+        vm.startPrank(address2);
+        NewSlap[] memory newSlaps = new NewSlap[](1);
+        newSlaps[0] = NewSlap({
+            placeId: placeIdUnionSquare,
+            stickerId: stickerId1,
+            size: 1
+        });
+        uint256[] memory objectives;
+
+        // Check that checkSlaps returns no issues
+        SlapIssue[] memory issues = stickerChain.checkSlaps(address2, newSlaps, objectives);
+        assertEq(issues.length, 0, "Expected no issues for initial slap");
+
+        // Successfully slap the sticker
+        (uint256[] memory slapIds, ) = stickerChain.slap{value: slapFee}(newSlaps, objectives);
+        assertEq(slapIds.length, 1);
+        assertGt(slapIds[0], 0);
+
+        // Create a balance checker that always returns 0
+        BalanceCheckerDeny balanceCheckerDeny = new BalanceCheckerDeny();
+
+        // Now set the limit to holders to the balance checker contract
+        vm.startPrank(publisher);
+        stickerDesigns.setStickerLimitToHolders(stickerId1, address(balanceCheckerDeny));
+
+        // Verify address2 can no longer slap the sticker
+        vm.startPrank(address2);
+        issues = stickerChain.checkSlaps(address2, newSlaps, objectives);
+        assertEq(issues.length, 1, "Expected one issue after setting limit to holders");
+        assertEq(uint(issues[0].issueCode), uint(IssueType.StickerNotAllowed), "Expected StickerNotAllowed issue");
+        assertEq(issues[0].recordId, stickerId1, "Expected issue for the correct sticker ID");
+        assertEq(issues[0].value, 103, "Expected issue value to be 103 (holder check failed)");
+
+        // Try to slap the sticker and verify it fails
+        (uint256[] memory slapIds2, uint256[] memory slapIssues2) = stickerChain.slap{value: slapFee}(newSlaps, objectives);
+        assertEq(slapIds2.length, 1);
+        assertEq(slapIds2[0], 0);
+        assertEq(slapIssues2.length, 1);
+        assertEq(slapIssues2[0], 103);
+    }
 
 }
 
