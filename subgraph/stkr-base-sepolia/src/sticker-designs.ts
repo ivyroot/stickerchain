@@ -43,26 +43,3 @@ export function handleStickerDesignPublished(
 
   entity.save()
 }
-
-// export function handleStickerDesignMetadata(content: Bytes): void {
-//   let stickerMeta = new StickerDesignMetadata(dataSource.stringParam())
-//   const value = json.fromBytes(content).toObject()
-//   if (value) {
-//     const imageCID = value.get('imageCID')
-//     const filename = value.get('filename')
-//     const contentType = value.get('contentType')
-//     const aspectRatio = value.get('aspectRatio')
-//     const size = value.get('size')
-
-//     if (imageCID == null || filename == null || contentType == null || aspectRatio == null || size == null) {
-//       return
-//     }
-
-//     stickerMeta.imageCID = imageCID.toString()
-//     stickerMeta.filename = filename.toString()
-//     stickerMeta.contentType = contentType.toString()
-//     stickerMeta.aspectRatio = aspectRatio.toBigInt()
-//     stickerMeta.size = size.toBigInt()
-//     stickerMeta.save()
-//   }
-// }
