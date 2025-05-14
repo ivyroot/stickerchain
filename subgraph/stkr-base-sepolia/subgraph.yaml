@@ -10,7 +10,7 @@ dataSources:
     source:
       address: "0x551aBce38B35D001444FA0b7c14626F30667fcB4"
       abi: StickerDesigns
-      startBlock: 17594533
+      startBlock: 25325063
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -32,7 +32,7 @@ dataSources:
     source:
       address: "0xbe341887B0656e03215D860C57aC85C6574EE92a"
       abi: StickerChain
-      startBlock: 17594575
+      startBlock: 25325089
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -52,7 +52,7 @@ dataSources:
     source:
       address: "0xDA9e2a99dbA68d189ED6b1BefAA1f4cF8A7dfA71"
       abi: PaymentMethod
-      startBlock: 17594498
+      startBlock: 25325031
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7

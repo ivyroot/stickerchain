@@ -1,5 +1,6 @@
 type StickerDesign @entity(immutable: false) {
   id: Bytes!
+  typeId: BigInt! # uint256
   stickerId: BigInt! # uint256
   originalPublisher: Bytes! # address
   currentPublisher: Bytes! # address
@@ -15,6 +16,7 @@ type StickerDesign @entity(immutable: false) {
 
 type Slap @entity(immutable: false) {
   id: Bytes!
+  typeId: BigInt! # uint256
   slapId: BigInt! # uint256
   placeId: BigInt! # uint256
   size: BigInt! # uint64
@@ -29,6 +31,7 @@ type Slap @entity(immutable: false) {
 
 type Coin @entity(immutable: false) {
   id: Bytes!
+  typeId: BigInt! # uint256
   address: Bytes! # address
   paymentMethodId: BigInt! # uint256
   name: String! # string

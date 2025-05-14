@@ -1,6 +1,9 @@
 import { CoinAdded as CoinAddedEvent } from "../generated/PaymentMethod/PaymentMethod"
 import { ERC20 } from "../generated/PaymentMethod/ERC20"
 import { Coin } from "../generated/schema"
+import { BigInt } from "@graphprotocol/graph-ts"
+
+const COIN_TYPE_ID = BigInt.fromI32(2)
 
 export function handleCoinAdded(event: CoinAddedEvent): void {
   let entity = new Coin(
@@ -18,6 +21,7 @@ export function handleCoinAdded(event: CoinAddedEvent): void {
   entity.name = tokenContract.name()
   entity.symbol = tokenContract.symbol()
   entity.decimals = tokenContract.decimals()
+  entity.typeId = COIN_TYPE_ID
 
   entity.save()
 }

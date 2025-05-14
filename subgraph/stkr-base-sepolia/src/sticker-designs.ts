@@ -17,6 +17,8 @@ import {
   StickerDesign,
 } from "../generated/schema"
 
+const STICKER_DESIGN_TYPE_ID = BigInt.fromI32(0)
+
 function updateStickerDesignState(entity: StickerDesign, contractAddress: Address, stickerId: BigInt): void {
   const contractInstance = StickerDesignsContract.bind(contractAddress)
   const stickerDesign = contractInstance.getStickerDesign(stickerId)
@@ -39,6 +41,7 @@ export function handleStickerDesignPublished(
   entity.originalPublisher = event.params.publisher
   entity.currentPublisher = event.params.publisher
   entity.payoutAddress = event.params.payoutAddress
+  entity.typeId = STICKER_DESIGN_TYPE_ID
 
   if (event.params.metadataCID) {
     entity.metadataCID = event.params.metadataCID.toHexString()
@@ -54,6 +57,7 @@ export function handleStickerPublisherChanged(
   let entity = StickerDesign.load(event.transaction.hash.concatI32(event.logIndex.toI32()))
   if (!entity) {
     entity = new StickerDesign(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    entity.typeId = STICKER_DESIGN_TYPE_ID
   }
   entity.stickerId = event.params.stickerId
   entity.currentPublisher = event.params.to
@@ -68,6 +72,7 @@ export function handleStickerPayoutAddressSet(
   let entity = StickerDesign.load(event.transaction.hash.concatI32(event.logIndex.toI32()))
   if (!entity) {
     entity = new StickerDesign(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    entity.typeId = STICKER_DESIGN_TYPE_ID
   }
   entity.stickerId = event.params.stickerId
   entity.payoutAddress = event.params.payoutAddress
@@ -82,6 +87,7 @@ export function handleStickerPriceSet(
   let entity = StickerDesign.load(event.transaction.hash.concatI32(event.logIndex.toI32()))
   if (!entity) {
     entity = new StickerDesign(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    entity.typeId = STICKER_DESIGN_TYPE_ID
   }
   entity.stickerId = event.params.stickerId
   entity.price = event.params.price
@@ -97,6 +103,7 @@ export function handleStickerEndTimeChanged(
   let entity = StickerDesign.load(event.transaction.hash.concatI32(event.logIndex.toI32()))
   if (!entity) {
     entity = new StickerDesign(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    entity.typeId = STICKER_DESIGN_TYPE_ID
   }
   entity.stickerId = event.params.stickerId
   entity.endTime = event.params.endTime
@@ -111,6 +118,7 @@ export function handleStickerCapped(
   let entity = StickerDesign.load(event.transaction.hash.concatI32(event.logIndex.toI32()))
   if (!entity) {
     entity = new StickerDesign(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    entity.typeId = STICKER_DESIGN_TYPE_ID
   }
   entity.stickerId = event.params.stickerId
 
@@ -124,6 +132,7 @@ export function handleStickerLimitToHoldersSet(
   let entity = StickerDesign.load(event.transaction.hash.concatI32(event.logIndex.toI32()))
   if (!entity) {
     entity = new StickerDesign(event.transaction.hash.concatI32(event.logIndex.toI32()))
+    entity.typeId = STICKER_DESIGN_TYPE_ID
   }
   entity.stickerId = event.params.stickerId
   entity.limitToHolders = event.params.limitToHolders

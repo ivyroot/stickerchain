@@ -10,7 +10,9 @@ import {
 import {
   Slap,
 } from "../generated/schema"
+import { BigInt } from "@graphprotocol/graph-ts"
 
+const SLAP_TYPE_ID = BigInt.fromI32(1)
 
 export function handleStickerSlapped(event: StickerSlappedEvent): void {
 
@@ -29,6 +31,7 @@ export function handleStickerSlapped(event: StickerSlappedEvent): void {
   entity.slappedAt = event.block.timestamp
   entity.blockNumber = event.block.number
   entity.objectiveIds = slap.objectiveIds
+  entity.typeId = SLAP_TYPE_ID
 
   entity.save()
 }
