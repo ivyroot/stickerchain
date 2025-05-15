@@ -25,6 +25,18 @@ dataSources:
           handler: handleStickerDesignPublished
           calls:
             getStickerDesign: StickerDesigns[event.address].getStickerDesign(event.params.stickerId)
+        - event: StickerPublisherChanged(indexed uint256,indexed address,indexed address)
+          handler: handleStickerPublisherChanged
+        - event: StickerPayoutAddressSet(indexed uint256,indexed address)
+          handler: handleStickerPayoutAddressSet
+        - event: StickerPriceSet(indexed uint256,uint256,uint256)
+          handler: handleStickerPriceSet
+        - event: StickerEndTimeChanged(indexed uint256,uint64)
+          handler: handleStickerEndTimeChanged
+        - event: StickerCapped(indexed uint256)
+          handler: handleStickerCapped
+        - event: StickerLimitToHoldersSet(indexed uint256,bool)
+          handler: handleStickerLimitToHoldersSet
       file: ./src/sticker-designs.ts
   - kind: ethereum
     name: StickerChain
