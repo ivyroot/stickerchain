@@ -15,7 +15,7 @@ contract DeployPublisherPayoutMethod is Script {
         StickerChain stickerChain = StickerChain(stickerChainContractAddress);
         vm.startBroadcast();
         PayoutMethod publisherPayoutMethod = new PayoutMethod(address(stickerChain), initialAdminAddress);
-        stickerChain.setPublisherPayoutMethodContract(payable(address(publisherPayoutMethod)));
+        // stickerChain.setPublisherPayoutMethodContract(payable(address(publisherPayoutMethod)));
         vm.stopBroadcast();
     }
 }

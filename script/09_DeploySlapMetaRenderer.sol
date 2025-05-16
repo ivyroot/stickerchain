@@ -17,7 +17,7 @@ contract DeploySlapMetaRenderer is Script {
         StickerDesigns stickerDesigns = StickerDesigns(stickerDesignsContractAddress);
         vm.startBroadcast();
         SlapMetaRendererV1 renderer = new SlapMetaRendererV1(stickerChain, stickerDesigns);
-        stickerChain.setMetadataRendererContract(address(renderer));
+        // stickerChain.setMetadataRendererContract(address(renderer));
         vm.stopBroadcast();
     }
 }

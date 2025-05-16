@@ -7,7 +7,7 @@
 //   ____(_)(_)_ (_)(_)___ (_)(_)(__)__ (_)   (_)___(_)(_) (_)( )_( )(_)(_) (_)
 //  (_____)  (__)(_) (____)(_) (_)(____)(_)     (___)  (_) (_) (__)_)(_)(_) (_)
 //
-//  StickerChain is a geocrypto map of the world for slapping stickers on.
+//  StickerChain is a geocrypto map of the world
 //
 //  follow ivyroot for updates:
 //

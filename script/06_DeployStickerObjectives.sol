@@ -15,7 +15,7 @@ contract DeployStickerObjectives is Script {
         StickerChain stickerChain = StickerChain(stickerChainContractAddress);
         vm.startBroadcast();
         StickerObjectives stickerObjectives = new StickerObjectives(stickerChainContractAddress, initialAdminAddress, 0.002 ether);
-        stickerChain.setStickerObjectivesContract(payable(address(stickerObjectives)));
+        // stickerChain.setStickerObjectivesContract(payable(address(stickerObjectives)));
         vm.stopBroadcast();
     }
 }

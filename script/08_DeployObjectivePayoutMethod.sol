@@ -15,7 +15,7 @@ contract DeployObjectivePayoutMethod is Script {
         StickerChain stickerChain = StickerChain(stickerChainContractAddress);
         vm.startBroadcast();
         PayoutMethod objectivePayoutMethod = new PayoutMethod(address(stickerChain),  initialAdminAddress);
-        stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
+        // stickerChain.setObjectivePayoutMethodContract(payable(address(objectivePayoutMethod)));
         vm.stopBroadcast();
     }
 }
