@@ -1,3 +1,11 @@
+// SPDX-License-Identifier: MIT
+//
+// StickerChain objective management by ivyroot
+//
+//        x.com/ivyroot_zk
+//
+//        farcaster.xyz/ivyroot
+//
 pragma solidity ^0.8.26;
 
 import {IStickerObjective} from "./IStickerObjective.sol";

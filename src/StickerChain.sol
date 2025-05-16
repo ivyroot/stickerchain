@@ -1,4 +1,21 @@
 // SPDX-License-Identifier: MIT
+//
+//   _____   _    _         _                    ___    _             _
+//  (_____) (_)_ (_)       (_) _   ____  _     _(___)_ (_)           (_) _
+// (_)___   (___) _    ___ (_)(_) (____)(_)__ (_)   (_)(_)__    ____  _ (_)__
+//   (___)_ (_)  (_) _(___)(___) (_)_(_)(____)(_)    _ (____)  (____)(_)(____)
+//   ____(_)(_)_ (_)(_)___ (_)(_)(__)__ (_)   (_)___(_)(_) (_)( )_( )(_)(_) (_)
+//  (_____)  (__)(_) (____)(_) (_)(____)(_)     (___)  (_) (_) (__)_)(_)(_) (_)
+//
+//  StickerChain is a geocrypto map of the world for slapping stickers on.
+//
+//  follow ivyroot for updates:
+//
+//        x.com/ivyroot_zk
+//
+//        farcaster.xyz/ivyroot
+//
+//
 pragma solidity ^0.8.26;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {ReentrancyGuardTransient} from "openzeppelin-contracts/contracts/utils/ReentrancyGuardTransient.sol";

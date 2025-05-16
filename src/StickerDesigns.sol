@@ -1,4 +1,13 @@
 // SPDX-License-Identifier: MIT
+//
+// sticker design management by ivyroot
+//
+//        x.com/ivyroot_zk
+//
+//        farcaster.xyz/ivyroot
+//
+
+
 pragma solidity ^0.8.26;
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
